@@ -12,3 +12,8 @@
 
 2025-04-17 21:58:18,931 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
 2025-04-17 21:58:19,646 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "GET /progress/54b3c0ec4424cc88459014389b2d21c4/559 HTTP/1.1" 404 207
+2025-04-17 22:18:56,389 INFO Starting fetch for 10 items
+2025-04-17 22:18:56,391 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-17 22:19:18,313 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 503 19
+2025-04-17 22:19:18,313 DEBUG Server response status: 503
+2025-04-17 22:19:18,313 DEBUG Server response content: Service Unavailable
