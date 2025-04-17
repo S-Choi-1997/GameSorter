@@ -58,11 +58,13 @@ class GameDataPanel(QWidget):
             thumbnail_url = data.get('thumbnail_url', '')
             logging.debug(f"Loading thumbnail: {thumbnail_url}")
             if thumbnail_url:
-                self.network_manager.get(QNetworkRequest(QUrl(thumbnail_url)))
+                request = QNetworkRequest(QUrl(thumbnail_url))
+                request.setRawHeader(b"User-Agent", b"Mozilla/5.0")
+                self.network_manager.get(request)
             else:
                 self.thumbnail_label.clear()
                 self.thumbnail_label.setText("No Thumbnail")
-                logging.warning("No thumbnail URL provided")
+
         except Exception as e:
             logging.error(f"Load game data error: {e}", exc_info=True)
             self.info_text.setText("데이터 로드 실패")
@@ -71,17 +73,22 @@ class GameDataPanel(QWidget):
     def on_image_downloaded(self, reply):
         try:
             if reply.error():
-                logging.error(f"Thumbnail download error: {reply.errorString()}")
+                error_str = reply.errorString()
+                status_code = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                logging.error(f"Thumbnail download error: {error_str}, HTTP Status: {status_code}, URL: {reply.url().toString()}")
                 self.thumbnail_label.clear()
                 self.thumbnail_label.setText("Failed to load thumbnail")
                 return
             data = reply.readAll()
             pixmap = QPixmap()
-            pixmap.loadFromData(data)
+            if not pixmap.loadFromData(data):
+                logging.error(f"Failed to load pixmap from data, URL: {reply.url().toString()}")
+                self.thumbnail_label.setText("Failed to load thumbnail")
+                return
             self.thumbnail_label.setPixmap(pixmap.scaled(200, 200, Qt.KeepAspectRatio))
-            logging.debug("Thumbnail loaded successfully")
+            logging.debug(f"Thumbnail loaded successfully: {reply.url().toString()}")
         except Exception as e:
-            logging.error(f"Image download error: {e}", exc_info=True)
+            logging.error(f"Image download error: {e}, URL: {reply.url().toString()}", exc_info=True)
             self.thumbnail_label.setText("Failed to load thumbnail")
 
     def clear_game_data(self):

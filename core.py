@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 import logging
 import tenacity
-from ui import MainWindowUI  # ui.py에서 MainWindowUI 클래스 확인
+from ui import MainWindowUI
 
 logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -54,6 +54,7 @@ class FetchWorker(QThread):
         )
     )
     def get_dlsite_data(self, rj_code):
+        import time
         if rj_code in self.cache:
             logging.info(f"Local cache hit for {rj_code}")
             return self.cache[rj_code]
@@ -70,14 +71,14 @@ class FetchWorker(QThread):
 
         soup = BeautifulSoup(response.text, 'html.parser')
         title_tag = soup.find('h1', id='work_name') or soup.find('h1', itemprop='name')
-        title = title_tag.text.strip() if title_tag else (soup.find('meta', property='og:title')['content'].strip() if soup.find('meta', property='og:title') else rj_code)
+        title_jp = title_tag.text.strip() if title_tag else (soup.find('meta', property='og:title')['content'].strip() if soup.find('meta', property='og:title') else rj_code)
 
-        tags = []
+        tags_jp = []
         genre_elements = soup.find_all('a', href=lambda x: x and '/maniax/genre' in x)
         for elem in genre_elements:
             tag = elem.text.strip()
             if tag:
-                tags.append(tag)
+                tags_jp.append(tag)
 
         maker = soup.find('span', class_='maker_name')
         maker = maker.text.strip() if maker else ""
@@ -90,8 +91,8 @@ class FetchWorker(QThread):
 
         data = {
             'rj_code': rj_code,
-            'title_jp': title,
-            'tags_jp': tags,
+            'title_jp': title_jp,
+            'tags_jp': tags_jp,
             'release_date': release_date,
             'thumbnail_url': thumbnail_url,
             'maker': maker,
@@ -160,6 +161,7 @@ class FetchWorker(QThread):
                 else:
                     local_results.append({
                         'title': item,
+                        'title_kr': item,
                         'primary_tag': "기타",
                         'tags': ["기타"],
                         'thumbnail_url': '',
@@ -169,13 +171,14 @@ class FetchWorker(QThread):
                 self.progress.emit(int((i + 1) / len(missing) * 50))
                 self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
 
-            # 3. 로컬 크롤링 결과를 Firestore에 저장
+            # 3. 로컬 크롤링 결과를 app.py로 보내 번역 및 저장
             if local_results:
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
                 response_data = response.json()
-                results = response_data.get("results", [])  # 최종 결과로 갱신
+                translated_results = response_data.get("results", [])
+                results.extend(translated_results)  # 번역된 결과 추가
 
-            # 4. 결과 반환
+            # 4. 최종 결과 반환
             self.result.emit(results)
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
@@ -192,7 +195,7 @@ class MainWindowLogic(MainWindowUI):
         self.cache_file = "dlsite_cache.json"
         self.cache = self.load_cache()
         self.folder_path = None
-        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"  # GCP URL 확인
+        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
 
         # UI 이벤트 연결
@@ -239,13 +242,11 @@ class MainWindowLogic(MainWindowUI):
 
         items = []
         for result in self.results:
-            original = result['original']
-            rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
-            if rj_match:
-                rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '')
+            rj_code = result.get('rj_code', '')
+            if rj_code:
                 items.append(rj_code)
             else:
-                items.append(original)
+                items.append(result['original'])
 
         self.worker = FetchWorker(self.SERVER_URL, items, self.cache_file)
         self.worker.progress.connect(self.progress_bar.setValue)
@@ -266,24 +267,27 @@ class MainWindowLogic(MainWindowUI):
             self.table.setUpdatesEnabled(False)
             for row, (result, data) in enumerate(zip(self.results, game_data)):
                 result['game_data'] = data
-                rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", result['original'], re.IGNORECASE)
-                rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else '기타'
+                rj_code = result.get('rj_code', '기타')
+                original_title = result.get('original_title', '')
 
                 if "error" in data or not data:
                     logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data.get('error', 'No data')}")
-                    result['suggested'] = f"[{rj_code}][기타]{result['original']}"  # RJ 코드 유지
+                    result['suggested'] = f"[{rj_code}][기타]{result['original']}"
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
                     continue
 
                 tag = data.get('primary_tag', '기타')
-                title = data.get('title_kr', data.get('title_jp', result['original']))
+                title_kr = data.get('title_kr')
+                title_jp = data.get('title_jp', result['original'])
                 maker = data.get('maker', '')
 
+                # title_kr을 우선 사용, 없으면 original_title, 그 다음 title_jp
+                title = title_kr if title_kr else (original_title if original_title else title_jp)
                 title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
                 title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
                 maker_tag = f"[{maker}]" if maker else ""
-                result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
+                result['suggested'] = f"[{rj_code}][{tag}]{title}"
                 logging.debug(f"Processed {rj_code or title}: thumbnail_url={data.get('thumbnail_url', 'None')}")
 
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
@@ -336,11 +340,18 @@ class MainWindowLogic(MainWindowUI):
         self.table.setUpdatesEnabled(False)
         for idx, original in enumerate(files):
             rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
-            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else '기타'
-            suggested = f"[{rj_code}][기타]{original}"
+            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else ''
+            
+            # RJ 코드 제거 후 원래 제목 추출
+            original_title = re.sub(rf"[Rr][Jj][_\-\s]?\d{{6,8}}", "", original, re.IGNORECASE).strip('_').strip()
+            original_title = original_title if original_title and original_title != os.path.splitext(original)[1] else ''
+            
+            suggested = f"[{rj_code or '기타'}][기타]{original}"
 
             result = {
                 'original': original,
+                'original_title': original_title,
+                'rj_code': rj_code,
                 'suggested': suggested,
                 'path': os.path.join(self.folder_path, original),
                 'game_data': {}
@@ -353,7 +364,7 @@ class MainWindowLogic(MainWindowUI):
             self.table.setCellWidget(idx, 0, chk)
             self.table.setItem(idx, 1, QTableWidgetItem(original))
             self.table.setItem(idx, 2, QTableWidgetItem(suggested))
-            logging.debug(f"Added row {idx}: {original}")
+            logging.debug(f"Added row {idx}: {original}, original_title={original_title}")
 
         self.table.setUpdatesEnabled(True)
         self.status_label.setText(f"파일: {len(self.results)}개")

@@ -90,25 +90,32 @@ def cache_tag(tag_jp, tag_kr, priority):
         logger.error(f"Tag cache error for {tag_jp}: {e}")
 
 # GPT 번역
-def translate_with_gpt_batch(tags, batch_idx=""):
+def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
     if not openai_client:
         logger.warning("OpenAI client not initialized")
-        return tags
+        return tags, title_jp
     try:
-        prompt = f"Translate the following Japanese tags to Korean naturally:\n{', '.join(tags)}\nProvide only the translated tags in a comma-separated list."
+        prompt = "Translate the following Japanese tags and title to Korean naturally:\n"
+        prompt += f"Tags: {', '.join(tags)}\n"
+        if title_jp:
+            prompt += f"Title: {title_jp}\n"
+        prompt += "Provide the translated tags in a comma-separated list, and if a title is provided, append the translated title after a semicolon."
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=100
+            max_tokens=200
         )
-        translated = response.choices[0].message.content.strip().split(',')
-        return [t.strip() for t in translated][:len(tags)]
+        response_text = response.choices[0].message.content.strip()
+        parts = response_text.split(';')
+        translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
+        translated_title = parts[1].strip() if len(parts) > 1 and title_jp else None
+        return translated_tags, translated_title
     except Exception as e:
         logger.error(f"GPT translation error for batch {batch_idx}: {e}")
-        return tags
+        return tags, title_jp
 
 # RJ 데이터 처리
 def process_rj_item(item):
@@ -120,6 +127,7 @@ def process_rj_item(item):
         return cached
 
     tags_jp = item.get('tags_jp', [])
+    title_jp = item.get('title_jp')
     tags_kr = []
     tags_to_translate = []
     tag_priorities = []
@@ -133,8 +141,10 @@ def process_rj_item(item):
             tags_to_translate.append(tag)
             tag_priorities.append(10)
 
-    if tags_to_translate:
-        translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
+    translated_tags = tags_jp
+    translated_title = title_jp
+    if tags_to_translate or title_jp:
+        translated_tags, translated_title = translate_with_gpt_batch(tags_to_translate, title_jp, batch_idx=rj_code)
         for jp, kr in zip(tags_to_translate, translated_tags):
             priority = 10
             if kr in ["RPG", "액션", "판타지"]:
@@ -147,8 +157,8 @@ def process_rj_item(item):
 
     processed_data = {
         'rj_code': rj_code,
-        'title_jp': item.get('title_jp'),
-        'title_kr': None,
+        'title_jp': title_jp,
+        'title_kr': translated_title,
         'primary_tag': primary_tag,
         'tags_jp': tags_jp,
         'tags': tags_kr,
