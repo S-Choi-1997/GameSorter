@@ -139,10 +139,9 @@ class FetchWorker(QThread):
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
             logging.info(f"Starting fetch for {total_items} items: {self.items}")
 
-            # 1. Firestore 캐시 확인
+            # 1. Firestore 캐시 확인, missing만 추출
             response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
             response_data = response.json()
-            results = response_data.get("results", [])
             missing = response_data.get("missing", [])
             self.task_id = response_data.get("task_id")
 
@@ -176,10 +175,12 @@ class FetchWorker(QThread):
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
                 response_data = response.json()
                 translated_results = response_data.get("results", [])
-                results = translated_results  # 기존 캐시 결과는 무시, 번역된 결과만 사용
+                self.result.emit(translated_results)  # 최종 번역된 결과만 UI로 전달
+            else:
+                # missing이 없으면 초기 요청의 결과를 사용
+                translated_results = response_data.get("results", [])
+                self.result.emit(translated_results)
 
-            # 4. 최종 결과 반환
-            self.result.emit(results)
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
         except Exception as e:
@@ -277,7 +278,7 @@ class MainWindowLogic(MainWindowUI):
                     continue
 
                 tag = data.get('primary_tag') or "기타"
-                title_kr = data.get('title_kr') or data.get('title_jp', result['original'])
+                title_kr = data.get('title_kr') or data.get('title_jp') or result['original']
 
                 # 제목에서 RJ 코드 제거 및 파일 이름에 적합하게 정리
                 title = title_kr
@@ -286,7 +287,7 @@ class MainWindowLogic(MainWindowUI):
 
                 # 최종 이름 조합: [RJ코드][태그] 제목
                 result['suggested'] = f"[{rj_code}][{tag}] {title}"
-                logging.debug(f"Processed {rj_code}: title_kr={title_kr}, thumbnail_url={data.get('thumbnail_url', 'None')}")
+                logging.debug(f"Processed {rj_code}: title_kr={data.get('title_kr')}, title_jp={data.get('title_jp')}, final_title={title}, thumbnail_url={data.get('thumbnail_url', 'None')}")
 
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 

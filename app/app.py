@@ -38,10 +38,13 @@ except Exception as e:
 
 # 일본어 감지 함수
 def needs_translation(title: str) -> bool:
-    if not title:
+    if not title or not isinstance(title, str):
+        logger.debug(f"No translation needed: title is empty or invalid: {title}")
         return False
     # 히라가나(\u3040-\u309F), 가타카나(\u30A0-\u30FF), 한자(\u4E00-\u9FFF) 포함 여부 확인
-    return bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', title))
+    has_japanese = bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', title))
+    logger.debug(f"Japanese detection for '{title}': {'Detected' if has_japanese else 'Not detected'}")
+    return has_japanese
 
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
@@ -51,8 +54,10 @@ def get_cached_data(platform, identifier):
         doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
         doc = doc_ref.get()
         if doc.exists:
-            logger.debug(f"Cache hit for {platform}:{identifier}")
-            return doc.to_dict()
+            data = doc.to_dict()
+            logger.debug(f"Cache hit for {platform}:{identifier}, title_kr={data.get('title_kr')}")
+            return data
+        logger.debug(f"Cache miss for {platform}:{identifier}")
         return None
     except Exception as e:
         logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
@@ -64,7 +69,7 @@ def cache_data(platform, identifier, data):
     try:
         doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
         doc_ref.set(data)
-        logger.info(f"Cached data for {platform}:{identifier}")
+        logger.info(f"Cached data for {platform}:{identifier}, title_kr={data.get('title_kr')}")
     except Exception as e:
         logger.error(f"Cache error for {platform}:{identifier}: {e}")
 
@@ -118,10 +123,8 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
         response_text = response.choices[0].message.content.strip()
         parts = response_text.split(';')
         translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
-        translated_title = parts[1].strip() if len(parts) > 1 and title_jp else None
-        if not translated_title and title_jp:
-            logger.warning(f"Title translation failed for {batch_idx}: {title_jp}")
-            translated_title = title_jp  # 번역 실패 시 원래 제목 유지
+        translated_title = parts[1].strip() if len(parts) > 1 and title_jp else title_jp
+        logger.info(f"Translated for {batch_idx}: tags={translated_tags}, title={translated_title}")
         return translated_tags, translated_title
     except Exception as e:
         logger.error(f"GPT translation error for batch {batch_idx}: {e}")
@@ -130,10 +133,11 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 # RJ 데이터 처리
 def process_rj_item(item):
     if 'error' in item:
+        logger.debug(f"Skipping error item: {item.get('rj_code')}")
         return item
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
-    if cached:
+    if cached and cached.get('title_kr'):
         logger.debug(f"Using cached data for {rj_code}: title_kr={cached.get('title_kr')}")
         return cached
 
@@ -158,7 +162,11 @@ def process_rj_item(item):
     # 일본어 포함 여부 확인
     if needs_translation(title_jp) or tags_to_translate:
         logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
-        translated_tags, translated_title = translate_with_gpt_batch(tags_to_translate, title_jp if needs_translation(title_jp) else None, batch_idx=rj_code)
+        translated_tags, translated_title = translate_with_gpt_batch(
+            tags_to_translate,
+            title_jp if needs_translation(title_jp) else None,
+            batch_idx=rj_code
+        )
         for jp, kr in zip(tags_to_translate, translated_tags):
             priority = 10
             if kr in ["RPG", "액션", "판타지"]:
@@ -187,7 +195,7 @@ def process_rj_item(item):
         'timestamp': time.time()
     }
     cache_data('rj', rj_code, processed_data)
-    logger.debug(f"Processed RJ item: {rj_code}, title_kr={processed_data['title_kr']}")
+    logger.info(f"Processed RJ item: {rj_code}, title_kr={processed_data['title_kr']}")
     return processed_data
 
 # Steam 데이터 처리
