@@ -1,239 +1,153 @@
-import json
-import logging
-import os
-import time
-from flask import Flask, request, jsonify
-from google.cloud import firestore
-from openai import OpenAI
-import re
-
-app = Flask(__name__)
-
-# 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("app.log", encoding="utf-8")
-    ]
+from PySide6.QtWidgets import (
+    QMainWindow, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
+    QTableWidget, QCheckBox, QLabel, QHeaderView, QProgressBar,
+    QSplitter, QTextEdit
 )
-logger = logging.getLogger(__name__)
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QPixmap
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
+import logging
 
-# Firestore 클라이언트 초기화
-try:
-    db = firestore.Client()
-    logger.info("Firestore client initialized")
-except Exception as e:
-    logger.error(f"Failed to initialize Firestore: {e}")
-    db = None
+logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
-# OpenAI 클라이언트 초기화
-try:
-    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    logger.info("OpenAI client initialized")
-except Exception as e:
-    logger.error(f"Failed to initialize OpenAI: {e}")
-    openai_client = None
+class GameDataPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        
+        # 썸네일 레이블
+        self.thumbnail_label = QLabel()
+        self.thumbnail_label.setFixedSize(200, 200)
+        self.thumbnail_label.setAlignment(Qt.AlignCenter)
+        self.thumbnail_label.setText("No Thumbnail")
+        self.layout.addWidget(self.thumbnail_label)
 
-# Firestore 캐시 확인
-def get_cached_data(platform, identifier):
-    if not db:
-        return None
-    try:
-        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
-        doc = doc_ref.get()
-        if doc.exists:
-            logger.debug(f"Cache hit for {platform}:{identifier}")
-            return doc.to_dict()
-        return None
-    except Exception as e:
-        logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
-        return None
+        # 제목 레이블
+        self.title_label = QLabel("게임 정보")
+        self.title_label.setStyleSheet("font-weight: bold; font-size: 16px;")
+        self.layout.addWidget(self.title_label)
 
-def cache_data(platform, identifier, data):
-    if not db:
-        return
-    try:
-        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
-        doc_ref.set(data)
-        logger.info(f"Cached data for {platform}:{identifier}")
-    except Exception as e:
-        logger.error(f"Cache error for {platform}:{identifier}: {e}")
+        # 정보 텍스트
+        self.info_text = QTextEdit()
+        self.info_text.setReadOnly(True)
+        self.layout.addWidget(self.info_text)
+        
+        self.setLayout(self.layout)
 
-# 태그 캐시
-def get_cached_tag(tag_jp):
-    if not db:
-        return None
-    try:
-        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
-        doc = doc_ref.get()
-        if doc.exists:
-            return doc.to_dict()
-        return None
-    except Exception as e:
-        logger.error(f"Tag cache error for {tag_jp}: {e}")
-        return None
+        # 네트워크 매니저
+        self.network_manager = QNetworkAccessManager()
+        self.network_manager.finished.connect(self.on_image_downloaded)
 
-def cache_tag(tag_jp, tag_kr, priority):
-    if not db:
-        return
-    try:
-        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
-        doc_ref.set({
-            'tag_jp': tag_jp,
-            'tag_kr': tag_kr,
-            'priority': priority
-        })
-        logger.info(f"Cached tag: {tag_jp} -> {tag_kr}")
-    except Exception as e:
-        logger.error(f"Tag cache error for {tag_jp}: {e}")
+    def load_game_data(self, data):
+        try:
+            if "error" in data:
+                self.info_text.setText("데이터를 불러올 수 없습니다.")
+                self.thumbnail_label.setText("No Thumbnail")
+                return
 
-# GPT 번역
-def translate_with_gpt_batch(tags, batch_idx=""):
-    if not openai_client:
-        logger.warning("OpenAI client not initialized")
-        return tags
-    try:
-        prompt = f"Translate the following Japanese tags to Korean naturally:\n{', '.join(tags)}\nProvide only the translated tags in a comma-separated list."
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=100
-        )
-        translated = response.choices[0].message.content.strip().split(',')
-        return [t.strip() for t in translated][:len(tags)]
-    except Exception as e:
-        logger.error(f"GPT translation error for batch {batch_idx}: {e}")
-        return tags
+            info = f"제목 (KR): {data.get('title_kr', 'N/A')}\n"
+            info += f"제목 (JP): {data.get('title_jp', 'N/A')}\n"
+            info += f"RJ 코드: {data.get('rj_code', 'N/A')}\n"
+            info += f"태그: {', '.join(data.get('tags', []))}\n"
+            info += f"출시일: {data.get('release_date', 'N/A')}\n"
+            info += f"제작자: {data.get('maker', 'N/A')}\n"
+            info += f"플랫폼: {data.get('platform', 'N/A')}\n"
+            info += f"링크: {data.get('link', 'N/A')}"
+            self.info_text.setText(info)
 
-# RJ 데이터 처리
-def process_rj_item(item):
-    if 'error' in item:
-        return item
-    rj_code = item.get('rj_code')
-    cached = get_cached_data('rj', rj_code)
-    if cached:
-        return cached
+            thumbnail_url = data.get('thumbnail_url', '')
+            logging.debug(f"Loading thumbnail: {thumbnail_url}")
+            if thumbnail_url:
+                self.network_manager.get(QNetworkRequest(QUrl(thumbnail_url)))
+            else:
+                self.thumbnail_label.clear()
+                self.thumbnail_label.setText("No Thumbnail")
+                logging.warning("No thumbnail URL provided")
+        except Exception as e:
+            logging.error(f"Load game data error: {e}", exc_info=True)
+            self.info_text.setText("데이터 로드 실패")
+            self.thumbnail_label.setText("Failed to load thumbnail")
 
-    tags_jp = item.get('tags_jp', [])
-    tags_kr = []
-    tags_to_translate = []
-    tag_priorities = []
+    def on_image_downloaded(self, reply):
+        try:
+            if reply.error():
+                logging.error(f"Thumbnail download error: {reply.errorString()}")
+                self.thumbnail_label.clear()
+                self.thumbnail_label.setText("Failed to load thumbnail")
+                return
+            data = reply.readAll()
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            self.thumbnail_label.setPixmap(pixmap.scaled(200, 200, Qt.KeepAspectRatio))
+            logging.debug("Thumbnail loaded successfully")
+        except Exception as e:
+            logging.error(f"Image download error: {e}", exc_info=True)
+            self.thumbnail_label.setText("Failed to load thumbnail")
 
-    for tag in tags_jp:
-        cached_tag = get_cached_tag(tag)
-        if cached_tag:
-            tags_kr.append(cached_tag['tag_kr'])
-            tag_priorities.append(cached_tag.get('priority', 10))
-        else:
-            tags_to_translate.append(tag)
-            tag_priorities.append(10)
+    def clear_game_data(self):
+        self.info_text.setText("선택된 게임이 없습니다.")
+        self.thumbnail_label.clear()
+        self.thumbnail_label.setText("No Thumbnail")
 
-    if tags_to_translate:
-        translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
-        for jp, kr in zip(tags_to_translate, translated_tags):
-            priority = 10
-            if kr in ["RPG", "액션", "판타지"]:
-                priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
-            tags_kr.append(kr)
-            cache_tag(jp, kr, priority)
-            tag_priorities[tags_kr.index(kr)] = priority
+class MainWindowUI(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("게임 파일 정리기")
+        self.setGeometry(100, 100, 1200, 600)
 
-    primary_tag = tags_kr[tag_priorities.index(max(tag_priorities))] if tags_kr else "기타"
+        # 메인 위젯 및 레이아웃
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QHBoxLayout(main_widget)
 
-    processed_data = {
-        'rj_code': rj_code,
-        'title_jp': item.get('title_jp'),
-        'title_kr': None,
-        'primary_tag': primary_tag,
-        'tags_jp': tags_jp,
-        'tags': tags_kr,
-        'release_date': item.get('release_date', 'N/A'),
-        'thumbnail_url': item.get('thumbnail_url', ''),
-        'rating': item.get('rating', 0.0),
-        'link': item.get('link', ''),
-        'platform': item.get('platform', 'rj'),
-        'maker': item.get('maker', ''),
-        'timestamp': time.time()
-    }
-    cache_data('rj', rj_code, processed_data)
-    return processed_data
+        # 왼쪽 패널 (테이블 및 컨트롤)
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
 
-# Steam 데이터 처리
-def process_steam_item(identifier):
-    cached = get_cached_data('steam', identifier)
-    if cached:
-        return cached
-    data = {
-        'title': identifier,
-        'primary_tag': "기타",
-        'tags': ["기타"],
-        'thumbnail_url': '',
-        'platform': 'steam',
-        'timestamp': time.time()
-    }
-    cache_data('steam', identifier, data)
-    return data
+        # 버튼 레이아웃
+        button_layout = QHBoxLayout()
+        self.select_folder_btn = QPushButton("📁 폴더 선택")
+        self.fetch_data_btn = QPushButton("🔄 게임명 변경")
+        self.rename_btn = QPushButton("💾 이름 변경")
+        button_layout.addWidget(self.select_folder_btn)
+        button_layout.addWidget(self.fetch_data_btn)
+        button_layout.addWidget(self.rename_btn)
+        left_layout.addLayout(button_layout)
 
-# 게임 데이터 처리 엔드포인트
-@app.route('/games', methods=['POST'])
-def process_games():
-    try:
-        data = request.get_json()
-        logger.info(f"Received request with data: {json.dumps(data, ensure_ascii=False)[:1000]}")
-        items = data.get('items', [])
-        logger.info(f"Processing {len(items)} items")
+        # 테이블
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름"])
+        self.table.setColumnWidth(0, 50)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        left_layout.addWidget(self.table)
 
-        results = []
-        missing = []
+        # 하단 상태 레이아웃
+        status_layout = QHBoxLayout()
+        self.select_all_box = QCheckBox("전체 선택")
+        self.status_label = QLabel("파일: 0개")
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(100)
+        self.progress_bar.setValue(0)
+        status_layout.addWidget(self.select_all_box)
+        status_layout.addWidget(self.status_label)
+        status_layout.addWidget(self.progress_bar)
+        left_layout.addLayout(status_layout)
 
-        if not items:
-            return jsonify({'results': [], 'missing': [], 'task_id': 'none'})
+        # 로그 레이블
+        self.log_label = QLabel("대기 중입니다.")
+        self.log_label.setWordWrap(True)
+        self.log_label.setMaximumWidth(self.table.width())
+        self.log_label.setMinimumHeight(50)
+        left_layout.addWidget(self.log_label)
 
-        # 문자열 배열 (캐시 확인) 또는 객체 배열 (크롤링 데이터) 처리
-        if isinstance(items[0], str):
-            for item in items:
-                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
-                if rj_match:
-                    rj_code = rj_match.group(0).upper()
-                    cached = get_cached_data('rj', rj_code)
-                    if cached:
-                        results.append(cached)
-                    else:
-                        missing.append(rj_code)
-                        results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
-                else:
-                    results.append(process_steam_item(item))
-        else:
-            for item in items:
-                rj_code = item.get('rj_code')
-                if rj_code and re.match(r'^[Rr][Jj]\d{6,8}$', rj_code, re.IGNORECASE) and 'error' not in item:
-                    results.append(process_rj_item(item))
-                elif 'error' in item:
-                    results.append(item)
-                else:
-                    results.append(process_steam_item(item.get('title', item)))
+        # 오른쪽 패널 (게임 정보)
+        self.game_data_panel = GameDataPanel()
 
-        task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
-        logger.info(f"Returning response for task_id: {task_id}")
-        return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
-    except Exception as e:
-        logger.error(f"Error processing games: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
-
-# 진행 상황 엔드포인트
-@app.route('/progress/<task_id>', methods=['GET'])
-def get_progress(task_id):
-    try:
-        logger.info(f"Progress request for task_id: {task_id}")
-        return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
-    except Exception as e:
-        logger.error(f"Progress error for task {task_id}: {e}")
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
+        # 스플리터로 좌우 패널 분할
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.addWidget(left_panel)
+        splitter.addWidget(self.game_data_panel)
+        splitter.setSizes([800, 400])
+        main_layout.addWidget(splitter)

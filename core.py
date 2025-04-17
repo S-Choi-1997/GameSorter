@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 import logging
 import tenacity
-from ui import MainWindowUI
+from ui import MainWindowUI  # ui.py에서 MainWindowUI 클래스 확인
 
 logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -192,7 +192,7 @@ class MainWindowLogic(MainWindowUI):
         self.cache_file = "dlsite_cache.json"
         self.cache = self.load_cache()
         self.folder_path = None
-        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
+        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"  # GCP URL 확인
         self.worker = None
 
         # UI 이벤트 연결
@@ -269,8 +269,8 @@ class MainWindowLogic(MainWindowUI):
                 rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", result['original'], re.IGNORECASE)
                 rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else '기타'
 
-                if "error" in data:
-                    logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data['error']}")
+                if "error" in data or not data:
+                    logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data.get('error', 'No data')}")
                     result['suggested'] = f"[{rj_code}][기타]{result['original']}"  # RJ 코드 유지
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))

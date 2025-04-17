@@ -236,4 +236,8 @@ def get_progress(task_id):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
+    # GCP에서만 실행
+    if os.getenv('GAE_ENV', '').startswith('standard') or os.getenv('CLOUD_RUN', '') == 'true':
+        app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
+    else:
+        logger.warning("This script should only run in GCP environment. Exiting.")

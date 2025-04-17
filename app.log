@@ -1,0 +1,19 @@
+2025-04-18 02:42:26,236 WARNING Compute Engine Metadata server unavailable on attempt 1 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:42:27,153 WARNING Compute Engine Metadata server unavailable on attempt 2 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:42:35,158 WARNING Compute Engine Metadata server unavailable on attempt 1 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:42:36,095 WARNING Compute Engine Metadata server unavailable on attempt 2 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:42:37,928 WARNING Compute Engine Metadata server unavailable on attempt 3 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:42:37,928 WARNING Authentication failed using Compute Engine authentication due to unavailable metadata server.
+2025-04-18 02:42:37,928 ERROR Failed to initialize Firestore: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-04-18 02:42:37,929 ERROR Failed to initialize OpenAI: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+2025-04-18 02:42:37,953 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://59.18.230.157:8080
+2025-04-18 02:42:37,953 INFO [33mPress CTRL+C to quit[0m
+2025-04-18 02:43:36,550 WARNING Compute Engine Metadata server unavailable on attempt 1 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:43:37,607 WARNING Compute Engine Metadata server unavailable on attempt 2 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:43:39,519 WARNING Compute Engine Metadata server unavailable on attempt 3 of 3. Reason: [WinError 10051] 연결할 수 없는 네트워크에서 소켓 작업을 시도했습니다
+2025-04-18 02:43:39,519 WARNING Authentication failed using Compute Engine authentication due to unavailable metadata server.
+2025-04-18 02:43:39,519 ERROR Failed to initialize Firestore: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+2025-04-18 02:43:39,520 ERROR Failed to initialize OpenAI: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable

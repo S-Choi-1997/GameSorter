@@ -84,3 +84,43 @@
 2025-04-18 02:17:44,484 DEBUG Added row 9: 변경용
 2025-04-18 02:17:44,485 DEBUG Added row 10: 정리본
 2025-04-18 02:17:44,485 DEBUG Added row 11: 털게 연구소 세트
+2025-04-18 02:22:48,210 INFO No cache file found, starting with empty cache
+2025-04-18 02:22:48,211 INFO Starting fetch for 12 items
+2025-04-18 02:22:48,213 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 02:22:52,492 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 1610
+2025-04-18 02:22:52,493 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:22:53,006 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-18 02:22:53,068 ERROR Local crawl failed for RJ01173055: name 'time' is not defined
+2025-04-18 02:22:53,070 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:22:53,844 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01288065.html HTTP/1.1" 200 None
+2025-04-18 02:22:53,896 ERROR Local crawl failed for RJ01288065: name 'time' is not defined
+2025-04-18 02:22:53,897 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:22:54,358 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01366624.html HTTP/1.1" 200 None
+2025-04-18 02:22:54,410 ERROR Local crawl failed for RJ01366624: name 'time' is not defined
+2025-04-18 02:22:54,412 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:22:54,892 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ374754.html HTTP/1.1" 200 None
+2025-04-18 02:22:54,953 ERROR Local crawl failed for RJ374754: name 'time' is not defined
+2025-04-18 02:22:54,955 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:22:55,693 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01111140.html HTTP/1.1" 200 None
+2025-04-18 02:22:55,753 ERROR Local crawl failed for RJ01111140: name 'time' is not defined
+2025-04-18 02:22:55,754 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 02:22:56,470 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 477
+2025-04-18 02:22:56,472 WARNING Error for RJ01173055: Game not found for RJ01173055
+2025-04-18 02:22:56,472 WARNING Error for RJ01288065: Game not found for RJ01288065
+2025-04-18 02:22:56,472 WARNING Error for RJ01366624: Game not found for RJ01366624
+2025-04-18 02:22:56,472 WARNING Error for RJ374754: Game not found for RJ374754
+2025-04-18 02:22:56,472 WARNING Error for RJ01111140: Game not found for RJ01111140
+2025-04-18 02:24:11,119 INFO No folder selected
+2025-04-18 02:24:22,252 INFO Scanning folder: H:/yangame/방주
+2025-04-18 02:24:22,253 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip
+2025-04-18 02:24:22,254 DEBUG Added row 1: RJ01288065_sleepingMidori.zip
+2025-04-18 02:24:22,254 DEBUG Added row 2: RJ01366624
+2025-04-18 02:24:22,255 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 02:24:22,256 DEBUG Added row 4: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 02:24:22,256 DEBUG Added row 5: ㅂㄱ
+2025-04-18 02:24:22,256 DEBUG Added row 6: 기타
+2025-04-18 02:24:22,257 DEBUG Added row 7: 란스
+2025-04-18 02:24:22,257 DEBUG Added row 8: 방주
+2025-04-18 02:24:22,257 DEBUG Added row 9: 변경용
+2025-04-18 02:24:22,258 DEBUG Added row 10: 정리본
+2025-04-18 02:24:22,258 DEBUG Added row 11: 털게 연구소 세트
