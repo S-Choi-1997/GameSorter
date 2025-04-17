@@ -5,6 +5,7 @@ from openai import OpenAI
 from google.cloud import firestore
 import os
 import time
+import hashlib
 
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -27,9 +28,12 @@ def translate_with_gpt(text, src_lang='ja', dest_lang='ko'):
         print(f"GPT translation error: {e}")
         return text
 
+def generate_doc_id(title):
+    return hashlib.md5(title.encode('utf-8')).hexdigest()
+
 @app.route('/rj/<rj_code>', methods=['GET'])
 def get_game_by_rj_code(rj_code):
-    game_ref = db.collection('games').document(rj_code)
+    game_ref = db.collection('games').document('rj').collection('items').document(rj_code)
     game = game_ref.get()
 
     if game.exists:
@@ -52,19 +56,63 @@ def get_game_by_rj_code(rj_code):
 @app.route('/game', methods=['GET'])
 def get_game_by_name():
     title = request.args.get('title')
+    platform = request.args.get('platform', 'rj')  # 기본값은 rj
     if not title:
         return jsonify({'error': 'Title parameter is required'}), 400
 
-    games = db.collection('games').where('title_jp', '==', title).stream()
-    for game in games:
-        return jsonify(game.to_dict())
+    if platform not in ['rj', 'steam', 'other']:
+        return jsonify({'error': 'Invalid platform. Use rj, steam, or other'}), 400
 
-    # If not found, try translated title
-    games = db.collection('games').where('title_kr', '==', title).stream()
-    for game in games:
+    if platform == 'rj':
+        # RJ 게임은 제목이 아닌 RJ 코드로 조회해야 하므로 별도 처리
+        return jsonify({'error': 'Use /rj/<rj_code> for RJ games'}), 400
+
+    # Steam/기타 게임은 제목 기반 고유 ID로 조회
+    doc_id = generate_doc_id(title)
+    game_ref = db.collection('games').document(platform).collection('items').document(doc_id)
+    game = game_ref.get()
+
+    if game.exists:
         return jsonify(game.to_dict())
 
     return jsonify({'error': 'Game not found'}), 404
+
+@app.route('/game', methods=['POST'])
+def add_game():
+    data = request.get_json()
+    if not data or 'title_jp' not in data or 'platform' not in data:
+        return jsonify({'error': 'title_jp and platform are required'}), 400
+
+    platform = data['platform']
+    if platform not in ['rj', 'steam', 'other']:
+        return jsonify({'error': 'Invalid platform. Use rj, steam, or other'}), 400
+
+    # RJ 게임은 별도 엔드포인트 사용
+    if platform == 'rj':
+        return jsonify({'error': 'Use /rj/<rj_code> for RJ games'}), 400
+
+    # 필수 필드 설정 및 기본값 제공
+    title_jp = data.get('title_jp')
+    title_kr = data.get('title_kr', translate_with_gpt(title_jp))
+    tags_jp = data.get('tags_jp', [])
+    tags = [translate_with_gpt(tag) for tag in tags_jp] if tags_jp else data.get('tags', [])
+    game_data = {
+        'title_jp': title_jp,
+        'title_kr': title_kr,
+        'tags_jp': tags_jp,
+        'tags': tags,
+        'rating': data.get('rating', 0.0),
+        'thumbnail_url': data.get('thumbnail_url', ''),
+        'release_date': data.get('release_date', ''),
+        'link': data.get('link', ''),  # dlsite_link 대신 platform별 link로 통일
+        'translated': bool(title_kr != title_jp)
+    }
+
+    # Steam/기타 게임은 제목 기반 고유 ID 사용
+    doc_id = generate_doc_id(title_jp)
+    game_ref = db.collection('games').document(platform).collection('items').document(doc_id)
+    game_ref.set(game_data)
+    return jsonify({'message': 'Game added', 'doc_id': doc_id}), 201
 
 def fetch_from_dlsite(rj_code):
     url = f'https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html'
@@ -95,7 +143,7 @@ def fetch_from_dlsite(rj_code):
         release_date = date_elem.text.strip() if date_elem else ''
         thumbnail_url = thumb_elem['content'] if thumb_elem else ''
         rating = float(rating_elem.text.strip()) if rating_elem else 0.0
-        dlsite_link = url
+        link = url
 
         return {
             'title_jp': title_jp,
@@ -103,7 +151,7 @@ def fetch_from_dlsite(rj_code):
             'release_date': release_date,
             'thumbnail_url': thumbnail_url,
             'rating': rating,
-            'dlsite_link': dlsite_link
+            'link': link
         }
     except Exception as e:
         print(f"Error fetching DLsite: {e}")
