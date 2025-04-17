@@ -1,140 +1,131 @@
-from flask import Flask, request, jsonify, Response
-from google.cloud import firestore
-import requests
-from bs4 import BeautifulSoup
+import json
+import logging
 import os
 import time
-import logging
-import signal
-import sys
-import json
-from dotenv import load_dotenv
+from urllib.parse import urljoin
+import psutil
+import requests
+from flask import Flask, request, jsonify
+from google.cloud import firestore
+from bs4 import BeautifulSoup
 from openai import OpenAI
-import hashlib
-import re
-import concurrent.futures
-from queue import Queue
-import uuid
-try:
-    import psutil
-except ImportError:
-    logging.warning("psutil not found, skipping memory usage logging")
-    def log_memory_usage():
-        logging.info("Memory usage logging skipped (psutil unavailable)")
-else:
-    def log_memory_usage():
-        process = psutil.Process(os.getpid())
-        mem_info = process.memory_info()
-        logging.info(f"Memory usage: RSS={mem_info.rss / 1024 / 1024:.2f}MB, VMS={mem_info.vms / 1024 / 1024:.2f}MB")
-import tenacity
-
-load_dotenv()
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-# Firestore 초기화
-db = None
+# 로깅 설정
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("app.log", encoding="utf-8")
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Firestore 클라이언트 초기화
 try:
     db = firestore.Client()
     logger.info("Firestore client initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize Firestore: {e}", exc_info=True)
+    logger.error(f"Failed to initialize Firestore client: {e}", exc_info=True)
+    db = None
 
-# 진행 상황 저장
-progress_data = {}
+# OpenAI 클라이언트 초기화
+try:
+    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    logger.info("OpenAI client initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize OpenAI client: {e}", exc_info=True)
+    openai_client = None
 
-# SIGTERM 핸들러
-def handle_sigterm(*args):
-    logger.info("Received SIGTERM, shutting down gracefully")
+# 메모리 사용량 로깅
+process = psutil.Process()
+logger.info(f"Memory usage: RSS={process.memory_info().rss / 1024 / 1024:.2f}MB, "
+            f"VMS={process.memory_info().vms / 1024 / 1024:.2f}MB")
+
+# Firestore 캐시 확인
+def get_cached_data(platform, identifier):
+    if not db:
+        return None
     try:
-        with open('progress_data.json', 'w') as f:
-            json.dump(progress_data, f)
-        logger.info("Progress data saved")
+        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
+        doc = doc_ref.get()
+        if doc.exists:
+            logger.debug(f"Cache hit for {platform}:{identifier}")
+            return doc.to_dict()
+        logger.debug(f"Cache miss for {platform}:{identifier}")
+        return None
     except Exception as e:
-        logger.error(f"Error saving progress data: {e}")
-    sys.exit(0)
+        logger.error(f"Error accessing Firestore cache for {platform}:{identifier}: {e}", exc_info=True)
+        return None
 
-signal.signal(signal.SIGTERM, handle_sigterm)
+def cache_data(platform, identifier, data):
+    if not db:
+        return
+    try:
+        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
+        doc_ref.set(data)
+        logger.info(f"Cached data for {platform}:{identifier}")
+    except Exception as e:
+        logger.error(f"Error caching data for {platform}:{identifier}: {e}", exc_info=True)
 
-# 재시도 데코레이터
-@tenacity.retry(
-    stop=tenacity.stop_after_attempt(3),
-    wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
-    retry=tenacity.retry_if_exception_type((requests.exceptions.RequestException, Exception)),
-    before_sleep=lambda retry_state: logger.warning(
-        f"Retrying API call (attempt {retry_state.attempt_number}/3) after {retry_state.next_action.sleep} seconds"
-    )
-)
-def make_openai_request(messages, max_tokens):
-    return client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=messages,
-        max_tokens=max_tokens
-    )
-
-# 태그 캐싱 조회 및 저장
+# 태그 캐시
 def get_cached_tag(tag_jp):
     if not db:
         return None
-    tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
-    tag_doc = tag_ref.get()
-    if tag_doc.exists:
-        logger.debug(f"Cache hit for tag: {tag_jp}")
-        return tag_doc.to_dict()
-    return None
+    try:
+        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
+        doc = doc_ref.get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+    except Exception as e:
+        logger.error(f"Error accessing tag cache for {tag_jp}: {e}", exc_info=True)
+        return None
 
-def cache_tag(tag_jp, tag_kr, priority=10):
+def cache_tag(tag_jp, tag_kr, priority):
     if not db:
         return
-    tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
     try:
-        tag_ref.set({'tag_jp': tag_jp, 'tag_kr': tag_kr, 'priority': priority})
-        logger.debug(f"Cached tag: {tag_jp} -> {tag_kr} with priority {priority}")
+        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
+        doc_ref.set({
+            'tag_jp': tag_jp,
+            'tag_kr': tag_kr,
+            'priority': priority
+        })
+        logger.info(f"Cached tag: {tag_jp} -> {tag_kr}")
     except Exception as e:
-        logger.error(f"Error caching tag: {e}", exc_info=True)
+        logger.error(f"Error caching tag {tag_jp}: {e}", exc_info=True)
 
-# 번역 함수 (배치 처리)
-def translate_with_gpt_batch(texts, src_lang='ja', dest_lang='ko', batch_idx=0):
-    if not texts:
-        return []
+# GPT 번역
+def translate_with_gpt_batch(tags, batch_idx=""):
+    if not openai_client:
+        logger.warning("OpenAI client not initialized, skipping translation")
+        return tags
     try:
-        prompt = (
-            "다음 일본어 텍스트를 한국어로 번역하세요:\n"
-            "- 직역 중심으로 번역하되, 자연스럽게 다듬어 원문 의미를 정확히 유지하세요.\n"
-            "- 고유명사(예: 인물, 장소, 작품명)는 원문 그대로 유지하세요.\n"
-            "- 특수문자(?, *, :, <, >, /, \\, |)는 제거하고, ?는 ,로 대체하세요.\n"
-            "- 비속어, 부정확하거나 부적절한 표현은 절대 사용하지 마세요.\n"
-            "- 출력은 번호 없이, 입력 순서대로 한 줄씩 번역된 텍스트만 반환하세요.\n"
-            "입력:\n" + "\n".join(texts)
+        prompt = f"Translate the following Japanese tags to Korean naturally:\n{', '.join(tags)}\nProvide only the translated tags in a comma-separated list."
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=100
         )
-        logger.info(f"Batch {batch_idx}: Sending translation request for {len(texts)} items")
-        messages = [
-            {'role': 'system', 'content': f'Translate the following {src_lang} text to {dest_lang} accurately and professionally.'},
-            {'role': 'user', 'content': prompt}
-        ]
-        response = make_openai_request(messages, max_tokens=500)
-        translated_texts = response.choices[0].message.content.strip().splitlines()
-        if len(translated_texts) != len(texts):
-            logger.error(f"Batch {batch_idx}: Translation response length mismatch: {len(translated_texts)} vs {len(texts)}")
-            return [text for text in texts]
-        logger.info(f"Batch {batch_idx}: Successfully translated {len(translated_texts)} items")
-        return translated_texts
+        translated = response.choices[0].message.content.strip().split(',')
+        return [t.strip() for t in translated][:len(tags)]
     except Exception as e:
-        logger.error(f"Batch {batch_idx}: GPT translation error: {e}", exc_info=True)
-        return [text for text in texts]
+        logger.error(f"GPT translation error for batch {batch_idx}: {e}", exc_info=True)
+        return tags
 
-# 고유 ID 생성
-def generate_doc_id(title):
-    return hashlib.md5(title.encode('utf-8')).hexdigest()
-
-# DLsite 직접 스크래핑 함수
-@tenacity.retry(
-    stop=tenacity.stop_after_attempt(3),
-    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
-    retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
+# DLsite 직접 스크래핑 (requests 기반)
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(Exception),
     before_sleep=lambda retry_state: logger.warning(
         f"Retrying DLsite request (attempt {retry_state.attempt_number}/3)"
     )
@@ -148,44 +139,39 @@ def fetch_from_dlsite_direct(rj_code):
         'Referer': 'https://www.dlsite.com/maniax/',
         'DNT': '1',
         'Connection': 'keep-alive',
-        'Cookie': 'adultconfirmed=1'  # 성인 인증 쿠키 추가
+        'Cookie': 'adultconfirmed=1'
     }
     try:
-        time.sleep(1)
         logger.info(f"Fetching DLsite data for RJ code: {rj_code}")
-        session = requests.Session()
-        response = session.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.encoding = 'utf-8'
         logger.debug(f"DLsite response status: {response.status_code}, URL: {response.url}")
 
-        # 성인 인증 페이지 확인
-        if 'age-verification' in response.url or 'adult_check' in response.text.lower():
-            logger.warning(f"Adult verification required for RJ code: {rj_code}")
-            return None
-
         if response.status_code != 200:
             logger.error(f"HTTP Error: Status code {response.status_code} for RJ code {rj_code}")
-            return None
+            return fetch_from_dlsite_playwright(rj_code)  # 404 등 실패 시 Playwright 시도
 
         soup = BeautifulSoup(response.text, 'html.parser')
+        if 'age-verification' in response.url or 'adult_check' in response.text.lower():
+            logger.warning(f"Adult verification page detected for RJ code {rj_code}")
+            return fetch_from_dlsite_playwright(rj_code)  # 인증 페이지 감지 시 Playwright
+
         title_elem = soup.select_one('#work_name')
         if not title_elem:
             logger.error(f"Error: Title not found for RJ code {rj_code}")
             return None
 
         tags_elem = soup.select('div.main_genre a')
-        date_elem = soup.select_one('th:contains("販売日") + td a')
+        date_elem = soup.select_one('th:-soup-contains("販売日") + td a')
         thumb_elem = soup.select_one('meta[property="og:image"]') or soup.select_one('img.work_thumb')
         rating_elem = soup.select_one('span[itemprop="ratingValue"]')
         maker_elem = soup.select_one('span.maker_name a')
 
-        if not thumb_elem:
-            logger.warning(f"No thumbnail found for RJ code: {rj_code}")
-            thumbnail_url = ''
-        else:
+        thumbnail_url = ''
+        if thumb_elem:
             thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
             if not thumbnail_url.startswith('http'):
-                thumbnail_url = f"https:{thumbnail_url}"
+                thumbnail_url = urljoin(url, thumbnail_url)
             logger.debug(f"Thumbnail URL found: {thumbnail_url}")
 
         tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
@@ -233,195 +219,186 @@ def fetch_from_dlsite_direct(rj_code):
             'maker': maker_elem.text.strip() if maker_elem else '',
             'timestamp': time.time()
         }
+        cache_data('rj', rj_code, data)
         logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
         return data
     except Exception as e:
         logger.error(f"Error fetching DLsite for RJ code {rj_code}: {e}", exc_info=True)
+        return fetch_from_dlsite_playwright(rj_code)
+
+# DLsite Playwright 스크래핑
+def fetch_from_dlsite_playwright(rj_code):
+    url = f'https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html'
+    try:
+        logger.info(f"Attempting Playwright for RJ code: {rj_code}")
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            )
+            page = context.new_page()
+            page.goto(url, timeout=30000)
+
+            if 'age-verification' in page.url or 'adult_check' in page.url:
+                logger.debug(f"Adult verification detected for RJ code {rj_code}")
+                try:
+                    page.click('button:has-text("はい、18歳以上です")', timeout=10000)
+                    page.wait_for_load_state('load', timeout=20000)
+                    logger.debug(f"Adult verification passed for RJ code {rj_code}")
+                except Exception as e:
+                    logger.warning(f"Failed to handle adult verification for RJ code {rj_code}: {e}")
+                    browser.close()
+                    return None
+
+            if page.url.endswith('404.html') or page.title().lower().startswith('not found'):
+                logger.error(f"Page not found for RJ code {rj_code}, URL: {page.url}")
+                browser.close()
+                return None
+
+            content = page.content()
+            soup = BeautifulSoup(content, 'html.parser')
+            title_elem = soup.select_one('#work_name')
+            if not title_elem:
+                logger.error(f"Error: Title not found for RJ code {rj_code}")
+                browser.close()
+                return None
+
+            tags_elem = soup.select('div.main_genre a')
+            date_elem = soup.select_one('th:-soup-contains("販売日") + td a')
+            thumb_elem = soup.select_one('meta[property="og:image"]') or soup.select_one('img.work_thumb')
+            rating_elem = soup.select_one('span[itemprop="ratingValue"]')
+            maker_elem = soup.select_one('span.maker_name a')
+
+            thumbnail_url = ''
+            if thumb_elem:
+                thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
+                if not thumbnail_url.startswith('http'):
+                    thumbnail_url = urljoin(url, thumbnail_url)
+                logger.debug(f"Thumbnail URL found: {thumbnail_url}")
+
+            tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
+            tags_kr = []
+            tags_to_translate = []
+            tag_priorities = []
+
+            for tag in tags_jp:
+                cached_tag = get_cached_tag(tag)
+                if cached_tag:
+                    tags_kr.append(cached_tag['tag_kr'])
+                    tag_priorities.append(cached_tag.get('priority', 10))
+                else:
+                    tags_to_translate.append(tag)
+                    tag_priorities.append(10)
+
+            if tags_to_translate:
+                translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
+                for jp, kr in zip(tags_to_translate, translated_tags):
+                    priority = 10
+                    if kr in ["RPG", "액션", "판타지"]:
+                        priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
+                    tags_kr.append(kr)
+                    cache_tag(jp, kr, priority)
+                    tag_priorities[tags_kr.index(kr)] = priority
+
+            if tags_kr:
+                primary_tag_idx = tag_priorities.index(max(tag_priorities))
+                primary_tag = tags_kr[primary_tag_idx]
+            else:
+                primary_tag = "기타"
+
+            data = {
+                'rj_code': rj_code,
+                'title_jp': title_elem.text.strip(),
+                'title_kr': None,
+                'primary_tag': primary_tag,
+                'tags_jp': tags_jp,
+                'tags': tags_kr,
+                'release_date': date_elem.text.strip() if date_elem else '',
+                'thumbnail_url': thumbnail_url,
+                'rating': float(rating_elem.text.strip()) if rating_elem else 0.0,
+                'link': url,
+                'platform': 'rj',
+                'maker': maker_elem.text.strip() if maker_elem else '',
+                'timestamp': time.time()
+            }
+            cache_data('rj', rj_code, data)
+            browser.close()
+            logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
+            return data
+    except Exception as e:
+        logger.error(f"Playwright error for RJ code {rj_code}: {e}", exc_info=True)
         return None
 
-# DLsite 데이터 가져오기 (캐싱 포함)
-def fetch_from_dlsite(rj_code):
-    if not db:
-        logger.warning("Firestore client not available, skipping cache")
-        return fetch_from_dlsite_direct(rj_code)
-
-    game_ref = db.collection('games').document('rj').collection('items').document(rj_code)
-    game = game_ref.get()
-
-    if game.exists:
-        cached_data = game.to_dict()
-        cache_timestamp = cached_data.get('timestamp', 0)
-        if time.time() - cache_timestamp < 7 * 24 * 3600:
-            logger.info(f"Cache hit for RJ code {rj_code}, thumbnail_url: {cached_data.get('thumbnail_url', 'None')}")
-            return cached_data
-        logger.warning(f"Cache expired for RJ code {rj_code}, refreshing")
-
-    data = fetch_from_dlsite_direct(rj_code)
-    if data:
-        try:
-            game_ref.set(data)
-            logger.info(f"Cached DLsite data for RJ code: {rj_code}")
-        except Exception as e:
-            logger.error(f"Error caching data for RJ code {rj_code}: {e}", exc_info=True)
-    return data
-
-# Steam/기타 게임 데이터 조회
-def fetch_from_firestore(title, platform):
-    if not db:
-        logger.warning("Firestore client not available")
-        return {
-            'title': title,
-            'platform': platform,
-            'primary_tag': '기타',
-            'tags': ['기타'],
-            'thumbnail_url': '',
-            'timestamp': time.time()
-        }
-
-    doc_id = generate_doc_id(title)
-    game_ref = db.collection('games').document(platform).collection('items').document(doc_id)
-    game = game_ref.get()
-
-    if game.exists:
-        logger.info(f"Cache hit for {platform} game: {title}")
-        return game.to_dict()
-    logger.debug(f"No cache found for {platform} game: {title}")
-    return {
-        'title': title,
-        'platform': platform,
-        'primary_tag': '기타',
-        'tags': ['기타'],
+# Steam 데이터 처리 (기존 유지)
+def fetch_from_steam(identifier):
+    cached = get_cached_data('steam', identifier)
+    if cached:
+        return cached
+    logger.debug(f"No cache found for steam game: {identifier}")
+    data = {
+        'title': identifier,
+        'primary_tag': "기타",
+        'tags': ["기타"],
         'thumbnail_url': '',
+        'platform': 'steam',
         'timestamp': time.time()
     }
-
-# 여러 제목 처리 엔드포인트
-@app.route('/games', methods=['POST'])
-def get_games():
-    try:
-        log_memory_usage()
-        data = request.get_json()
-        if not data or 'items' not in data:
-            logger.warning("Invalid request: items field required")
-            return {"error": "Items field required"}, 400
-
-        items = data['items']
-        total_items = len(items)
-        task_id = str(uuid.uuid4())
-        progress_data[task_id] = {"total": total_items, "completed": 0, "status": "processing"}
-        logger.info(f"Task {task_id}: Processing {total_items} items")
-
-        batch_size = 10
-        batches = [(i, items[i:i + batch_size]) for i in range(0, len(items), batch_size)]
-        result_queue = Queue()
-
-        def process_batch(batch_idx, batch_items):
-            batch_results = []
-            titles_to_translate = []
-            items_to_update = []
-
-            for item in batch_items:
-                rj_match = re.match(r'^(RJ\d{6,8})$', item, re.IGNORECASE)
-                if rj_match:
-                    rj_code = rj_match.group(1).upper()
-                    game_data = fetch_from_dlsite(rj_code)
-                    if game_data:
-                        if 'title_kr' not in game_data or not game_data['title_kr']:
-                            titles_to_translate.append(game_data['title_jp'])
-                            items_to_update.append((rj_code, game_data))
-                        batch_results.append(game_data)
-                    else:
-                        batch_results.append({"rj_code": rj_code, "platform": "rj", "error": f"Game not found for {rj_code}"})
-                else:
-                    game_data = fetch_from_firestore(item, 'steam')
-                    batch_results.append(game_data)
-
-            if titles_to_translate:
-                translated_titles = translate_with_gpt_batch(titles_to_translate, batch_idx=batch_idx)
-                for (rj_code, game_data), translated_title in zip(items_to_update, translated_titles):
-                    game_data['title_kr'] = translated_title
-                    if db:
-                        db.collection('games').document('rj').collection('items').document(rj_code).set(game_data)
-
-            progress_data[task_id]["completed"] += len(batch_items)
-            logger.info(f"Task {task_id}: Batch {batch_idx} completed, {progress_data[task_id]['completed']}/{total_items}")
-            log_memory_usage()
-
-            return batch_idx, batch_results
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(process_batch, i, batch_items)
-                for i, batch_items in batches
-            ]
-            for future in concurrent.futures.as_completed(futures):
-                batch_idx, batch_results = future.result()
-                result_queue.put((batch_idx, batch_results))
-
-        final_results = []
-        while not result_queue.empty():
-            batch_idx, batch_results = result_queue.get()
-            final_results.append((batch_idx, batch_results))
-
-        final_results.sort()
-        response = []
-        for _, batch_results in final_results:
-            response.extend(batch_results)
-
-        ordered_response = []
-        for item in items:
-            for res in response:
-                if (res.get('rj_code', '').upper() == item.upper() or 
-                    res.get('title', '').lower() == item.lower()):
-                    ordered_response.append(res)
-                    break
-
-        progress_data[task_id]["status"] = "completed"
-        logger.info(f"Task {task_id}: Processed {len(response)} items")
-        log_memory_usage()
-        return jsonify({"task_id": task_id, "results": ordered_response})
-    except Exception as e:
-        logger.error(f"Error in /games endpoint: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
-
-# 진행 상황 조회 엔드포인트
-@app.route('/progress/<task_id>', methods=['GET'])
-def get_progress(task_id):
-    if task_id not in progress_data:
-        logger.warning(f"Task not found: {task_id}")
-        return jsonify({"error": "Task not found"}), 404
-    return jsonify(progress_data[task_id])
-
-# 이미지 프록시 엔드포인트
-@app.route('/proxy_image/<path:image_url>')
-@tenacity.retry(
-    stop=tenacity.stop_after_attempt(3),
-    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
-    retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException)
-)
-def proxy_image(image_url):
-    try:
-        if not image_url.startswith('http'):
-            image_url = f"https:{image_url}"
-        response = requests.get(image_url, stream=True, timeout=5)
-        if response.status_code == 200:
-            logger.debug(f"Proxied image: {image_url}")
-            return Response(response.iter_content(chunk_size=1024), content_type=response.headers['Content-Type'])
-        logger.error(f"Image proxy failed: Status code {response.status_code} for {image_url}")
-        return {"error": "Image not found"}, 404
-    except Exception as e:
-        logger.error(f"Proxy image error: {e}")
-        return {"error": str(e)}, 500
-
-# 기존 단일 RJ 코드 엔드포인트
-@app.route('/dlsite/<rj_code>')
-def get_dlsite(rj_code):
-    data = fetch_from_dlsite(rj_code)
-    if not data:
-        logger.warning(f"No data found for RJ code: {rj_code}")
-        return {"error": f"Game not found for {rj_code}"}, 404
+    cache_data('steam', identifier, data)
     return data
 
+# 엔드포인트
+@app.route('/games', methods=['POST'])
+def process_games():
+    try:
+        data = request.get_json()
+        items = data.get('items', [])
+        logger.info(f"Task {request.headers.get('X-Cloud-Trace-Context', 'unknown')}: Processing {len(items)} items")
+
+        results = []
+        for item in items:
+            rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
+            if rj_match:
+                rj_code = rj_match.group(0).upper()
+                cached = get_cached_data('rj', rj_code)
+                if cached:
+                    results.append(cached)
+                    continue
+                data = fetch_from_dlsite_direct(rj_code)
+                if data:
+                    results.append(data)
+                else:
+                    results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
+            else:
+                data = fetch_from_steam(item)
+                results.append(data)
+
+        task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
+        return jsonify({'results': results, 'task_id': task_id})
+    except Exception as e:
+        logger.error(f"Error processing games: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/progress/<task_id>', methods=['GET'])
+def get_progress(task_id):
+    try:
+        return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
+    except Exception as e:
+        logger.error(f"Error fetching progress for task {task_id}: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/dlsite/<rj_code>', methods=['GET'])
+def get_dlsite_data(rj_code):
+    try:
+        rj_code = rj_code.upper()
+        if not re.match(r'^RJ\d{6,8}$', rj_code):
+            return jsonify({'error': 'Invalid RJ code format'}), 400
+        data = fetch_from_dlsite_direct(rj_code)
+        if data:
+            return jsonify(data)
+        return jsonify({'error': f'Game not found for {rj_code}'}), 404
+    except Exception as e:
+        logger.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))

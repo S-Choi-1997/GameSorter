@@ -1,0 +1,21 @@
+2025-04-17 21:32:27,640 INFO Starting crawling test for RJ code: RJ01173055
+2025-04-17 21:32:27,640 INFO Attempting requests crawl for RJ code RJ01173055
+2025-04-17 21:32:27,643 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-17 21:32:28,356 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-17 21:32:28,360 DEBUG Response status: 200, URL: https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html
+2025-04-17 21:32:28,450 DEBUG Thumbnail URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-17 21:32:28,451 INFO Parsed data for RJ code RJ01173055: {'rj_code': 'RJ01173055', 'title': 'ミナミさんホテルにいこう', 'tags': ['おさわり', 'きせかえ', '学生', '日常/生活', '中出し'], 'release_date': '2024年03月23日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg', 'maker': 'プランクトンセスナ', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html'}
+2025-04-17 21:32:28,452 INFO Basic requests took 0.81 seconds
+2025-04-17 21:32:28,453 INFO Attempting requests with cookies crawl for RJ code RJ01173055
+2025-04-17 21:32:28,455 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-17 21:32:29,210 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-17 21:32:29,213 DEBUG Response status: 200, URL: https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html
+2025-04-17 21:32:29,273 DEBUG Thumbnail URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-17 21:32:29,273 INFO Parsed data for RJ code RJ01173055: {'rj_code': 'RJ01173055', 'title': 'ミナミさんホテルにいこう', 'tags': ['おさわり', 'きせかえ', '学生', '日常/生活', '中出し'], 'release_date': '2024年03月23日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg', 'maker': 'プランクトンセスナ', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html'}
+2025-04-17 21:32:29,275 INFO Requests with cookies took 0.82 seconds
+2025-04-17 21:32:29,276 INFO Attempting playwright crawl for RJ code RJ01173055
+2025-04-17 21:32:29,276 DEBUG Using proactor: IocpProactor
+2025-04-17 21:32:40,111 DEBUG Thumbnail URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-17 21:32:40,111 INFO Parsed data for RJ code RJ01173055: {'rj_code': 'RJ01173055', 'title': 'ミナミさんホテルにいこう', 'tags': ['おさわり', 'きせかえ', '学生', '日常/生活', '中出し'], 'release_date': '2024年03月23日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg', 'maker': 'プランクトンセスナ', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html'}
+2025-04-17 21:32:40,256 INFO Playwright took 10.98 seconds
+2025-04-17 21:32:40,257 INFO Test completed for RJ code: RJ01173055

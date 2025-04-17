@@ -7050,3 +7050,40 @@
 2025-04-17 21:00:32,156 WARNING Error for 유리&클레어 NTR.zip: Game not found for 유리&클레어 NTR.zip
 2025-04-17 21:00:32,156 WARNING Error for 음란한 모험가 안나 ~최강 모험가가 밑바닥 남자의 여자가 될때까지~.zip: Game not found for 음란한 모험가 안나 ~최강 모험가가 밑바닥 남자의 여자가 될때까지~.zip
 2025-04-17 21:00:32,156 WARNING Error for 히메가시마 즐거운 한여름 v1.1 KRver1.6.zip: Game not found for 히메가시마 즐거운 한여름 v1.1 KRver1.6.zip
+2025-04-17 21:18:27,718 INFO No cache file found, starting with empty cache
+2025-04-17 21:18:33,258 INFO Scanning folder: H:/yangame/방주/기타/총합
+2025-04-17 21:18:40,649 INFO Scanning folder: H:/yangame/방주
+2025-04-17 21:18:40,651 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip
+2025-04-17 21:18:40,653 DEBUG Added row 1: RJ01288065_sleepingMidori.zip
+2025-04-17 21:18:40,653 DEBUG Added row 2: RJ01366624
+2025-04-17 21:18:40,653 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-17 21:18:40,654 DEBUG Added row 4: ㅂㄱ
+2025-04-17 21:18:40,654 DEBUG Added row 5: 기타
+2025-04-17 21:18:40,655 DEBUG Added row 6: 방주
+2025-04-17 21:18:40,655 DEBUG Added row 7: 변경용
+2025-04-17 21:18:40,655 DEBUG Added row 8: 정리본
+2025-04-17 21:18:40,656 DEBUG Added row 9: 털게 연구소 세트
+2025-04-17 21:18:44,322 INFO Starting fetch for 10 items
+2025-04-17 21:18:44,327 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-17 21:18:55,890 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 1307
+2025-04-17 21:18:55,890 DEBUG Server response status: 200
+2025-04-17 21:18:55,890 DEBUG Server response content: {"results":[{"error":"Game not found for RJ01173055","platform":"rj","rj_code":"RJ01173055"},{"error":"Game not found for RJ01288065","platform":"rj","rj_code":"RJ01288065"},{"error":"Game not found for RJ01366624","platform":"rj","rj_code":"RJ01366624"},{"error":"Game not found for RJ374754","platform":"rj","rj_code":"RJ374754"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.0359356,"title":"\u3142\u3131"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.067041,"title":"\uae30\ud0c0"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.1057692,"title":"\ubc29\uc8fc"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.1382163,"title":"\ubcc0\uacbd\uc6a9"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.1709745,"title":"\uc815\ub9ac\ubcf8"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744892336.191626,"title":"\ud138\uac8c \uc5f0\uad6c\uc18c \uc138\ud2b8"}],"task_id":"e06405d0-9571-4e16-9088-5601353ad8b5"}
+
+2025-04-17 21:18:55,892 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-17 21:18:56,564 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "GET /progress/e06405d0-9571-4e16-9088-5601353ad8b5 HTTP/1.1" 200 49
+2025-04-17 21:18:56,566 WARNING Error for RJ01173055: Game not found for RJ01173055
+2025-04-17 21:18:56,567 WARNING Error for RJ01288065: Game not found for RJ01288065
+2025-04-17 21:18:56,567 WARNING Error for RJ01366624: Game not found for RJ01366624
+2025-04-17 21:18:56,568 WARNING Error for RJ374754: Game not found for RJ374754
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:18:56,568 DEBUG Processed 기타: thumbnail_url=
+2025-04-17 21:19:02,989 DEBUG Loading thumbnail: 
+2025-04-17 21:19:02,989 WARNING No thumbnail URL provided
+2025-04-17 21:19:03,703 DEBUG Loading thumbnail: 
+2025-04-17 21:19:03,703 WARNING No thumbnail URL provided
+2025-04-17 21:19:04,543 DEBUG Loading thumbnail: 
+2025-04-17 21:19:04,543 WARNING No thumbnail URL provided
