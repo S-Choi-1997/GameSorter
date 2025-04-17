@@ -3,3 +3,4 @@ requests==2.31.0
 beautifulsoup4==4.12.2
 openai==1.35.3
 google-cloud-firestore==2.16.1
+gunicorn>=20.1.0
