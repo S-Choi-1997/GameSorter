@@ -160,11 +160,12 @@ def process_rj_item(item):
     translated_title = title_jp
 
     # 일본어 포함 여부 확인
-    if needs_translation(title_jp) or tags_to_translate:
-        logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
+    should_translate_title = not item.get('title_kr') and needs_translation(title_jp)
+
+    if should_translate_title or tags_to_translate:
         translated_tags, translated_title = translate_with_gpt_batch(
             tags_to_translate,
-            title_jp if needs_translation(title_jp) else None,
+            title_jp if should_translate_title else None,
             batch_idx=rj_code
         )
         for jp, kr in zip(tags_to_translate, translated_tags):
