@@ -386,3 +386,434 @@ TypeError: expected string or bytes-like object, got 'NoneType'
 2025-04-18 03:19:30,086 DEBUG Added row 10: 변경용
 2025-04-18 03:19:30,086 DEBUG Added row 11: 정리본
 2025-04-18 03:19:30,087 DEBUG Added row 12: 털게 연구소 세트
+2025-04-18 03:46:45,822 INFO Scanning folder: H:/yangame/방주
+2025-04-18 03:46:45,823 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 03:46:45,825 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 03:46:45,825 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 03:46:45,826 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 03:46:45,826 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 03:46:45,827 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 03:46:45,827 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 03:46:45,828 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 03:46:45,828 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 03:46:45,828 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 03:46:45,829 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 03:46:45,829 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 03:46:45,830 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 03:46:47,574 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 03:46:47,574 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 03:46:47,580 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 03:46:53,039 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 03:46:53,040 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 03:46:53,044 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:46:53,044 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:46:53,046 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 03:46:53,046 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:46:53,046 DEBUG Processed WE ARE BANDIT v1.14 KR.7z: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:46:53,046 DEBUG Processed ㅂㄱ: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 란스: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 방주: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 변경용: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 정리본: thumbnail_url=
+2025-04-18 03:46:53,046 DEBUG Processed 털게 연구소 세트: thumbnail_url=
+2025-04-18 03:46:57,406 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:46:57,580 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:47:01,242 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:01,257 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:02,011 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:47:02,052 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:47:02,590 DEBUG Loading thumbnail: 
+2025-04-18 03:47:03,644 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:47:03,662 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:47:04,344 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:47:04,360 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:47:04,889 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:47:05,042 ERROR Thumbnail download error: Error transferring https://img.dlsite.jp/sample.jpg - server replied: , HTTP Status: 403, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:47:05,343 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:05,359 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:06,534 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:47:06,703 ERROR Thumbnail download error: Error transferring https://img.dlsite.jp/sample.jpg - server replied: , HTTP Status: 403, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:47:08,036 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:08,052 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:47:09,275 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:47:09,296 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:52:48,167 INFO Scanning folder: H:/yangame/방주
+2025-04-18 03:52:48,168 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 03:52:48,169 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 03:52:48,170 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 03:52:48,171 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 03:52:48,171 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 03:52:48,172 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 03:52:48,172 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 03:52:48,173 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 03:52:48,174 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 03:52:48,174 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 03:52:48,175 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 03:52:48,175 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 03:52:48,176 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 03:52:51,025 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 03:52:51,025 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 03:52:51,031 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 03:52:52,462 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 03:52:52,462 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 03:52:52,464 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:52:52,465 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:52:52,465 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 03:52:52,465 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:52:52,465 DEBUG Processed WE ARE BANDIT v1.14 KR.7z: thumbnail_url=
+2025-04-18 03:52:52,465 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:52:52,465 DEBUG Processed ㅂㄱ: thumbnail_url=
+2025-04-18 03:52:52,465 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 03:52:52,465 DEBUG Processed 란스: thumbnail_url=
+2025-04-18 03:52:52,466 DEBUG Processed 방주: thumbnail_url=
+2025-04-18 03:52:52,466 DEBUG Processed 변경용: thumbnail_url=
+2025-04-18 03:52:52,466 DEBUG Processed 정리본: thumbnail_url=
+2025-04-18 03:52:52,466 DEBUG Processed 털게 연구소 세트: thumbnail_url=
+2025-04-18 03:52:55,595 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:52:55,753 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:52:57,055 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:52:57,208 ERROR Thumbnail download error: Error transferring https://img.dlsite.jp/sample.jpg - server replied: , HTTP Status: 403, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:53:02,896 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:53:02,910 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:53:03,663 DEBUG Loading thumbnail: 
+2025-04-18 03:53:04,633 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:53:04,648 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:53:05,623 DEBUG Loading thumbnail: 
+2025-04-18 03:53:10,143 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:53:10,169 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:53:13,885 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:53:13,900 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:55:53,499 INFO Scanning folder: H:/yangame/방주
+2025-04-18 03:55:53,500 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 03:55:53,501 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 03:55:53,501 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 03:55:53,501 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 03:55:53,502 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 03:55:53,502 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 03:55:53,502 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 03:55:53,503 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 03:55:53,503 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 03:55:53,504 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 03:55:53,504 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 03:55:53,504 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 03:55:53,505 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 03:55:54,746 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 03:55:54,746 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 03:55:54,750 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 03:55:56,149 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 03:55:56,149 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 03:55:56,150 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:55:56,152 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:55:56,152 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 03:55:56,152 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 03:55:56,152 DEBUG Processed WE ARE BANDIT v1.14 KR.7z: thumbnail_url=
+2025-04-18 03:55:56,152 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:55:56,152 DEBUG Processed ㅂㄱ: thumbnail_url=
+2025-04-18 03:55:56,152 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 03:55:56,152 DEBUG Processed 란스: thumbnail_url=
+2025-04-18 03:55:56,152 DEBUG Processed 방주: thumbnail_url=
+2025-04-18 03:55:56,152 DEBUG Processed 변경용: thumbnail_url=
+2025-04-18 03:55:56,153 DEBUG Processed 정리본: thumbnail_url=
+2025-04-18 03:55:56,153 DEBUG Processed 털게 연구소 세트: thumbnail_url=
+2025-04-18 03:56:02,684 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:56:02,860 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:56:10,230 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:56:10,245 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 03:56:15,028 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:56:15,182 ERROR Thumbnail download error: Error transferring https://img.dlsite.jp/sample.jpg - server replied: , HTTP Status: 403, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 03:57:56,008 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:57:56,033 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 03:57:57,187 DEBUG Loading thumbnail: 
+2025-04-18 03:57:58,264 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 03:57:58,278 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:00:16,166 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:00:16,168 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:00:16,169 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:00:16,170 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:00:16,170 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:00:16,170 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:00:16,170 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:00:16,171 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:00:16,171 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:00:16,172 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:00:16,172 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 04:00:16,173 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 04:00:16,173 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 04:00:16,173 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:00:17,972 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:00:17,972 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:00:17,976 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:00:19,350 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 04:00:19,350 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 04:00:19,352 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:00:19,353 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:00:19,353 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 04:00:19,353 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:00:19,353 DEBUG Processed WE ARE BANDIT v1.14 KR.7z: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:00:19,353 DEBUG Processed ㅂㄱ: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 란스: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 방주: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 변경용: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 정리본: thumbnail_url=
+2025-04-18 04:00:19,353 DEBUG Processed 털게 연구소 세트: thumbnail_url=
+2025-04-18 04:00:23,094 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:00:23,225 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:00:25,359 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:00:25,373 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:00:26,256 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:00:26,270 ERROR Thumbnail download error: Unknown error, HTTP Status: 200, URL: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:04:53,450 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:04:53,451 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:04:53,452 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:04:53,453 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:04:53,454 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:04:53,454 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:04:53,454 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:04:53,455 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:04:53,455 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:04:53,456 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:04:53,456 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 04:04:53,457 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 04:04:53,457 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 04:04:53,457 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:04:54,944 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:04:54,944 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:04:54,948 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:04:56,231 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 04:04:56,231 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 04:04:56,233 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:04:56,234 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:04:56,234 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 04:04:56,234 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:04:56,234 DEBUG Processed WE ARE BANDIT v1.14 KR.7z: thumbnail_url=
+2025-04-18 04:04:56,234 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:04:56,234 DEBUG Processed ㅂㄱ: thumbnail_url=
+2025-04-18 04:04:56,234 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:04:56,235 DEBUG Processed 란스: thumbnail_url=
+2025-04-18 04:04:56,235 DEBUG Processed 방주: thumbnail_url=
+2025-04-18 04:04:56,235 DEBUG Processed 변경용: thumbnail_url=
+2025-04-18 04:04:56,235 DEBUG Processed 정리본: thumbnail_url=
+2025-04-18 04:04:56,235 DEBUG Processed 털게 연구소 세트: thumbnail_url=
+2025-04-18 04:05:01,381 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:05:01,381 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:05:01,383 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:01,820 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg HTTP/1.1" 200 188858
+2025-04-18 04:05:01,846 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:05:03,084 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:05:03,084 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:05:03,085 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:03,533 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg HTTP/1.1" 200 143490
+2025-04-18 04:05:03,538 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:05:04,058 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:04,058 DEBUG Manually loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:04,059 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:04,646 DEBUG https://img.dlsite.jp:443 "GET /sample.jpg HTTP/1.1" 403 None
+2025-04-18 04:05:04,646 ERROR Manual thumbnail load error: HTTP 403, content empty?, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:07,605 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:05:07,605 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:05:07,607 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:08,044 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg HTTP/1.1" 200 109280
+2025-04-18 04:05:08,052 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:05:09,914 DEBUG Loading thumbnail: 
+2025-04-18 04:05:12,888 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:05:12,888 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:05:12,889 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:13,333 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg HTTP/1.1" 200 185182
+2025-04-18 04:05:13,338 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:05:16,178 DEBUG Loading thumbnail: 
+2025-04-18 04:05:36,218 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:36,218 DEBUG Manually loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:36,220 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:36,798 DEBUG https://img.dlsite.jp:443 "GET /sample.jpg HTTP/1.1" 403 None
+2025-04-18 04:05:36,798 ERROR Manual thumbnail load error: HTTP 403, content empty?, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:05:37,487 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:05:37,487 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:05:37,488 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:05:37,908 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg HTTP/1.1" 200 109280
+2025-04-18 04:05:37,916 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:09:12,730 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:09:12,731 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:09:12,732 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:09:12,733 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:09:12,734 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:09:12,753 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:09:12,754 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:09:12,755 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:09:12,755 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:09:12,755 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:09:12,756 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 04:09:12,757 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 04:09:12,757 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 04:09:12,759 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:09:15,781 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:09:15,781 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:09:15,785 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:09:17,161 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 04:09:17,161 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 04:09:17,162 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:09:17,163 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:09:17,164 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 04:09:17,164 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,164 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:09:17,866 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:09:17,866 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:09:17,868 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:09:18,281 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg HTTP/1.1" 200 188858
+2025-04-18 04:09:18,290 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:09:19,146 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:09:19,147 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:09:19,148 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:09:19,573 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg HTTP/1.1" 200 143490
+2025-04-18 04:09:19,578 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:09:20,529 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:09:20,529 DEBUG Manually loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:09:20,531 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:09:20,975 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg HTTP/1.1" 200 109280
+2025-04-18 04:09:20,983 DEBUG Thumbnail loaded manually successfully
+2025-04-18 04:09:21,344 DEBUG Loading thumbnail: 
+2025-04-18 04:12:28,152 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:12:28,154 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:12:28,154 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:12:28,155 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:12:28,155 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:12:28,156 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:12:28,156 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:12:28,157 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:12:28,158 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:12:28,158 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:12:28,159 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 04:12:28,160 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 04:12:28,161 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 04:12:28,161 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:12:29,165 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:12:29,166 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:12:29,170 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:12:30,434 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 04:12:30,434 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 04:12:30,435 DEBUG Processed RJ01173055: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:12:30,436 DEBUG Processed RJ01288065: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:12:30,437 DEBUG Processed RJ01366624: thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:30,437 DEBUG Processed RJ374754: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed RJ01111140: thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:30,437 DEBUG Processed 기타: thumbnail_url=
+2025-04-18 04:12:32,774 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:12:32,776 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:12:32,777 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:33,234 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg HTTP/1.1" 200 188858
+2025-04-18 04:12:33,252 DEBUG Thumbnail downloaded and cached successfully
+2025-04-18 04:12:34,245 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:12:34,248 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:12:34,249 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:34,707 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg HTTP/1.1" 200 143490
+2025-04-18 04:12:34,732 DEBUG Thumbnail downloaded and cached successfully
+2025-04-18 04:12:35,450 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:12:35,451 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
+2025-04-18 04:12:35,463 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:12:36,051 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:12:36,052 DEBUG Loading cached thumbnail: thumbnails\bb0caa4544e5fdc5ba2317e24a542bdb81e07963.jpg
+2025-04-18 04:12:36,061 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:12:40,565 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:12:40,566 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:12:40,567 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:41,007 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg HTTP/1.1" 200 185182
+2025-04-18 04:12:41,037 DEBUG Thumbnail downloaded and cached successfully
+2025-04-18 04:12:41,424 DEBUG Loading thumbnail: 
+2025-04-18 04:12:42,154 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:12:42,154 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:12:42,156 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:42,593 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg HTTP/1.1" 200 109280
+2025-04-18 04:12:42,601 DEBUG Thumbnail downloaded and cached successfully
+2025-04-18 04:12:43,215 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:43,216 DEBUG Downloading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:43,217 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:43,792 DEBUG https://img.dlsite.jp:443 "GET /sample.jpg HTTP/1.1" 403 None
+2025-04-18 04:12:43,792 ERROR Manual thumbnail load error: HTTP 403, content empty?, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:48,012 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:12:48,012 DEBUG Loading cached thumbnail: thumbnails\dab4fdb086f1ed2132fffa76aeffe170c2695ced.jpg
+2025-04-18 04:12:48,023 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:12:48,871 DEBUG Loading thumbnail: 
+2025-04-18 04:12:49,640 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:49,640 DEBUG Downloading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:49,641 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:12:50,207 DEBUG https://img.dlsite.jp:443 "GET /sample.jpg HTTP/1.1" 403 None
+2025-04-18 04:12:50,207 ERROR Manual thumbnail load error: HTTP 403, content empty?, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:12:50,211 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:12:50,211 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
+2025-04-18 04:12:50,212 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:18:29,122 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:18:29,123 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:18:29,124 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:18:29,124 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:18:29,124 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:18:29,124 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:18:29,125 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:18:29,126 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:18:29,126 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:18:29,126 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:18:29,127 DEBUG Added row 9: 방주, original_title=방주
+2025-04-18 04:18:29,127 DEBUG Added row 10: 변경용, original_title=변경용
+2025-04-18 04:18:29,128 DEBUG Added row 11: 정리본, original_title=정리본
+2025-04-18 04:18:29,128 DEBUG Added row 12: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:18:30,934 INFO Starting fetch for 13 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:18:30,935 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:18:30,943 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:18:32,449 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 3672
+2025-04-18 04:18:32,450 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744912847.6479511,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":null},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744912847.7579203,"title_jp":"\u7720\u3063\u3066\u3044\u308b\u5c11\u5973","title_kr":null},{"l
+2025-04-18 04:18:32,452 DEBUG Processed RJ01173055: title_kr=번역 실패, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:18:32,452 DEBUG Processed RJ01288065: title_kr=번역 실패, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:18:32,452 DEBUG Processed RJ01366624: title_kr=번역 실패, thumbnail_url=https://img.dlsite.jp/sample.jpg
+2025-04-18 04:18:32,452 DEBUG Processed RJ374754: title_kr=번역 실패, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:18:32,452 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,452 DEBUG Processed RJ01111140: title_kr=번역 실패, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:18:32,452 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,452 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,453 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,453 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,453 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,453 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:32,453 DEBUG Processed 기타: title_kr=번역 실패, thumbnail_url=
+2025-04-18 04:18:38,288 DEBUG Loading thumbnail: 
+2025-04-18 04:18:39,694 DEBUG Loading thumbnail: 
+2025-04-18 04:18:40,356 DEBUG Loading thumbnail: 
+2025-04-18 04:18:41,128 DEBUG Loading thumbnail: 
+2025-04-18 04:18:41,594 DEBUG Loading thumbnail: 
+2025-04-18 04:18:42,006 DEBUG Loading thumbnail: 
+2025-04-18 04:18:42,514 DEBUG Loading thumbnail: 
+2025-04-18 04:18:42,944 DEBUG Loading thumbnail: 
+2025-04-18 04:18:43,752 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:18:43,753 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
+2025-04-18 04:18:43,757 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:18:44,216 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:18:44,223 DEBUG Loading cached thumbnail: thumbnails\bb0caa4544e5fdc5ba2317e24a542bdb81e07963.jpg
+2025-04-18 04:18:44,226 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:18:44,782 DEBUG Loading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:18:44,783 DEBUG Downloading thumbnail: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:18:44,784 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:18:45,376 DEBUG https://img.dlsite.jp:443 "GET /sample.jpg HTTP/1.1" 403 None
+2025-04-18 04:18:45,376 ERROR Manual thumbnail load error: HTTP 403, content empty?, URL: https://img.dlsite.jp/sample.jpg
+2025-04-18 04:18:45,382 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:18:45,383 DEBUG Loading cached thumbnail: thumbnails\9760dc5d17c14ac36ed29f086064c2bb4432e861.jpg
+2025-04-18 04:18:45,397 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:18:46,026 DEBUG Loading thumbnail: 
+2025-04-18 04:18:46,513 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:18:46,513 DEBUG Loading cached thumbnail: thumbnails\dab4fdb086f1ed2132fffa76aeffe170c2695ced.jpg
+2025-04-18 04:18:46,517 DEBUG Cached thumbnail loaded successfully

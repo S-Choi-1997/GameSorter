@@ -2,10 +2,10 @@ import json
 import logging
 import os
 import time
-import re
 from flask import Flask, request, jsonify
 from google.cloud import firestore
 from openai import OpenAI
+import re
 
 app = Flask(__name__)
 
@@ -35,13 +35,6 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize OpenAI: {e}")
     openai_client = None
-
-# 일본어 감지 함수
-def needs_translation(title: str) -> bool:
-    if not title:
-        return False
-    # 히라가나(\u3040-\u309F), 가타카나(\u30A0-\u30FF), 한자(\u4E00-\u9FFF) 포함 여부 확인
-    return bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', title))
 
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
@@ -119,13 +112,10 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
         parts = response_text.split(';')
         translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
         translated_title = parts[1].strip() if len(parts) > 1 and title_jp else None
-        if not translated_title and title_jp:
-            logger.warning(f"Title translation failed for {batch_idx}: {title_jp}")
-            translated_title = title_jp  # 번역 실패 시 원래 제목 유지
         return translated_tags, translated_title
     except Exception as e:
         logger.error(f"GPT translation error for batch {batch_idx}: {e}")
-        return tags, title_jp  # 번역 실패 시 원래 제목 유지
+        return tags, title_jp
 
 # RJ 데이터 처리
 def process_rj_item(item):
@@ -134,11 +124,10 @@ def process_rj_item(item):
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
     if cached:
-        logger.debug(f"Using cached data for {rj_code}: title_kr={cached.get('title_kr')}")
         return cached
 
     tags_jp = item.get('tags_jp', [])
-    title_jp = item.get('title_jp', '')
+    title_jp = item.get('title_jp')
     tags_kr = []
     tags_to_translate = []
     tag_priorities = []
@@ -154,11 +143,8 @@ def process_rj_item(item):
 
     translated_tags = tags_jp
     translated_title = title_jp
-
-    # 일본어 포함 여부 확인
-    if needs_translation(title_jp) or tags_to_translate:
-        logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
-        translated_tags, translated_title = translate_with_gpt_batch(tags_to_translate, title_jp if needs_translation(title_jp) else None, batch_idx=rj_code)
+    if tags_to_translate or title_jp:
+        translated_tags, translated_title = translate_with_gpt_batch(tags_to_translate, title_jp, batch_idx=rj_code)
         for jp, kr in zip(tags_to_translate, translated_tags):
             priority = 10
             if kr in ["RPG", "액션", "판타지"]:
@@ -166,15 +152,13 @@ def process_rj_item(item):
             tags_kr.append(kr)
             cache_tag(jp, kr, priority)
             tag_priorities[tags_kr.index(kr)] = priority
-    else:
-        logger.debug(f"No translation needed for {rj_code}: title_jp={title_jp}")
 
     primary_tag = tags_kr[tag_priorities.index(max(tag_priorities))] if tags_kr else "기타"
 
     processed_data = {
         'rj_code': rj_code,
         'title_jp': title_jp,
-        'title_kr': translated_title or title_jp or rj_code,  # 번역 없으면 title_jp 또는 rj_code
+        'title_kr': translated_title,
         'primary_tag': primary_tag,
         'tags_jp': tags_jp,
         'tags': tags_kr,
@@ -187,7 +171,6 @@ def process_rj_item(item):
         'timestamp': time.time()
     }
     cache_data('rj', rj_code, processed_data)
-    logger.debug(f"Processed RJ item: {rj_code}, title_kr={processed_data['title_kr']}")
     return processed_data
 
 # Steam 데이터 처리
@@ -197,7 +180,6 @@ def process_steam_item(identifier):
         return cached
     data = {
         'title': identifier,
-        'title_kr': identifier,
         'primary_tag': "기타",
         'tags': ["기타"],
         'thumbnail_url': '',
@@ -247,7 +229,7 @@ def process_games():
                     results.append(process_steam_item(item.get('title', item)))
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
-        logger.info(f"Returning response for task_id: {task_id}, results: {len(results)}")
+        logger.info(f"Returning response for task_id: {task_id}")
         return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
     except Exception as e:
         logger.error(f"Error processing games: {e}", exc_info=True)

@@ -171,12 +171,12 @@ class FetchWorker(QThread):
                 self.progress.emit(int((i + 1) / len(missing) * 50))
                 self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
 
-            # 3. 모든 결과를 app.py로 보내 번역 및 저장
+            # 3. 로컬 크롤링 결과를 app.py로 보내 번역 및 저장
             if local_results:
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
                 response_data = response.json()
                 translated_results = response_data.get("results", [])
-                results = translated_results  # 기존 캐시 결과는 무시, 번역된 결과만 사용
+                results.extend(translated_results)  # 번역된 결과 추가
 
             # 4. 최종 결과 반환
             self.result.emit(results)
@@ -268,6 +268,7 @@ class MainWindowLogic(MainWindowUI):
             for row, (result, data) in enumerate(zip(self.results, game_data)):
                 result['game_data'] = data
                 rj_code = result.get('rj_code') or data.get('rj_code') or "기타"
+                original_title = result.get('original_title', '')
 
                 if "error" in data or not data:
                     logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data.get('error', 'No data')}")
@@ -277,16 +278,17 @@ class MainWindowLogic(MainWindowUI):
                     continue
 
                 tag = data.get('primary_tag') or "기타"
-                title_kr = data.get('title_kr') or data.get('title_jp', result['original'])
+                title_kr = data.get('title_kr')
+                title_jp = data.get('title_jp', result.get('original', ''))
 
-                # 제목에서 RJ 코드 제거 및 파일 이름에 적합하게 정리
-                title = title_kr
+                # 제목 우선순위: title_kr > original_title > title_jp
+                title = title_kr or original_title or title_jp or ''
                 title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
                 title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
 
                 # 최종 이름 조합: [RJ코드][태그] 제목
                 result['suggested'] = f"[{rj_code}][{tag}] {title}"
-                logging.debug(f"Processed {rj_code}: title_kr={title_kr}, thumbnail_url={data.get('thumbnail_url', 'None')}")
+                logging.debug(f"Processed {rj_code or title}: thumbnail_url={data.get('thumbnail_url', 'None')}")
 
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
@@ -300,6 +302,7 @@ class MainWindowLogic(MainWindowUI):
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
             QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
+
 
     def on_fetch_error(self, error_msg):
         max_length = 100
@@ -344,7 +347,7 @@ class MainWindowLogic(MainWindowUI):
             original_title = re.sub(rf"[Rr][Jj][_\-\s]?\d{{6,8}}", "", original, re.IGNORECASE).strip('_').strip()
             original_title = original_title if original_title and original_title != os.path.splitext(original)[1] else ''
             
-            suggested = f"[{rj_code or '기타'}][기타] {original}"
+            suggested = f"[{rj_code or '기타'}][기타]{original}"
 
             result = {
                 'original': original,
