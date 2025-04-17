@@ -3,7 +3,6 @@ import re
 import json
 import requests
 import time
-from bs4 import BeautifulSoup
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
@@ -115,9 +114,6 @@ class MainWindowLogic(MainWindowUI):
         self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
 
-        self.log_label.setWordWrap(True)
-        self.log_label.setMaximumWidth(self.table.width())
-
         # UI 이벤트 연결
         self.select_folder_btn.clicked.connect(self.select_folder)
         self.fetch_data_btn.clicked.connect(self.fetch_game_data_and_update)
@@ -127,9 +123,6 @@ class MainWindowLogic(MainWindowUI):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.update_log_label_width()
-
-    def update_log_label_width(self):
         self.log_label.setMaximumWidth(self.table.width())
 
     def load_cache(self):
@@ -261,7 +254,7 @@ class MainWindowLogic(MainWindowUI):
         for idx, original in enumerate(files):
             rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
             rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else None
-            suggested = f"[{rj_code}][기타]{original}" if rj_code else f"[기타][기타]{original}"
+            suggested = f"[{rj_code}][기타]{original}" if rj_match else f"[기타][기타]{original}"
 
             result = {
                 'original': original,

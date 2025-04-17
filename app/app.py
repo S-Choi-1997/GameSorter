@@ -7,6 +7,7 @@ import time
 import logging
 import signal
 import sys
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
 import hashlib
@@ -48,7 +49,6 @@ progress_data = {}
 # SIGTERM 핸들러
 def handle_sigterm(*args):
     logger.info("Received SIGTERM, shutting down gracefully")
-    # 진행 상황 저장
     try:
         with open('progress_data.json', 'w') as f:
             json.dump(progress_data, f)
@@ -147,7 +147,8 @@ def fetch_from_dlsite_direct(rj_code):
         'Accept-Language': 'en-US,en;q=0.5',
         'Referer': 'https://www.dlsite.com/maniax/',
         'DNT': '1',
-        'Connection': 'keep-alive'
+        'Connection': 'keep-alive',
+        'Cookie': 'adultconfirmed=1'  # 성인 인증 쿠키 추가
     }
     try:
         time.sleep(1)
@@ -155,6 +156,13 @@ def fetch_from_dlsite_direct(rj_code):
         session = requests.Session()
         response = session.get(url, headers=headers, timeout=10)
         response.encoding = 'utf-8'
+        logger.debug(f"DLsite response status: {response.status_code}, URL: {response.url}")
+
+        # 성인 인증 페이지 확인
+        if 'age-verification' in response.url or 'adult_check' in response.text.lower():
+            logger.warning(f"Adult verification required for RJ code: {rj_code}")
+            return None
+
         if response.status_code != 200:
             logger.error(f"HTTP Error: Status code {response.status_code} for RJ code {rj_code}")
             return None
@@ -176,6 +184,8 @@ def fetch_from_dlsite_direct(rj_code):
             thumbnail_url = ''
         else:
             thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
+            if not thumbnail_url.startswith('http'):
+                thumbnail_url = f"https:{thumbnail_url}"
             logger.debug(f"Thumbnail URL found: {thumbnail_url}")
 
         tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
@@ -259,7 +269,14 @@ def fetch_from_dlsite(rj_code):
 def fetch_from_firestore(title, platform):
     if not db:
         logger.warning("Firestore client not available")
-        return None
+        return {
+            'title': title,
+            'platform': platform,
+            'primary_tag': '기타',
+            'tags': ['기타'],
+            'thumbnail_url': '',
+            'timestamp': time.time()
+        }
 
     doc_id = generate_doc_id(title)
     game_ref = db.collection('games').document(platform).collection('items').document(doc_id)
@@ -304,8 +321,9 @@ def get_games():
             items_to_update = []
 
             for item in batch_items:
-                if re.match(r'^RJ\d{6,8}$', item, re.IGNORECASE):
-                    rj_code = item.upper()
+                rj_match = re.match(r'^(RJ\d{6,8})$', item, re.IGNORECASE)
+                if rj_match:
+                    rj_code = rj_match.group(1).upper()
                     game_data = fetch_from_dlsite(rj_code)
                     if game_data:
                         if 'title_kr' not in game_data or not game_data['title_kr']:
@@ -383,6 +401,8 @@ def get_progress(task_id):
 )
 def proxy_image(image_url):
     try:
+        if not image_url.startswith('http'):
+            image_url = f"https:{image_url}"
         response = requests.get(image_url, stream=True, timeout=5)
         if response.status_code == 200:
             logger.debug(f"Proxied image: {image_url}")
