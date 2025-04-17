@@ -5797,3 +5797,38 @@
 2025-04-17 13:36:22,174 Checkbox changed: row=22, checked=False
 2025-04-17 13:36:22,177 Checkbox changed: row=23, checked=False
 2025-04-17 13:36:22,180 Checkbox changed: row=24, checked=False
+2025-04-17 18:49:42,991 INFO No cache file found, starting with empty cache
+2025-04-17 18:49:49,037 INFO Scanning folder: H:/yangame/방주/변경용
+2025-04-17 18:49:49,054 DEBUG Starting new HTTPS connection (1): rj-server-xxx.a.run.app:443
+2025-04-17 18:49:49,863 DEBUG https://rj-server-xxx.a.run.app:443 "POST /games HTTP/1.1" 404 1566
+2025-04-17 18:49:49,863 ERROR Server fetch failed: Status 404
+2025-04-17 18:53:25,952 INFO No cache file found, starting with empty cache
+2025-04-17 18:53:31,774 INFO Scanning folder: H:/yangame/방주/변경용
+2025-04-17 18:53:31,776 DEBUG Sending request to https://rj-server-xxx.a.run.app/games with items: ['Asuka-san wa Nabikanai.zip', 'Dungeons Legion 1.3.2.7z', 'EroPhoneRe v1.1.236.7z', 'Mura Musume v1.61.zip', 'My lovely Mom Final.zip', 'My_wifes_cheating_on_me.zip', 'NTR House v1.51.zip', 'Perfect_Housewife-v.2412-pc.zip', 'RJ01010738', 'RJ01014957', 'RJ01046884', 'RJ01083992', 'RJ01100898', 'RJ01112545', 'RJ01116084', 'RJ01124518', 'RJ01126625', 'RJ01129482', 'RJ01144186', 'RJ01159214', 'RJ01168998', 'RJ01171084', 'RJ01175493', 'RJ01194506', 'RJ01203511', 'RJ01366624', 'RJ128994', 'RJ136120', 'RJ168154', 'RJ168154', 'RJ183462', 'RJ198609', 'RJ214280', 'RJ220365', 'RJ259162', 'RJ263090', 'RJ301237', 'RJ304810', 'RJ312869', 'RJ331162', 'RJ335038', 'RJ343468', 'RJ415568', 'RJ419237', 'Samurai Vandalism v2.0.3.7z', 'VJ01000810[おねえちゃんらんど]엣치한 누나가 갈색 거유의 악마였던 건-번역.zip', 'VJ01001309[おねえちゃんらんど]엣치한 누나가, 갈색 거유의 악마였던 건 2_새로운 악마 미리스 등장♪_-번역.zip', 'XX한 그녀를 만드는 방법2.zip', '[Kimochi] ママンズオペレーション.zip', 'RJ01069680', 'RJ01088206', 'RJ01098509', 'RJ01203275', 'RJ01212879', 'RJ01309932', 'RJ01334689', 'RJ155787', 'RJ270106', 'RJ277410', 'RJ297937', 'RJ322172', 'RJ353158', 'RJ367013', 'RJ381706', 'RJ385640', 'RJ403033', 'RJ405415', 'RJ406483', 'RJ422696', 'RJ425934', 'RJ432234', '_29790656_ [VJ013434] 우정전사 릴리 애로우 ~친구의 손으로 쾌락에 떨어지는 소녀~(폰트변경).rar', 'devcontainer-python-template.zip', 'koiyasumi.7z', 'koiyasumi_winter.7z', '催眠貴族1.03.7z', '네토라레 마녀 아멜리아.zip', 'RJ01098750', '소젖용사 암캐기사.zip', '악마를 앞에 두고 하렘을 만들겠다고 외치는 자.zip', '오빠 사랑스러운 여동생과 기분 좋은 이세계 성활!.zip', '우라!!.7z', '유리&클레어 NTR.zip', '음란한 모험가 안나 ~최강 모험가가 밑바닥 남자의 여자가 될때까지~.zip', '히메가시마 즐거운 한여름 v1.1 KRver1.6.zip']
+2025-04-17 18:53:31,780 DEBUG Starting new HTTPS connection (1): rj-server-xxx.a.run.app:443
+2025-04-17 18:53:32,421 DEBUG https://rj-server-xxx.a.run.app:443 "POST /games HTTP/1.1" 404 1566
+2025-04-17 18:53:32,422 DEBUG Server response status: 404
+2025-04-17 18:53:32,422 DEBUG Server response content: <!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 404 (Not Found)!!1</title>
+  <style>
+    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
+  </style>
+  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
+  <p><b>404.</b> <ins>That’s an error.</ins>
+  <p>The requested URL <code>/games</code> was not found on this server.  <ins>That’s all we know.</ins>
+
+2025-04-17 18:53:32,422 ERROR Server fetch failed: Status 404 - <!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 404 (Not Found)!!1</title>
+  <style>
+    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
+  </style>
+  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
+  <p><b>404.</b> <ins>That’s an error.</ins>
+  <p>The requested URL <code>/games</code> was not found on this server.  <ins>That’s all we know.</ins>
+
