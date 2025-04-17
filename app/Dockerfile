@@ -3,6 +3,8 @@ FROM python:3.11-slim
 # 작업 디렉토리 설정
 WORKDIR /app
 
+RUN playwright install --with-deps
+
 # requirements.txt 복사 및 의존성 설치
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
