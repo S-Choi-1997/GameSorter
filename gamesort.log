@@ -963,3 +963,57 @@ TypeError: expected string or bytes-like object, got 'NoneType'
 2025-04-18 04:49:00,463 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
 2025-04-18 04:49:00,464 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
 2025-04-18 04:49:00,464 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:58:17,993 INFO Scanning folder: H:/yangame/방주
+2025-04-18 04:58:17,994 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip, original_title=Minamisan v1.05 SEdition.zip
+2025-04-18 04:58:17,995 DEBUG Added row 1: RJ01288065_sleepingMidori.zip, original_title=sleepingMidori.zip
+2025-04-18 04:58:17,995 DEBUG Added row 2: RJ01366624, original_title=
+2025-04-18 04:58:17,995 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, original_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 04:58:17,996 DEBUG Added row 4: WE ARE BANDIT v1.14 KR.7z, original_title=WE ARE BANDIT v1.14 KR.7z
+2025-04-18 04:58:17,996 DEBUG Added row 5: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, original_title=[][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 04:58:17,996 DEBUG Added row 6: ㅂㄱ, original_title=ㅂㄱ
+2025-04-18 04:58:17,997 DEBUG Added row 7: 기타, original_title=기타
+2025-04-18 04:58:17,997 DEBUG Added row 8: 란스, original_title=란스
+2025-04-18 04:58:17,997 DEBUG Added row 9: 몬무스 퀘스트 ver3.05 한국어.zip, original_title=몬무스 퀘스트 ver3.05 한국어.zip
+2025-04-18 04:58:17,998 DEBUG Added row 10: 방주, original_title=방주
+2025-04-18 04:58:17,998 DEBUG Added row 11: 변경용, original_title=변경용
+2025-04-18 04:58:17,998 DEBUG Added row 12: 정리본, original_title=정리본
+2025-04-18 04:58:17,999 DEBUG Added row 13: 털게 연구소 세트, original_title=털게 연구소 세트
+2025-04-18 04:58:19,443 INFO Starting fetch for 14 items: ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '몬무스 퀘스트 ver3.05 한국어.zip', '방주', '변경용', '정리본', '털게 연구소 세트']
+2025-04-18 04:58:19,443 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': ['RJ01173055', 'RJ01288065', 'RJ01366624', 'RJ374754', 'WE ARE BANDIT v1.14 KR.7z', 'RJ01111140', 'ㅂㄱ', '기타', '란스', '몬무스 퀘스트 ver3.05 한국어.zip', '방주', '변경용', '정리본', '털게 연구소 세트']}
+2025-04-18 04:58:19,465 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:58:23,914 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 2055
+2025-04-18 04:58:23,915 DEBUG Received response: status=200, content={"missing":["RJ01173055","RJ01288065","RJ01366624","RJ374754","RJ01111140"],"results":[{"error":"Game not found for RJ01173055","platform":"rj","rj_code":"RJ01173055"},{"error":"Game not found for RJ01288065","platform":"rj","rj_code":"RJ01288065"},{"error":"Game not found for RJ01366624","platform":"rj","rj_code":"RJ01366624"},{"error":"Game not found for RJ374754","platform":"rj","rj_code":"RJ374754"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744915613.4644985,"title":"WE ARE BANDIT v1.14 KR.7z"},{"error":"Game not found for RJ01111140","platform":"rj","rj_code":"RJ01111140"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744894698.7622583,"title":"\u3142\u3131"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["\uae30\ud0c0"],"thumbnail_url":"","timestamp":1744894698.8539267,"title":"\uae30\ud0c0"},{"platform":"steam","primary_tag":"\uae30\ud0c0","tags":["
+2025-04-18 04:58:23,915 INFO Local cache hit for RJ01173055
+2025-04-18 04:58:23,915 INFO Local cache hit for RJ01288065
+2025-04-18 04:58:23,916 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 04:58:24,662 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01366624.html HTTP/1.1" 200 None
+2025-04-18 04:58:24,717 INFO Cache saved successfully
+2025-04-18 04:58:24,717 INFO Fetched DLsite data for RJ01366624
+2025-04-18 04:58:24,719 INFO Local cache hit for RJ374754
+2025-04-18 04:58:24,719 INFO Local cache hit for RJ01111140
+2025-04-18 04:58:24,719 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games with data: {'items': [{'rj_code': 'RJ01173055', 'title_jp': 'ミナミさんホテルにいこう', 'tags_jp': [], 'release_date': '2024年03月23日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg', 'maker': 'プランクトンセスナ', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html', 'platform': 'rj', 'rating': 0.0, 'timestamp': 1744912844.3065672}, {'rj_code': 'RJ01288065', 'title_jp': '眠っている少女', 'tags_jp': [], 'release_date': '2024年11月09日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg', 'maker': 'tomotostew', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html', 'platform': 'rj', 'rating': 0.0, 'timestamp': 1744912845.134399}, {'rj_code': 'RJ01366624', 'title_jp': '放課後のすけべ倶楽部', 'tags_jp': [], 'release_date': '2025年04月07日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01367000/RJ01366624_img_main.jpg', 'maker': 'FANTASY・FACTORY', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01366624.html', 'platform': 'rj', 'rating': 0.0, 'timestamp': 1744919904.716025}, {'rj_code': 'RJ374754', 'title_jp': '秘術相伝忍法勝負', 'tags_jp': [], 'release_date': '2022年03月14日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg', 'maker': 'あぶらそば日和', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ374754.html', 'platform': 'rj', 'rating': 0.0, 'timestamp': 1744912845.6493666}, {'rj_code': 'RJ01111140', 'title_jp': '紅蓮飛翔ピュアフレイム', 'tags_jp': [], 'release_date': '2024年01月19日', 'thumbnail_url': 'https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg', 'maker': 'NoTears', 'link': 'https://www.dlsite.com/maniax/work/=/product_id/RJ01111140.html', 'platform': 'rj', 'rating': 0.0, 'timestamp': 1744912846.1508327}]}
+2025-04-18 04:58:24,723 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 04:58:30,031 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 2750
+2025-04-18 04:58:30,032 DEBUG Received response: status=200, content={"missing":[],"results":[{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html","maker":"\u30d7\u30e9\u30f3\u30af\u30c8\u30f3\u30bb\u30b9\u30ca","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7403\u670823\u65e5","rj_code":"RJ01173055","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg","timestamp":1744919907.066427,"title_jp":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046","title_kr":"\u30df\u30ca\u30df\u3055\u3093\u30db\u30c6\u30eb\u306b\u3044\u3053\u3046"},{"link":"https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html","maker":"tomotostew","platform":"rj","primary_tag":"\uae30\ud0c0","rating":0.0,"release_date":"2024\u5e7411\u670809\u65e5","rj_code":"RJ01288065","tags":[],"tags_jp":[],"thumbnail_url":"https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg","timestamp":1744919908.216796,"title_j
+2025-04-18 04:58:30,034 DEBUG Processed RJ01173055: title_kr=ミナミさんホテルにいこう, title_jp=ミナミさんホテルにいこう, final_title=ミナミさんホテルにいこう, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:58:30,035 DEBUG Processed RJ01288065: title_kr=眠っている少女, title_jp=眠っている少女, final_title=眠っている少女, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:58:30,035 DEBUG Processed RJ01366624: title_kr=放課後のすけべ倶楽部, title_jp=放課後のすけべ倶楽部, final_title=放課後のすけべ倶楽部, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01367000/RJ01366624_img_main.jpg
+2025-04-18 04:58:30,035 DEBUG Processed RJ374754: title_kr=秘術相伝忍法勝負, title_jp=秘術相伝忍法勝負, final_title=秘術相伝忍法勝負, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:58:30,035 DEBUG Processed RJ01111140: title_kr=紅蓮飛翔ピュアフレイム, title_jp=紅蓮飛翔ピュアフレイム, final_title=紅蓮飛翔ピュアフレイム, thumbnail_url=https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:58:35,235 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-18 04:58:35,236 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
+2025-04-18 04:58:35,250 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:58:37,207 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-18 04:58:37,207 DEBUG Loading cached thumbnail: thumbnails\bb0caa4544e5fdc5ba2317e24a542bdb81e07963.jpg
+2025-04-18 04:58:37,211 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:58:37,907 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg
+2025-04-18 04:58:37,907 DEBUG Loading cached thumbnail: thumbnails\9760dc5d17c14ac36ed29f086064c2bb4432e861.jpg
+2025-04-18 04:58:37,914 DEBUG Cached thumbnail loaded successfully
+2025-04-18 04:58:38,737 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01367000/RJ01366624_img_main.jpg
+2025-04-18 04:58:38,737 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01367000/RJ01366624_img_main.jpg
+2025-04-18 04:58:38,739 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-18 04:58:39,176 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01367000/RJ01366624_img_main.jpg HTTP/1.1" 200 186667
+2025-04-18 04:58:39,186 DEBUG Thumbnail downloaded and cached successfully
+2025-04-18 04:58:39,555 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg
+2025-04-18 04:58:39,556 DEBUG Loading cached thumbnail: thumbnails\dab4fdb086f1ed2132fffa76aeffe170c2695ced.jpg
+2025-04-18 04:58:39,559 DEBUG Cached thumbnail loaded successfully

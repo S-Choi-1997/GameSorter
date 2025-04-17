@@ -67,6 +67,9 @@ def cache_data(platform, identifier, data):
     if not db:
         return
     try:
+        # title_kr 유효성 검사
+        if needs_translation(data.get('title_kr', '')):
+            logger.warning(f"Invalid title_kr for {platform}:{identifier}: {data.get('title_kr')} contains Japanese")
         doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
         doc_ref.set(data)
         logger.info(f"Cached data for {platform}:{identifier}, title_kr={data.get('title_kr')}")
@@ -107,13 +110,34 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
         logger.warning("OpenAI client not initialized")
         return tags, title_jp
     try:
-        prompt = "Translate the following Japanese tags and title to Korean naturally:\n"
-        prompt += f"Tags: {', '.join(tags)}\n"
-        if title_jp:
-            prompt += f"Title: {title_jp}\n"
-        prompt += "Provide the translated tags in a comma-separated list, and if a title is provided, append the translated title after a semicolon."
+        # 개선된 프롬프트
+        prompt = (
+            "당신은 일본어에서 한국어로 번역하는 전문 번역가입니다.\n"
+            "아래의 태그들과 제목을 문맥에 맞게 한국어로 번역해주세요.\n"
+            "반드시 JSON 형식으로만 응답하며, 예시와 동일한 구조를 따라야 합니다.\n"
+            "제목(title)번역은 한국어나 영어인 경우만 생략해도 됩니다.\n\n"
+            "출력 형식 예시:\n"
+            "{\n"
+            "  \"tags\": [\"번역된태그1\", \"번역된태그2\", ...],\n"
+            "  \"title\": \"번역된제목\"\n"
+            "}\n\n"
+            "예시 입력/출력:\n"
+            "Input:\n"
+            "Tags: RPG, アクション\n"
+            "Title: 少女の冒険\n"
+            "Output:\n"
+            "{\n"
+            "  \"tags\": [\"RPG\", \"액션\"],\n"
+            "  \"title\": \"소녀의 모험\"\n"
+            "}\n\n"
+            f"Input:\n"
+            f"Tags: {', '.join(tags) if tags else '없음'}\n"
+            f"Title: {title_jp if title_jp else '없음'}\n"
+            "Output:"
+        )
+
         response = openai_client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
                 {"role": "user", "content": prompt}
@@ -121,9 +145,25 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
             max_tokens=200
         )
         response_text = response.choices[0].message.content.strip()
-        parts = response_text.split(';')
-        translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
-        translated_title = parts[1].strip() if len(parts) > 1 and title_jp else title_jp
+        logger.debug(f"GPT response for {batch_idx}: {response_text}")
+
+        # JSON 파싱
+        try:
+            response_json = json.loads(response_text)
+            translated_tags = response_json.get('tags', tags)
+            translated_title = response_json.get('title', title_jp) if title_jp else title_jp
+        except json.JSONDecodeError:
+            logger.warning(f"Invalid JSON response for {batch_idx}: {response_text}")
+            # 폴백: 기존 방식으로 파싱
+            parts = response_text.split(';')
+            translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
+            translated_title = parts[1].strip() if len(parts) > 1 and title_jp else title_jp
+
+        # 번역 실패 감지
+        if title_jp and translated_title and needs_translation(translated_title):
+            logger.warning(f"Translation failed for {batch_idx}: translated_title={translated_title} is still Japanese")
+            translated_title = title_jp  # 일본어로 반환된 경우 원본 유지
+
         logger.info(f"Translated for {batch_idx}: tags={translated_tags}, title={translated_title}")
         return translated_tags, translated_title
     except Exception as e:
@@ -137,7 +177,7 @@ def process_rj_item(item):
         return item
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
-    if cached and cached.get('title_kr'):
+    if cached and cached.get('title_kr') and not needs_translation(cached.get('title_kr')):
         logger.debug(f"Using cached data for {rj_code}: title_kr={cached.get('title_kr')}")
         return cached
 
@@ -160,12 +200,11 @@ def process_rj_item(item):
     translated_title = title_jp
 
     # 일본어 포함 여부 확인
-    should_translate_title = not item.get('title_kr') and needs_translation(title_jp)
-
-    if should_translate_title or tags_to_translate:
+    if needs_translation(title_jp) or tags_to_translate:
+        logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
         translated_tags, translated_title = translate_with_gpt_batch(
             tags_to_translate,
-            title_jp if should_translate_title else None,
+            title_jp if needs_translation(title_jp) else None,
             batch_idx=rj_code
         )
         for jp, kr in zip(tags_to_translate, translated_tags):
