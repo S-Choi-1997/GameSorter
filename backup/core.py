@@ -2,7 +2,7 @@ import os
 import re
 import json
 import requests
-from bs4 import BeautifulSoup
+import time
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
@@ -19,99 +19,18 @@ class FetchWorker(QThread):
     error = Signal(str)
     finished = Signal()
 
-    def __init__(self, server_url, items, cache_file="dlsite_cache.json"):
+    def __init__(self, server_url, items):
         super().__init__()
         self.server_url = server_url
         self.items = items
-        self.cache_file = cache_file
-        self.cache = self.load_cache()
-
-    def load_cache(self):
-        try:
-            if os.path.exists(self.cache_file):
-                with open(self.cache_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            logging.info("No cache file found, starting with empty cache")
-            return {}
-        except Exception as e:
-            logging.error(f"Cache load error: {e}")
-            return {}
-
-    def save_cache(self):
-        try:
-            with open(self.cache_file, 'w', encoding='utf-8') as f:
-                json.dump(self.cache, f, ensure_ascii=False, indent=2)
-            logging.info("Cache saved successfully")
-        except Exception as e:
-            logging.error(f"Cache save error: {e}")
-
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_exponential(multiplier=1, min=2, max=15),
-        retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
-        before_sleep=lambda retry_state: logging.warning(
-            f"Retrying request (attempt {retry_state.attempt_number}/3) after {retry_state.next_action.sleep} seconds"
-        )
-    )
-    def get_dlsite_data(self, rj_code):
-        if rj_code in self.cache:
-            logging.info(f"Local cache hit for {rj_code}")
-            return self.cache[rj_code]
-
-        url = f"https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.encoding = 'utf-8'
-
-        if response.status_code != 200:
-            raise Exception(f"DLsite fetch failed: Status {response.status_code}")
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-        title_tag = soup.find('h1', id='work_name') or soup.find('h1', itemprop='name')
-        title = title_tag.text.strip() if title_tag else (soup.find('meta', property='og:title')['content'].strip() if soup.find('meta', property='og:title') else rj_code)
-
-        tags = []
-        genre_elements = soup.find_all('a', href=lambda x: x and '/maniax/genre' in x)
-        for elem in genre_elements:
-            tag = elem.text.strip()
-            if tag:
-                tags.append(tag)
-
-        maker = soup.find('span', class_='maker_name')
-        maker = maker.text.strip() if maker else ""
-
-        release_date = soup.find('th', text=re.compile('販売日')) or soup.find('th', text=re.compile('Release date'))
-        release_date = release_date.find_next('td').text.strip() if release_date else "N/A"
-
-        thumbnail = soup.find('meta', property='og:image')
-        thumbnail_url = thumbnail['content'] if thumbnail else ""
-
-        data = {
-            'rj_code': rj_code,
-            'title_jp': title,
-            'tags_jp': tags,
-            'release_date': release_date,
-            'thumbnail_url': thumbnail_url,
-            'maker': maker,
-            'link': url,
-            'platform': 'rj',
-            'rating': 0.0,
-            'timestamp': time.time()
-        }
-        self.cache[rj_code] = data
-        self.save_cache()
-        logging.info(f"Fetched DLsite data for {rj_code}")
-        return data
+        self.task_id = None
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(5),
         wait=tenacity.wait_exponential(multiplier=1, min=2, max=15),
         retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
         before_sleep=lambda retry_state: logging.warning(
-            f"Retrying server request (attempt {retry_state.attempt_number}/5) after {retry_state.next_action.sleep} seconds"
+            f"Retrying request (attempt {retry_state.attempt_number}/5) after {retry_state.next_action.sleep} seconds"
         )
     )
     def make_request(self, url, method='post', json_data=None):
@@ -130,56 +49,57 @@ class FetchWorker(QThread):
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
             logging.info(f"Starting fetch for {total_items} items")
 
-            # 1. Firestore 캐시 확인
             response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
+            logging.debug(f"Server response status: {response.status_code}")
+            logging.debug(f"Server response content: {response.text}")
+
             if response.status_code != 200:
                 self.error.emit(f"서버 오류: 상태 코드 {response.status_code} - {response.text}")
                 return
 
             response_data = response.json()
-            results = response_data.get("results", [])
-            missing = response_data.get("missing", [])
             self.task_id = response_data.get("task_id")
+            game_data = response_data.get("results")
 
-            # 2. Firestore에 없는 항목만 로컬 크롤링
-            local_results = []
-            for i, item in enumerate(missing):
-                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
-                if rj_match:
-                    rj_code = rj_match.group(0).upper()
-                    try:
-                        data = self.get_dlsite_data(rj_code)
-                        local_results.append(data)
-                    except Exception as e:
-                        logging.error(f"Local crawl failed for {rj_code}: {e}")
-                        local_results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
-                else:
-                    local_results.append({
-                        'title': item,
-                        'primary_tag': "기타",
-                        'tags': ["기타"],
-                        'thumbnail_url': '',
-                        'platform': 'steam',
-                        'timestamp': time.time()
-                    })
-                self.progress.emit(int((i + 1) / len(missing) * 50))
-                self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
+            if not self.task_id:
+                self.result.emit(game_data)
+                self.progress.emit(100)
+                self.log.emit("데이터 가져오기 완료")
+                return
 
-            # 3. 로컬 크롤링 결과를 Firestore에 저장
-            if local_results:
-                response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
-                if response.status_code != 200:
-                    self.error.emit(f"Firestore 저장 실패: 상태 코드 {response.status_code} - {response.text}")
-                    return
-                response_data = response.json()
-                results = response_data.get("results", [])  # 최종 결과로 갱신
+            timeout = 600  # 10분 타임아웃
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    progress_response = self.make_request(f"{self.server_url}/progress/{self.task_id}", method='get')
+                    if progress_response.status_code != 200:
+                        self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
+                        return
 
-            # 4. 결과 반환
-            self.result.emit(results)
+                    progress = progress_response.json()
+                    completed = progress.get("completed", 0)
+                    total = progress.get("total", total_items)
+                    status = progress.get("status", "processing")
+
+                    percentage = int((completed / total) * 100)
+                    self.progress.emit(percentage)
+                    self.log.emit(f"처리 중: {completed}/{total} ({percentage}%)")
+
+                    if status == "completed":
+                        break
+                    time.sleep(2)
+                except requests.exceptions.RequestException as e:
+                    logging.warning(f"Progress request failed: {e}, retrying...")
+
+            if status != "completed":
+                self.error.emit("작업이 타임아웃되었습니다")
+                return
+
+            self.result.emit(game_data)
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
         except Exception as e:
-            self.error.emit(f"작업 실패: {str(e)}")
+            self.error.emit(f"서버 요청 실패: {str(e)}")
             logging.error(f"FetchWorker error: {str(e)}", exc_info=True)
         finally:
             self.finished.emit()
@@ -217,10 +137,10 @@ class MainWindowLogic(MainWindowUI):
             logging.error(f"Cache load error: {str(e)}")
             return {}
 
-    def save_cache(self):
+    def save_cache(self, data):
         try:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
-                json.dump(self.cache, f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False, indent=2)
             logging.info("Cache saved successfully")
         except Exception as e:
             self.log_label.setText(f"캐시 저장 오류: {str(e)}")
@@ -232,7 +152,7 @@ class MainWindowLogic(MainWindowUI):
             QMessageBox.warning(self, "경고", "폴더를 선택하세요.")
             return
 
-        self.log_label.setText("Firestore에서 데이터 확인 중...")
+        self.log_label.setText("서버에서 데이터 가져오는 중...")
         self.progress_bar.setValue(0)
         self.fetch_data_btn.setEnabled(False)
 
@@ -246,7 +166,7 @@ class MainWindowLogic(MainWindowUI):
             else:
                 items.append(original)
 
-        self.worker = FetchWorker(self.SERVER_URL, items, self.cache_file)
+        self.worker = FetchWorker(self.SERVER_URL, items)
         self.worker.progress.connect(self.progress_bar.setValue)
         self.worker.log.connect(self.log_label.setText)
         self.worker.result.connect(self.on_fetch_finished)

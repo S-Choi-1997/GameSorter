@@ -17,3 +17,70 @@
 2025-04-17 22:19:18,313 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 503 19
 2025-04-17 22:19:18,313 DEBUG Server response status: 503
 2025-04-17 22:19:18,313 DEBUG Server response content: Service Unavailable
+2025-04-18 01:35:26,795 INFO No cache file found, starting with empty cache
+2025-04-18 01:35:34,582 INFO Scanning folder: H:/yangame/방주
+2025-04-18 01:35:34,585 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip
+2025-04-18 01:35:34,586 DEBUG Added row 1: RJ01288065_sleepingMidori.zip
+2025-04-18 01:35:34,587 DEBUG Added row 2: RJ01366624
+2025-04-18 01:35:34,588 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 01:35:34,588 DEBUG Added row 4: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 01:35:34,589 DEBUG Added row 5: ㅂㄱ
+2025-04-18 01:35:34,589 DEBUG Added row 6: 기타
+2025-04-18 01:35:34,589 DEBUG Added row 7: 란스
+2025-04-18 01:35:34,590 DEBUG Added row 8: 방주
+2025-04-18 01:35:34,591 DEBUG Added row 9: 변경용
+2025-04-18 01:35:34,591 DEBUG Added row 10: 정리본
+2025-04-18 01:35:34,592 DEBUG Added row 11: 털게 연구소 세트
+2025-04-18 02:16:46,003 INFO No cache file found, starting with empty cache
+2025-04-18 02:16:52,578 INFO Scanning folder: H:/yangame/방주
+2025-04-18 02:16:52,580 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip
+2025-04-18 02:16:52,581 DEBUG Added row 1: RJ01288065_sleepingMidori.zip
+2025-04-18 02:16:52,581 DEBUG Added row 2: RJ01366624
+2025-04-18 02:16:52,582 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 02:16:52,582 DEBUG Added row 4: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 02:16:52,582 DEBUG Added row 5: ㅂㄱ
+2025-04-18 02:16:52,583 DEBUG Added row 6: 기타
+2025-04-18 02:16:52,583 DEBUG Added row 7: 란스
+2025-04-18 02:16:52,583 DEBUG Added row 8: 방주
+2025-04-18 02:16:52,584 DEBUG Added row 9: 변경용
+2025-04-18 02:16:52,584 DEBUG Added row 10: 정리본
+2025-04-18 02:16:52,584 DEBUG Added row 11: 털게 연구소 세트
+2025-04-18 02:17:00,139 INFO No cache file found, starting with empty cache
+2025-04-18 02:17:00,141 INFO Starting fetch for 12 items
+2025-04-18 02:17:00,148 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 02:17:09,450 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 1610
+2025-04-18 02:17:09,453 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:17:10,055 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-18 02:17:10,156 ERROR Local crawl failed for RJ01173055: name 'time' is not defined
+2025-04-18 02:17:10,158 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:17:10,958 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01288065.html HTTP/1.1" 200 None
+2025-04-18 02:17:11,026 ERROR Local crawl failed for RJ01288065: name 'time' is not defined
+2025-04-18 02:17:11,029 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:17:11,558 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01366624.html HTTP/1.1" 200 None
+2025-04-18 02:17:11,635 ERROR Local crawl failed for RJ01366624: name 'time' is not defined
+2025-04-18 02:17:11,637 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:17:12,343 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ374754.html HTTP/1.1" 200 None
+2025-04-18 02:17:12,393 ERROR Local crawl failed for RJ374754: name 'time' is not defined
+2025-04-18 02:17:12,394 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 02:17:13,142 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01111140.html HTTP/1.1" 200 None
+2025-04-18 02:17:13,201 ERROR Local crawl failed for RJ01111140: name 'time' is not defined
+2025-04-18 02:17:13,202 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 02:17:13,950 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 477
+2025-04-18 02:17:13,958 WARNING Error for RJ01173055: Game not found for RJ01173055
+2025-04-18 02:17:13,958 WARNING Error for RJ01288065: Game not found for RJ01288065
+2025-04-18 02:17:13,958 WARNING Error for RJ01366624: Game not found for RJ01366624
+2025-04-18 02:17:13,958 WARNING Error for RJ374754: Game not found for RJ374754
+2025-04-18 02:17:13,958 WARNING Error for RJ01111140: Game not found for RJ01111140
+2025-04-18 02:17:44,475 INFO Scanning folder: H:/yangame/방주
+2025-04-18 02:17:44,479 DEBUG Added row 0: RJ01173055 Minamisan v1.05 SEdition.zip
+2025-04-18 02:17:44,480 DEBUG Added row 1: RJ01288065_sleepingMidori.zip
+2025-04-18 02:17:44,480 DEBUG Added row 2: RJ01366624
+2025-04-18 02:17:44,481 DEBUG Added row 3: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-18 02:17:44,482 DEBUG Added row 4: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-18 02:17:44,482 DEBUG Added row 5: ㅂㄱ
+2025-04-18 02:17:44,482 DEBUG Added row 6: 기타
+2025-04-18 02:17:44,483 DEBUG Added row 7: 란스
+2025-04-18 02:17:44,483 DEBUG Added row 8: 방주
+2025-04-18 02:17:44,484 DEBUG Added row 9: 변경용
+2025-04-18 02:17:44,485 DEBUG Added row 10: 정리본
+2025-04-18 02:17:44,485 DEBUG Added row 11: 털게 연구소 세트

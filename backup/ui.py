@@ -58,7 +58,8 @@ class GameDataPanel(QWidget):
             thumbnail_url = data.get('thumbnail_url', '')
             logging.debug(f"Loading thumbnail: {thumbnail_url}")
             if thumbnail_url:
-                self.network_manager.get(QNetworkRequest(QUrl(thumbnail_url)))
+                proxy_url = f"https://gamesorter-28083845590.us-central1.run.app/proxy_image/{thumbnail_url}"
+                self.network_manager.get(QNetworkRequest(QUrl(proxy_url)))
             else:
                 self.thumbnail_label.clear()
                 self.thumbnail_label.setText("No Thumbnail")

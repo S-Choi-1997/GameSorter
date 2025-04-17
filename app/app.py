@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import time
-import psutil
 from flask import Flask, request, jsonify
 from google.cloud import firestore
 from openai import OpenAI
@@ -12,7 +11,7 @@ app = Flask(__name__)
 
 # 로깅 설정
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.StreamHandler(),
@@ -24,23 +23,18 @@ logger = logging.getLogger(__name__)
 # Firestore 클라이언트 초기화
 try:
     db = firestore.Client()
-    logger.info("Firestore client initialized successfully")
+    logger.info("Firestore client initialized")
 except Exception as e:
-    logger.error(f"Failed to initialize Firestore client: {e}", exc_info=True)
+    logger.error(f"Failed to initialize Firestore: {e}")
     db = None
 
 # OpenAI 클라이언트 초기화
 try:
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    logger.info("OpenAI client initialized successfully")
+    logger.info("OpenAI client initialized")
 except Exception as e:
-    logger.error(f"Failed to initialize OpenAI client: {e}", exc_info=True)
+    logger.error(f"Failed to initialize OpenAI: {e}")
     openai_client = None
-
-# 메모리 사용량 로깅
-process = psutil.Process()
-logger.info(f"Memory usage: RSS={process.memory_info().rss / 1024 / 1024:.2f}MB, "
-            f"VMS={process.memory_info().vms / 1024 / 1024:.2f}MB")
 
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
@@ -52,10 +46,9 @@ def get_cached_data(platform, identifier):
         if doc.exists:
             logger.debug(f"Cache hit for {platform}:{identifier}")
             return doc.to_dict()
-        logger.debug(f"Cache miss for {platform}:{identifier}")
         return None
     except Exception as e:
-        logger.error(f"Error accessing Firestore cache for {platform}:{identifier}: {e}", exc_info=True)
+        logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
         return None
 
 def cache_data(platform, identifier, data):
@@ -66,7 +59,7 @@ def cache_data(platform, identifier, data):
         doc_ref.set(data)
         logger.info(f"Cached data for {platform}:{identifier}")
     except Exception as e:
-        logger.error(f"Error caching data for {platform}:{identifier}: {e}", exc_info=True)
+        logger.error(f"Cache error for {platform}:{identifier}: {e}")
 
 # 태그 캐시
 def get_cached_tag(tag_jp):
@@ -79,7 +72,7 @@ def get_cached_tag(tag_jp):
             return doc.to_dict()
         return None
     except Exception as e:
-        logger.error(f"Error accessing tag cache for {tag_jp}: {e}", exc_info=True)
+        logger.error(f"Tag cache error for {tag_jp}: {e}")
         return None
 
 def cache_tag(tag_jp, tag_kr, priority):
@@ -94,19 +87,19 @@ def cache_tag(tag_jp, tag_kr, priority):
         })
         logger.info(f"Cached tag: {tag_jp} -> {tag_kr}")
     except Exception as e:
-        logger.error(f"Error caching tag {tag_jp}: {e}", exc_info=True)
+        logger.error(f"Tag cache error for {tag_jp}: {e}")
 
 # GPT 번역
 def translate_with_gpt_batch(tags, batch_idx=""):
     if not openai_client:
-        logger.warning("OpenAI client not initialized, skipping translation")
+        logger.warning("OpenAI client not initialized")
         return tags
     try:
         prompt = f"Translate the following Japanese tags to Korean naturally:\n{', '.join(tags)}\nProvide only the translated tags in a comma-separated list."
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
+                {"role": R"system", "content": "You are a translator specializing in Japanese to Korean."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=100
@@ -114,10 +107,10 @@ def translate_with_gpt_batch(tags, batch_idx=""):
         translated = response.choices[0].message.content.strip().split(',')
         return [t.strip() for t in translated][:len(tags)]
     except Exception as e:
-        logger.error(f"GPT translation error for batch {batch_idx}: {e}", exc_info=True)
+        logger.error(f"GPT translation error for batch {batch_idx}: {e}")
         return tags
 
-# RJ 데이터 가공
+# RJ 데이터 처리
 def process_rj_item(item):
     if 'error' in item:
         return item
@@ -150,11 +143,7 @@ def process_rj_item(item):
             cache_tag(jp, kr, priority)
             tag_priorities[tags_kr.index(kr)] = priority
 
-    if tags_kr:
-        primary_tag_idx = tag_priorities.index(max(tag_priorities))
-        primary_tag = tags_kr[primary_tag_idx]
-    else:
-        primary_tag = "기타"
+    primary_tag = tags_kr[tag_priorities.index(max(tag_priorities))] if tags_kr else "기타"
 
     processed_data = {
         'rj_code': rj_code,
@@ -163,11 +152,11 @@ def process_rj_item(item):
         'primary_tag': primary_tag,
         'tags_jp': tags_jp,
         'tags': tags_kr,
-        'release_date': item.get('release_date', ''),
+        'release_date': item.get('release_date', 'N/A'),
         'thumbnail_url': item.get('thumbnail_url', ''),
         'rating': item.get('rating', 0.0),
         'link': item.get('link', ''),
-        'platform': 'rj',
+        'platform': item.get('platform', 'rj'),
         'maker': item.get('maker', ''),
         'timestamp': time.time()
     }
@@ -175,11 +164,10 @@ def process_rj_item(item):
     return processed_data
 
 # Steam 데이터 처리
-def fetch_from_steam(identifier):
+def process_steam_item(identifier):
     cached = get_cached_data('steam', identifier)
     if cached:
         return cached
-    logger.debug(f"No cache found for steam game: {identifier}")
     data = {
         'title': identifier,
         'primary_tag': "기타",
@@ -191,20 +179,22 @@ def fetch_from_steam(identifier):
     cache_data('steam', identifier, data)
     return data
 
-# 엔드포인트
+# 게임 데이터 처리 엔드포인트
 @app.route('/games', methods=['POST'])
 def process_games():
     try:
         data = request.get_json()
         items = data.get('items', [])
-        logger.info(f"Task {request.headers.get('X-Cloud-Trace-Context', 'unknown')}: Processing {len(items)} items")
+        logger.info(f"Processing {len(items)} items")
 
         results = []
         missing = []
 
-        # 문자열 배열 (초기 요청) 또는 객체 배열 (크롤링 데이터) 처리
-        if items and isinstance(items[0], str):
-            # 초기 요청: 캐시 확인
+        if not items:
+            return jsonify({'results': [], 'missing': [], 'task_id': 'none'})
+
+        # 문자열 배열 (캐시 확인) 또는 객체 배열 (크롤링 데이터) 처리
+        if isinstance(items[0], str):
             for item in items:
                 rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
                 if rj_match:
@@ -216,33 +206,30 @@ def process_games():
                         missing.append(rj_code)
                         results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
                 else:
-                    data = fetch_from_steam(item)
-                    results.append(data)
+                    results.append(process_steam_item(item))
         else:
-            # 크롤링 데이터 처리
             for item in items:
-                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item.get('rj_code', ''), re.IGNORECASE)
-                if rj_match and 'error' not in item:
-                    processed = process_rj_item(item)
-                    results.append(processed)
+                rj_code = item.get('rj_code')
+                if rj_code and re.match(r'^[Rr][Jj]\d{6,8}$', rj_code, re.IGNORECASE) and 'error' not in item:
+                    results.append(process_rj_item(item))
                 elif 'error' in item:
                     results.append(item)
                 else:
-                    data = fetch_from_steam(item.get('title', item))
-                    results.append(data)
+                    results.append(process_steam_item(item.get('title', item)))
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
         return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
     except Exception as e:
-        logger.error(f"Error processing games: {e}", exc_info=True)
+        logger.error(f"Error processing games: {e}")
         return jsonify({'error': str(e)}), 500
 
+# 진행 상황 엔드포인트 (단순화)
 @app.route('/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     try:
         return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
     except Exception as e:
-        logger.error(f"Error fetching progress for task {task_id}: {e}", exc_info=True)
+        logger.error(f"Progress error for task {task_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
