@@ -7,7 +7,7 @@ import logging
 class GameDataPanel:
     def __init__(self, ui):
         self.ui = ui
-        self.SERVER_URL = "https://rj-server-xxx.a.run.app"  # 실제 Cloud Run URL로 변경
+        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"  # 실제 Cloud Run URL로 변경
 
     def load_game_data(self, rj_code):
         try:

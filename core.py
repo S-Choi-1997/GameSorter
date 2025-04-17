@@ -68,7 +68,9 @@ class FetchWorker(QThread):
                 self.log.emit("데이터 가져오기 완료")
                 return
 
-            while True:
+            timeout = 300  # 5분 타임아웃
+            start_time = time.time()
+            while time.time() - start_time < timeout:
                 progress_response = self.make_request(f"{self.server_url}/progress/{self.task_id}", method='get')
                 if progress_response.status_code != 200:
                     self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
@@ -87,11 +89,16 @@ class FetchWorker(QThread):
                     break
                 time.sleep(1)
 
+            if status != "completed":
+                self.error.emit("작업이 타임아웃되었습니다")
+                return
+
             self.result.emit(game_data)
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
-        except requests.exceptions.RequestException as e:
-            self.error.emit(f"서버 요청 실패: 네트워크 오류가 발생했습니다. 다시 시도해 주세요. ({str(e)})")
+        except Exception as e:
+            self.error.emit(f"서버 요청 실패: {str(e)}")
+            logging.error(f"FetchWorker error: {str(e)}", exc_info=True)
         finally:
             self.finished.emit()
 
@@ -175,26 +182,33 @@ class MainWindowLogic(MainWindowUI):
             self.log_label.setText("데이터 가져오기 실패")
             return
 
+        error_count = 0
         for result, data in zip(self.results, game_data):
             result['game_data'] = data
-            if "error" not in data:
-                rj_code = data.get('rj_code', '기타')
-                tag = data.get('tags', ['기타'])[0]
-                title = data.get('title_kr', data.get('title', result['original']))
-                maker = data.get('maker', '')
-
-                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
-                title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-                maker_tag = f"[{maker}]" if maker else ""
-                result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
-            else:
+            if "error" in data:
+                logging.warning(f"Error for {data.get('rj_code', 'Unknown')}: {data['error']}")
                 result['suggested'] = f"[기타][기타]{result['original']}"
+                error_count += 1
+                continue
+
+            rj_code = data.get('rj_code', '기타')
+            tag = data.get('primary_tag', '기타')
+            title = data.get('title_kr', data.get('title', result['original']))
+            maker = data.get('maker', '')
+
+            title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+            title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+            maker_tag = f"[{maker}]" if maker else ""
+            result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
+            logging.debug(f"Processed {rj_code}: thumbnail_url={data.get('thumbnail_url', 'None')}")
 
         self.table.setUpdatesEnabled(False)
         for row in range(self.table.rowCount()):
             self.table.setItem(row, 2, QTableWidgetItem(self.results[row]['suggested']))
         self.table.setUpdatesEnabled(True)
-        self.log_label.setText("게임명 변경 완료")
+        self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
+        if error_count > 0:
+            QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
 
     def on_fetch_error(self, error_msg):
         max_length = 100
@@ -202,6 +216,7 @@ class MainWindowLogic(MainWindowUI):
             error_msg = error_msg[:max_length] + "... (자세한 내용은 로그를 확인하세요)"
         self.log_label.setText(error_msg)
         self.progress_bar.setValue(0)
+        QMessageBox.warning(self, "오류", error_msg)
 
     def on_fetch_finished_cleanup(self):
         self.fetch_data_btn.setEnabled(True)
@@ -263,7 +278,7 @@ class MainWindowLogic(MainWindowUI):
 
     def on_table_cell_clicked(self, row, column):
         data = self.results[row]['game_data']
-        if not data:
+        if not data or "error" in data:
             self.game_data_panel.clear_game_data()
             return
         self.game_data_panel.load_game_data(data)

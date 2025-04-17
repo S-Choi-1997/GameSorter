@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from google.cloud import firestore
 import requests
 from bs4 import BeautifulSoup
@@ -90,7 +90,7 @@ def translate_with_gpt_batch(texts, src_lang='ja', dest_lang='ko', batch_idx=0):
             "- 직역 중심으로 번역하되, 자연스럽게 다듬어 원문 의미를 정확히 유지하세요.\n"
             "- 고유명사(예: 인물, 장소, 작품명)는 원문 그대로 유지하세요.\n"
             "- 특수문자(?, *, :, <, >, /, \\, |)는 제거하고, ?는 ,로 대체하세요.\n"
-            "- 번역 요청한 내용 외의 표현은 절대 사용하지 마세요.\n"
+            "- 비속어, 부정확하거나 부적절한 표현은 절대 사용하지 마세요.\n"
             "- 출력은 번호 없이, 입력 순서대로 한 줄씩 번역된 텍스트만 반환하세요.\n"
             "입력:\n" + "\n".join(texts)
         )
@@ -118,28 +118,37 @@ def generate_doc_id(title):
 def fetch_from_dlsite_direct(rj_code):
     url = f'https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html'
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
     }
     try:
         time.sleep(1)
         logger.info(f"Fetching DLsite data for RJ code: {rj_code}")
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=10)
         response.encoding = 'utf-8'
         if response.status_code != 200:
-            logger.error(f"HTTP Error: Status code {response.status_code}")
+            logger.error(f"HTTP Error: Status code {response.status_code} for RJ code {rj_code}")
             return None
 
         soup = BeautifulSoup(response.text, 'html.parser')
         title_elem = soup.select_one('#work_name')
         if not title_elem:
-            logger.error("Error: Title not found")
+            logger.error(f"Error: Title not found for RJ code {rj_code}")
             return None
 
         tags_elem = soup.select('div.main_genre a')
         date_elem = soup.select_one('th:contains("販売日") + td a')
-        thumb_elem = soup.select_one('meta[property="og:image"]')
+        thumb_elem = soup.select_one('meta[property="og:image"]') or soup.select_one('img.work_thumb')
         rating_elem = soup.select_one('span[itemprop="ratingValue"]')
         maker_elem = soup.select_one('span.maker_name a')
+
+        if not thumb_elem:
+            logger.warning(f"No thumbnail found for RJ code: {rj_code}")
+            thumbnail_url = ''
+        else:
+            thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
+            logger.info(f"Thumbnail URL found: {thumbnail_url}")
 
         tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
         tags_kr = []
@@ -179,7 +188,7 @@ def fetch_from_dlsite_direct(rj_code):
             'tags_jp': tags_jp,
             'tags': tags_kr,
             'release_date': date_elem.text.strip() if date_elem else '',
-            'thumbnail_url': thumb_elem['content'] if thumb_elem else '',
+            'thumbnail_url': thumbnail_url,
             'rating': float(rating_elem.text.strip()) if rating_elem else 0.0,
             'link': url,
             'platform': 'rj',
@@ -189,7 +198,7 @@ def fetch_from_dlsite_direct(rj_code):
         logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
         return data
     except Exception as e:
-        logger.error(f"Error fetching DLsite: {e}", exc_info=True)
+        logger.error(f"Error fetching DLsite for RJ code {rj_code}: {e}", exc_info=True)
         return None
 
 # DLsite 데이터 가져오기 (캐싱 포함)
@@ -205,8 +214,9 @@ def fetch_from_dlsite(rj_code):
         cached_data = game.to_dict()
         cache_timestamp = cached_data.get('timestamp', 0)
         if time.time() - cache_timestamp < 7 * 24 * 3600:
-            logger.info(f"Cache hit for RJ code {rj_code}")
+            logger.info(f"Cache hit for RJ code {rj_code}, thumbnail_url: {cached_data.get('thumbnail_url', 'None')}")
             return cached_data
+        logger.warning(f"Cache expired for RJ code {rj_code}, refreshing")
 
     data = fetch_from_dlsite_direct(rj_code)
     if data:
@@ -214,7 +224,7 @@ def fetch_from_dlsite(rj_code):
             game_ref.set(data)
             logger.info(f"Cached DLsite data for RJ code: {rj_code}")
         except Exception as e:
-            logger.error(f"Error caching data: {e}", exc_info=True)
+            logger.error(f"Error caching data for RJ code {rj_code}: {e}", exc_info=True)
     return data
 
 # Steam/기타 게임 데이터 조회
@@ -267,7 +277,7 @@ def get_games():
                             items_to_update.append((rj_code, game_data))
                         batch_results.append(game_data)
                     else:
-                        batch_results.append({"rj_code": rj_code, "platform": "rj", "error": "Game not found"})
+                        batch_results.append({"rj_code": rj_code, "platform": "rj", "error": f"Game not found for {rj_code}"})
                 else:
                     game_data = fetch_from_firestore(item, 'steam')
                     if game_data:
@@ -277,7 +287,7 @@ def get_games():
                         if game_data:
                             batch_results.append(game_data)
                         else:
-                            batch_results.append({"title": item, "platform": "steam", "error": "Game not found"})
+                            batch_results.append({"title": item, "platform": "steam", "error": f"Game not found for {item}"})
 
             if titles_to_translate:
                 translated_titles = translate_with_gpt_batch(titles_to_translate, batch_idx=batch_idx)
@@ -331,8 +341,22 @@ def get_games():
 @app.route('/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     if task_id not in progress_data:
+        logger.warning(f"Task not found: {task_id}")
         return jsonify({"error": "Task not found"}), 404
     return jsonify(progress_data[task_id])
+
+# 이미지 프록시 엔드포인트
+@app.route('/proxy_image/<path:image_url>')
+def proxy_image(image_url):
+    try:
+        response = requests.get(image_url, stream=True, timeout=5)
+        if response.status_code == 200:
+            return Response(response.iter_content(chunk_size=1024), content_type=response.headers['Content-Type'])
+        logger.error(f"Image proxy failed: Status code {response.status_code} for {image_url}")
+        return {"error": "Image not found"}, 404
+    except Exception as e:
+        logger.error(f"Proxy image error: {e}")
+        return {"error": str(e)}, 500
 
 # 기존 단일 RJ 코드 엔드포인트
 @app.route('/dlsite/<rj_code>')
@@ -340,7 +364,7 @@ def get_dlsite(rj_code):
     data = fetch_from_dlsite(rj_code)
     if not data:
         logger.warning(f"No data found for RJ code: {rj_code}")
-        return {"error": "Game not found"}, 404
+        return {"error": f"Game not found for {rj_code}"}, 404
     return data
 
 if __name__ == '__main__':
