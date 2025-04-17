@@ -2,13 +2,90 @@ import os
 import re
 import json
 import requests
+import time
 from bs4 import BeautifulSoup
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import QApplication
 import logging
 from ui import MainWindowUI
 
 logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
+
+
+class FetchWorker(QThread):
+    progress = Signal(int)
+    log = Signal(str)
+    result = Signal(list)
+    error = Signal(str)
+    finished = Signal()
+
+    def __init__(self, server_url, items):
+        super().__init__()
+        self.server_url = server_url
+        self.items = items
+        self.task_id = None
+
+    def run(self):
+        try:
+            total_items = len(self.items)
+            if total_items == 0:
+                self.log.emit("처리할 파일이 없습니다.")
+                self.result.emit([])
+                return
+
+            self.log.emit(f"총 {total_items}개 파일 처리 시작")
+            logging.info(f"Starting fetch for {total_items} items")
+
+            response = requests.post(
+                f"{self.server_url}/games",
+                json={"items": self.items},
+                timeout=30
+            )
+            logging.debug(f"Server response status: {response.status_code}")
+            logging.debug(f"Server response content: {response.text}")
+
+            if response.status_code != 200:
+                self.error.emit(f"서버 오류: 상태 코드 {response.status_code} - {response.text}")
+                return
+
+            response_data = response.json()
+            self.task_id = response_data.get("task_id")
+            game_data = response_data.get("results")
+
+            if not self.task_id:
+                self.result.emit(game_data)
+                self.progress.emit(100)
+                self.log.emit("데이터 가져오기 완료")
+                return
+
+            while True:
+                progress_response = requests.get(f"{self.server_url}/progress/{self.task_id}", timeout=5)
+                if progress_response.status_code != 200:
+                    self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
+                    return
+
+                progress = progress_response.json()
+                completed = progress.get("completed", 0)
+                total = progress.get("total", total_items)
+                status = progress.get("status", "processing")
+
+                percentage = int((completed / total) * 100)
+                self.progress.emit(percentage)
+                self.log.emit(f"처리 중: {completed}/{total} ({percentage}%)")
+
+                if status == "completed":
+                    break
+                time.sleep(1)
+
+            self.result.emit(game_data)
+            self.progress.emit(100)
+            self.log.emit("데이터 가져오기 완료")
+        except requests.exceptions.RequestException as e:
+            self.error.emit(f"서버 요청 실패: {str(e)}")
+        finally:
+            self.finished.emit()
+
 
 class MainWindowLogic(MainWindowUI):
     def __init__(self):
@@ -17,9 +94,11 @@ class MainWindowLogic(MainWindowUI):
         self.cache_file = "dlsite_cache.json"
         self.cache = self.load_cache()
         self.folder_path = None
-        # 실제 Cloud Run URL로 변경해야 함
-        # 예: https://game-sort-service-xxx.a.run.app (Google Cloud Console에서 확인)
         self.SERVER_URL = "https://rj-server-xxx.a.run.app"
+        self.worker = None
+
+        self.log_label.setWordWrap(True)
+        self.log_label.setMaximumWidth(self.table.width())
 
         # UI 이벤트 연결
         self.select_folder_btn.clicked.connect(self.select_folder)
@@ -27,6 +106,13 @@ class MainWindowLogic(MainWindowUI):
         self.rename_btn.clicked.connect(self.rename_files)
         self.select_all_box.stateChanged.connect(self.toggle_all_selection)
         self.table.cellClicked.connect(self.on_table_cell_clicked)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_log_label_width()
+
+    def update_log_label_width(self):
+        self.log_label.setMaximumWidth(self.table.width())
 
     def load_cache(self):
         try:
@@ -49,34 +135,15 @@ class MainWindowLogic(MainWindowUI):
             self.log_label.setText(f"캐시 저장 오류: {str(e)}")
             logging.error(f"Cache save error: {str(e)}")
 
-    def fetch_game_data(self, items):
-        try:
-            logging.debug(f"Sending request to {self.SERVER_URL}/games with items: {items}")
-            response = requests.post(
-                f"{self.SERVER_URL}/games",
-                json={"items": items},
-                timeout=10
-            )
-            logging.debug(f"Server response status: {response.status_code}")
-            logging.debug(f"Server response content: {response.text}")
-
-            if response.status_code == 200:
-                return response.json()
-            else:
-                self.log_label.setText(f"서버 오류: 상태 코드 {response.status_code} - {response.text}")
-                logging.error(f"Server fetch failed: Status {response.status_code} - {response.text}")
-                return []
-        except requests.exceptions.RequestException as e:
-            self.log_label.setText(f"서버 요청 실패: {str(e)}")
-            logging.error(f"Server fetch error: {str(e)}")
-            return []
-
     def fetch_game_data_and_update(self):
         if not self.results:
             self.log_label.setText("먼저 폴더를 선택하세요.")
             return
 
         self.log_label.setText("서버에서 데이터 가져오는 중...")
+        self.progress_bar.setValue(0)
+        self.fetch_data_btn.setEnabled(False)
+
         items = []
         for result in self.results:
             original = result['original']
@@ -87,25 +154,50 @@ class MainWindowLogic(MainWindowUI):
             else:
                 items.append(original)
 
-        game_data = self.fetch_game_data(items)
+        self.worker = FetchWorker(self.SERVER_URL, items)
+        self.worker.progress.connect(self.progress_bar.setValue)
+        self.worker.log.connect(self.log_label.setText)
+        self.worker.result.connect(self.on_fetch_finished)
+        self.worker.error.connect(self.on_fetch_error)
+        self.worker.finished.connect(self.on_fetch_finished_cleanup)
+        self.worker.start()
+
+    def on_fetch_finished(self, game_data):
         if not game_data:
             self.log_label.setText("데이터 가져오기 실패")
             return
 
-        # 데이터 갱신
         for result, data in zip(self.results, game_data):
             result['game_data'] = data
             if "error" not in data:
+                rj_code = data.get('rj_code', '기타')
                 tag = data.get('tags', ['기타'])[0]
-                title = data.get('title_kr', result['original'])
-                result['suggested'] = f"[{data.get('rj_code', data.get('title', '기타'))}][{tag}]{title}"
+                title = data.get('title_kr', data.get('title', result['original']))
+                maker = data.get('maker', '')
 
-        # 테이블 갱신
+                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+                title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+                maker_tag = f"[{maker}]" if maker else ""
+                result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
+            else:
+                result['suggested'] = f"[기타][기타]{result['original']}"
+
         self.table.setUpdatesEnabled(False)
         for row in range(self.table.rowCount()):
             self.table.setItem(row, 2, QTableWidgetItem(self.results[row]['suggested']))
         self.table.setUpdatesEnabled(True)
         self.log_label.setText("게임명 변경 완료")
+
+    def on_fetch_error(self, error_msg):
+        max_length = 100
+        if len(error_msg) > max_length:
+            error_msg = error_msg[:max_length] + "... (자세한 내용은 로그를 확인하세요)"
+        self.log_label.setText(error_msg)
+        self.progress_bar.setValue(0)
+
+    def on_fetch_finished_cleanup(self):
+        self.fetch_data_btn.setEnabled(True)
+        self.worker = None
 
     def select_folder(self):
         self.folder_path = QFileDialog.getExistingDirectory(self, "폴더 선택")
@@ -119,7 +211,6 @@ class MainWindowLogic(MainWindowUI):
         self.table.setRowCount(0)
         self.results.clear()
 
-        # 폴더 내 파일 목록 가져오기
         entries = os.listdir(self.folder_path)
         files = [f for f in entries if f.lower().endswith(('.zip', '.7z', '.rar')) or os.path.isdir(os.path.join(self.folder_path, f))]
         files.sort()
@@ -130,10 +221,11 @@ class MainWindowLogic(MainWindowUI):
             self.fetch_data_btn.setEnabled(False)
             return
 
-        # 테이블에 파일 목록 표시
         self.table.setUpdatesEnabled(False)
         for idx, original in enumerate(files):
-            suggested = original
+            rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
+            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else None
+            suggested = f"[{rj_code}][기타]{original}" if rj_code else f"[기타][기타]{original}"
 
             result = {
                 'original': original,
@@ -166,7 +258,6 @@ class MainWindowLogic(MainWindowUI):
         if not data:
             self.game_data_panel.clear_game_data()
             return
-
         self.game_data_panel.load_game_data(data)
 
     def update_select_all_state(self):
@@ -256,9 +347,9 @@ class MainWindowLogic(MainWindowUI):
         self.log_label.setText(f"이름 변경 완료: {completed}개 파일 변경됨.")
         self.update_select_all_state()
 
+
 if __name__ == "__main__":
     import sys
-    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = MainWindowLogic()
     window.show()

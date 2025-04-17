@@ -9,6 +9,11 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import hashlib
 import re
+import concurrent.futures
+from queue import Queue
+import uuid
+import psutil
+import tenacity
 
 load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
@@ -25,23 +30,60 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize Firestore: {e}", exc_info=True)
 
-# 번역 함수
-def translate_with_gpt(text, src_lang='ja', dest_lang='ko'):
-    if not text:
-        return ''
+# 진행 상황 저장
+progress_data = {}
+
+# 메모리 사용량 로깅
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    logger.info(f"Memory usage: RSS={mem_info.rss / 1024 / 1024:.2f}MB, VMS={mem_info.vms / 1024 / 1024:.2f}MB")
+
+# 재시도 데코레이터
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+    retry=tenacity.retry_if_exception_type((requests.exceptions.RequestException, Exception)),
+    before_sleep=lambda retry_state: logger.warning(
+        f"Retrying API call (attempt {retry_state.attempt_number}/3) after {retry_state.next_action.sleep} seconds"
+    )
+)
+def make_openai_request(messages, max_tokens):
+    return client.chat.completions.create(
+        model='gpt-4o-mini',
+        messages=messages,
+        max_tokens=max_tokens
+    )
+
+# 번역 함수 (배치 처리)
+def translate_with_gpt_batch(texts, src_lang='ja', dest_lang='ko', batch_idx=0):
+    if not texts:
+        return []
     try:
-        response = client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[
-                {'role': 'system', 'content': f'Translate the following {src_lang} text to {dest_lang} accurately.'},
-                {'role': 'user', 'content': text}
-            ],
-            max_tokens=100
+        prompt = (
+            "다음은 일본어 게임 제목 및 태그 목록입니다. 아래 규칙에 따라 한국어로 번역해 주세요:\n"
+            "1. 직역 중심으로 자연스럽게 번역, 고유명사는 유지.\n"
+            "   예: 家出少女との同棲生活 → 가출소녀와의동거생활\n"
+            "   예: ねるこはそだつ! → 네루코는자란다!\n"
+            "2. 특수문자(?, *, :, <, >, /, \\, |)는 제거하고, ?는 ,로 대체.\n"
+            "3. 번호 없이, 한 줄씩 번역된 텍스트만 출력.\n"
+            "입력:\n" + "\n".join(f"{i+1}. {text}" for i, text in enumerate(texts))
         )
-        return response.choices[0].message.content.strip()
+        logger.info(f"Batch {batch_idx}: Sending translation request for {len(texts)} items")
+        messages = [
+            {'role': 'system', 'content': f'Translate the following {src_lang} text to {dest_lang} accurately.'},
+            {'role': 'user', 'content': prompt}
+        ]
+        response = make_openai_request(messages, max_tokens=500)
+        translated_texts = response.choices[0].message.content.strip().splitlines()
+        if len(translated_texts) != len(texts):
+            logger.error(f"Batch {batch_idx}: Translation response length mismatch: {len(translated_texts)} vs {len(texts)}")
+            return [text for text in texts]
+        logger.info(f"Batch {batch_idx}: Successfully translated {len(translated_texts)} items")
+        return translated_texts
     except Exception as e:
-        logger.error(f"GPT translation error: {e}")
-        return text
+        logger.error(f"Batch {batch_idx}: GPT translation error: {e}", exc_info=True)
+        return [text for text in texts]
 
 # 고유 ID 생성
 def generate_doc_id(title):
@@ -72,6 +114,7 @@ def fetch_from_dlsite_direct(rj_code):
         date_elem = soup.select_one('th:contains("販売日") + td a')
         thumb_elem = soup.select_one('meta[property="og:image"]')
         rating_elem = soup.select_one('span[itemprop="ratingValue"]')
+        maker_elem = soup.select_one('span.maker_name a')
 
         data = {
             'rj_code': rj_code,
@@ -81,7 +124,8 @@ def fetch_from_dlsite_direct(rj_code):
             'thumbnail_url': thumb_elem['content'] if thumb_elem else '',
             'rating': float(rating_elem.text.strip()) if rating_elem else 0.0,
             'link': url,
-            'platform': 'rj'
+            'platform': 'rj',
+            'maker': maker_elem.text.strip() if maker_elem else ''
         }
         logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
         return data
@@ -105,10 +149,6 @@ def fetch_from_dlsite(rj_code):
     data = fetch_from_dlsite_direct(rj_code)
     if data:
         try:
-            title_kr = translate_with_gpt(data['title_jp'])
-            tags = [translate_with_gpt(tag) for tag in data['tags_jp']]
-            data['title_kr'] = title_kr
-            data['tags'] = tags
             game_ref.set(data)
             logger.info(f"Cached DLsite data for RJ code: {rj_code}")
         except Exception as e:
@@ -133,38 +173,107 @@ def fetch_from_firestore(title, platform):
 # 여러 제목 처리 엔드포인트
 @app.route('/games', methods=['POST'])
 def get_games():
-    data = request.get_json()
-    if not data or 'items' not in data:
-        logger.warning("Invalid request: items field required")
-        return {"error": "Items field required"}, 400
+    try:
+        log_memory_usage()
+        data = request.get_json()
+        if not data or 'items' not in data:
+            logger.warning("Invalid request: items field required")
+            return {"error": "Items field required"}, 400
 
-    items = data['items']
-    results = []
+        items = data['items']
+        total_items = len(items)
+        task_id = str(uuid.uuid4())
+        progress_data[task_id] = {"total": total_items, "completed": 0, "status": "processing"}
+        logger.info(f"Task {task_id}: Processing {total_items} items")
 
-    for item in items:
-        # RJ 코드 판별
-        if re.match(r'^RJ\d{6,8}$', item, re.IGNORECASE):
-            game_data = fetch_from_dlsite(item)
-            if game_data:
-                results.append(game_data)
-            else:
-                results.append({"rj_code": item, "platform": "rj", "error": "Game not found"})
-        else:
-            # Steam/기타 게임 처리 (기본적으로 steam으로 처리, other는 별도 조정 가능)
-            game_data = fetch_from_firestore(item, 'steam')
-            if game_data:
-                results.append(game_data)
-            else:
-                game_data = fetch_from_firestore(item, 'other')
-                if game_data:
-                    results.append(game_data)
+        batch_size = 10
+        batches = [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
+        result_queue = Queue()
+
+        def process_batch(batch_idx, batch_items):
+            batch_results = []
+            titles_to_translate = []
+            tags_to_translate = []
+            items_to_update = []
+
+            for item in batch_items:
+                if re.match(r'^RJ\d{6,8}$', item, re.IGNORECASE):
+                    rj_code = item.upper()
+                    game_data = fetch_from_dlsite(rj_code)
+                    if game_data:
+                        if 'title_kr' not in game_data or not game_data['title_kr']:
+                            titles_to_translate.append(game_data['title_jp'])
+                            tags_to_translate.extend(game_data['tags_jp'])
+                            items_to_update.append((rj_code, game_data))
+                        batch_results.append(game_data)
+                    else:
+                        batch_results.append({"rj_code": rj_code, "platform": "rj", "error": "Game not found"})
                 else:
-                    results.append({"title": item, "platform": "steam", "error": "Game not found"})
+                    game_data = fetch_from_firestore(item, 'steam')
+                    if game_data:
+                        batch_results.append(game_data)
+                    else:
+                        game_data = fetch_from_firestore(item, 'other')
+                        if game_data:
+                            batch_results.append(game_data)
+                        else:
+                            batch_results.append({"title": item, "platform": "steam", "error": "Game not found"})
 
-    logger.info(f"Processed {len(items)} items")
-    return jsonify(results)
+            if titles_to_translate:
+                translated_titles = translate_with_gpt_batch(titles_to_translate, batch_idx=batch_idx)
+                all_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=batch_idx)
+                tag_idx = 0
 
-# 기존 단일 RJ 코드 엔드포인트 (호환성 유지)
+                for (rj_code, game_data), translated_title in zip(items_to_update, translated_titles):
+                    game_data['title_kr'] = translated_title
+                    num_tags = len(game_data['tags_jp'])
+                    game_data['tags'] = all_tags[tag_idx:tag_idx + num_tags]
+                    tag_idx += num_tags
+                    if db:
+                        db.collection('games').document('rj').collection('items').document(rj_code).set(game_data)
+
+            progress_data[task_id]["completed"] += len(batch_items)
+            logger.info(f"Task {task_id}: Batch {batch_idx} completed, {progress_data[task_id]['completed']}/{total_items}")
+            log_memory_usage()
+
+            return batch_idx, batch_results
+
+        # 병렬 처리 (max_workers 줄임)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [
+                executor.submit(process_batch, i, batch_items)
+                for i, batch_items in enumerate(batches)
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                batch_idx, batch_results = future.result()
+                result_queue.put((batch_idx, batch_results))
+
+        final_results = []
+        while not result_queue.empty():
+            batch_idx, batch_results = result_queue.get()
+            final_results.append((batch_idx, batch_results))
+
+        final_results.sort()
+        response = []
+        for _, batch_results in final_results:
+            response.extend(batch_results)
+
+        progress_data[task_id]["status"] = "completed"
+        logger.info(f"Task {task_id}: Processed {len(response)} items")
+        log_memory_usage()
+        return jsonify({"task_id": task_id, "results": response})
+    except Exception as e:
+        logger.error(f"Error in /games endpoint: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+# 진행 상황 조회 엔드포인트
+@app.route('/progress/<task_id>', methods=['GET'])
+def get_progress(task_id):
+    if task_id not in progress_data:
+        return jsonify({"error": "Task not found"}), 404
+    return jsonify(progress_data[task_id])
+
+# 기존 단일 RJ 코드 엔드포인트
 @app.route('/dlsite/<rj_code>')
 def get_dlsite(rj_code):
     data = fetch_from_dlsite(rj_code)
