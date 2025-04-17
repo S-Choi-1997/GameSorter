@@ -12,7 +12,17 @@ import re
 import concurrent.futures
 from queue import Queue
 import uuid
-import psutil
+try:
+    import psutil
+except ImportError:
+    logging.warning("psutil not found, skipping memory usage logging")
+    def log_memory_usage():
+        logging.info("Memory usage logging skipped (psutil unavailable)")
+else:
+    def log_memory_usage():
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        logging.info(f"Memory usage: RSS={mem_info.rss / 1024 / 1024:.2f}MB, VMS={mem_info.vms / 1024 / 1024:.2f}MB")
 import tenacity
 
 load_dotenv()
@@ -33,12 +43,6 @@ except Exception as e:
 # 진행 상황 저장
 progress_data = {}
 
-# 메모리 사용량 로깅
-def log_memory_usage():
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    logger.info(f"Memory usage: RSS={mem_info.rss / 1024 / 1024:.2f}MB, VMS={mem_info.vms / 1024 / 1024:.2f}MB")
-
 # 재시도 데코레이터
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(3),
@@ -55,23 +59,44 @@ def make_openai_request(messages, max_tokens):
         max_tokens=max_tokens
     )
 
+# 태그 캐싱 조회 및 저장
+def get_cached_tag(tag_jp):
+    if not db:
+        return None
+    tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
+    tag_doc = tag_ref.get()
+    if tag_doc.exists:
+        logger.info(f"Cache hit for tag: {tag_jp}")
+        return tag_doc.to_dict()
+    return None
+
+def cache_tag(tag_jp, tag_kr, priority=10):
+    if not db:
+        return
+    tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
+    try:
+        tag_ref.set({'tag_jp': tag_jp, 'tag_kr': tag_kr, 'priority': priority})
+        logger.info(f"Cached tag: {tag_jp} -> {tag_kr} with priority {priority}")
+    except Exception as e:
+        logger.error(f"Error caching tag: {e}", exc_info=True)
+
 # 번역 함수 (배치 처리)
 def translate_with_gpt_batch(texts, src_lang='ja', dest_lang='ko', batch_idx=0):
     if not texts:
         return []
     try:
         prompt = (
-            "다음은 일본어 게임 제목 및 태그 목록입니다. 아래 규칙에 따라 한국어로 번역해 주세요:\n"
-            "1. 직역 중심으로 자연스럽게 번역, 고유명사는 유지.\n"
-            "   예: 家出少女との同棲生活 → 가출소녀와의동거생활\n"
-            "   예: ねるこはそだつ! → 네루코는자란다!\n"
-            "2. 특수문자(?, *, :, <, >, /, \\, |)는 제거하고, ?는 ,로 대체.\n"
-            "3. 번호 없이, 한 줄씩 번역된 텍스트만 출력.\n"
-            "입력:\n" + "\n".join(f"{i+1}. {text}" for i, text in enumerate(texts))
+            "다음 일본어 텍스트를 한국어로 번역하세요:\n"
+            "- 직역 중심으로 번역하되, 자연스럽게 다듬어 원문 의미를 정확히 유지하세요.\n"
+            "- 고유명사(예: 인물, 장소, 작품명)는 원문 그대로 유지하세요.\n"
+            "- 특수문자(?, *, :, <, >, /, \\, |)는 제거하고, ?는 ,로 대체하세요.\n"
+            "- 번역 요청한 내용 외의 표현은 절대 사용하지 마세요.\n"
+            "- 출력은 번호 없이, 입력 순서대로 한 줄씩 번역된 텍스트만 반환하세요.\n"
+            "입력:\n" + "\n".join(texts)
         )
         logger.info(f"Batch {batch_idx}: Sending translation request for {len(texts)} items")
         messages = [
-            {'role': 'system', 'content': f'Translate the following {src_lang} text to {dest_lang} accurately.'},
+            {'role': 'system', 'content': f'Translate the following {src_lang} text to {dest_lang} accurately and professionally.'},
             {'role': 'user', 'content': prompt}
         ]
         response = make_openai_request(messages, max_tokens=500)
@@ -116,16 +141,50 @@ def fetch_from_dlsite_direct(rj_code):
         rating_elem = soup.select_one('span[itemprop="ratingValue"]')
         maker_elem = soup.select_one('span.maker_name a')
 
+        tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
+        tags_kr = []
+        tags_to_translate = []
+        tag_priorities = []
+
+        for tag in tags_jp:
+            cached_tag = get_cached_tag(tag)
+            if cached_tag:
+                tags_kr.append(cached_tag['tag_kr'])
+                tag_priorities.append(cached_tag.get('priority', 10))
+            else:
+                tags_to_translate.append(tag)
+                tag_priorities.append(10)
+
+        if tags_to_translate:
+            translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
+            for jp, kr in zip(tags_to_translate, translated_tags):
+                priority = 10
+                if kr in ["RPG", "액션", "판타지"]:
+                    priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
+                tags_kr.append(kr)
+                cache_tag(jp, kr, priority)
+                tag_priorities[tags_kr.index(kr)] = priority
+
+        if tags_kr:
+            primary_tag_idx = tag_priorities.index(max(tag_priorities))
+            primary_tag = tags_kr[primary_tag_idx]
+        else:
+            primary_tag = "기타"
+
         data = {
             'rj_code': rj_code,
             'title_jp': title_elem.text.strip(),
-            'tags_jp': [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5],
+            'title_kr': None,
+            'primary_tag': primary_tag,
+            'tags_jp': tags_jp,
+            'tags': tags_kr,
             'release_date': date_elem.text.strip() if date_elem else '',
             'thumbnail_url': thumb_elem['content'] if thumb_elem else '',
             'rating': float(rating_elem.text.strip()) if rating_elem else 0.0,
             'link': url,
             'platform': 'rj',
-            'maker': maker_elem.text.strip() if maker_elem else ''
+            'maker': maker_elem.text.strip() if maker_elem else '',
+            'timestamp': time.time()
         }
         logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
         return data
@@ -143,8 +202,11 @@ def fetch_from_dlsite(rj_code):
     game = game_ref.get()
 
     if game.exists:
-        logger.info(f"Cache hit for RJ code {rj_code}")
-        return game.to_dict()
+        cached_data = game.to_dict()
+        cache_timestamp = cached_data.get('timestamp', 0)
+        if time.time() - cache_timestamp < 7 * 24 * 3600:
+            logger.info(f"Cache hit for RJ code {rj_code}")
+            return cached_data
 
     data = fetch_from_dlsite_direct(rj_code)
     if data:
@@ -187,13 +249,12 @@ def get_games():
         logger.info(f"Task {task_id}: Processing {total_items} items")
 
         batch_size = 10
-        batches = [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
+        batches = [(i, items[i:i + batch_size]) for i in range(0, len(items), batch_size)]
         result_queue = Queue()
 
         def process_batch(batch_idx, batch_items):
             batch_results = []
             titles_to_translate = []
-            tags_to_translate = []
             items_to_update = []
 
             for item in batch_items:
@@ -203,7 +264,6 @@ def get_games():
                     if game_data:
                         if 'title_kr' not in game_data or not game_data['title_kr']:
                             titles_to_translate.append(game_data['title_jp'])
-                            tags_to_translate.extend(game_data['tags_jp'])
                             items_to_update.append((rj_code, game_data))
                         batch_results.append(game_data)
                     else:
@@ -221,14 +281,8 @@ def get_games():
 
             if titles_to_translate:
                 translated_titles = translate_with_gpt_batch(titles_to_translate, batch_idx=batch_idx)
-                all_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=batch_idx)
-                tag_idx = 0
-
                 for (rj_code, game_data), translated_title in zip(items_to_update, translated_titles):
                     game_data['title_kr'] = translated_title
-                    num_tags = len(game_data['tags_jp'])
-                    game_data['tags'] = all_tags[tag_idx:tag_idx + num_tags]
-                    tag_idx += num_tags
                     if db:
                         db.collection('games').document('rj').collection('items').document(rj_code).set(game_data)
 
@@ -238,11 +292,10 @@ def get_games():
 
             return batch_idx, batch_results
 
-        # 병렬 처리 (max_workers 줄임)
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [
                 executor.submit(process_batch, i, batch_items)
-                for i, batch_items in enumerate(batches)
+                for i, batch_items in batches
             ]
             for future in concurrent.futures.as_completed(futures):
                 batch_idx, batch_results = future.result()
@@ -258,10 +311,18 @@ def get_games():
         for _, batch_results in final_results:
             response.extend(batch_results)
 
+        ordered_response = []
+        for item in items:
+            for res in response:
+                if (res.get('rj_code', '').upper() == item.upper() or 
+                    res.get('title', '').lower() == item.lower()):
+                    ordered_response.append(res)
+                    break
+
         progress_data[task_id]["status"] = "completed"
         logger.info(f"Task {task_id}: Processed {len(response)} items")
         log_memory_usage()
-        return jsonify({"task_id": task_id, "results": response})
+        return jsonify({"task_id": task_id, "results": ordered_response})
     except Exception as e:
         logger.error(f"Error in /games endpoint: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
