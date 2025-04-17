@@ -8,10 +8,10 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheck
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 import logging
+import tenacity
 from ui import MainWindowUI
 
 logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
-
 
 class FetchWorker(QThread):
     progress = Signal(int)
@@ -26,6 +26,19 @@ class FetchWorker(QThread):
         self.items = items
         self.task_id = None
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+        retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
+        before_sleep=lambda retry_state: logging.warning(
+            f"Retrying request (attempt {retry_state.attempt_number}/3) after {retry_state.next_action.sleep} seconds"
+        )
+    )
+    def make_request(self, url, method='post', json_data=None):
+        if method == 'post':
+            return requests.post(url, json=json_data, timeout=30)
+        return requests.get(url, timeout=5)
+
     def run(self):
         try:
             total_items = len(self.items)
@@ -37,11 +50,7 @@ class FetchWorker(QThread):
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
             logging.info(f"Starting fetch for {total_items} items")
 
-            response = requests.post(
-                f"{self.server_url}/games",
-                json={"items": self.items},
-                timeout=30
-            )
+            response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
             logging.debug(f"Server response status: {response.status_code}")
             logging.debug(f"Server response content: {response.text}")
 
@@ -60,7 +69,7 @@ class FetchWorker(QThread):
                 return
 
             while True:
-                progress_response = requests.get(f"{self.server_url}/progress/{self.task_id}", timeout=5)
+                progress_response = self.make_request(f"{self.server_url}/progress/{self.task_id}", method='get')
                 if progress_response.status_code != 200:
                     self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
                     return
@@ -82,10 +91,9 @@ class FetchWorker(QThread):
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
         except requests.exceptions.RequestException as e:
-            self.error.emit(f"서버 요청 실패: {str(e)}")
+            self.error.emit(f"서버 요청 실패: 네트워크 오류가 발생했습니다. 다시 시도해 주세요. ({str(e)})")
         finally:
             self.finished.emit()
-
 
 class MainWindowLogic(MainWindowUI):
     def __init__(self):
@@ -94,7 +102,7 @@ class MainWindowLogic(MainWindowUI):
         self.cache_file = "dlsite_cache.json"
         self.cache = self.load_cache()
         self.folder_path = None
-        self.SERVER_URL = "https://rj-server-xxx.a.run.app"
+        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
 
         self.log_label.setWordWrap(True)
@@ -346,7 +354,6 @@ class MainWindowLogic(MainWindowUI):
             QMessageBox.warning(self, "오류", f"다음 파일 이름 변경 실패:\n" + "\n".join(errors[:5]))
         self.log_label.setText(f"이름 변경 완료: {completed}개 파일 변경됨.")
         self.update_select_all_state()
-
 
 if __name__ == "__main__":
     import sys
