@@ -2,14 +2,10 @@ import json
 import logging
 import os
 import time
-from urllib.parse import urljoin
 import psutil
-import requests
 from flask import Flask, request, jsonify
 from google.cloud import firestore
-from bs4 import BeautifulSoup
 from openai import OpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import re
 
 app = Flask(__name__)
@@ -45,10 +41,6 @@ except Exception as e:
 process = psutil.Process()
 logger.info(f"Memory usage: RSS={process.memory_info().rss / 1024 / 1024:.2f}MB, "
             f"VMS={process.memory_info().vms / 1024 / 1024:.2f}MB")
-
-# 프록시 설정
-PROXY_URL = os.getenv("PROXY_URL")  # 예: http://user:pass@proxy-host:port
-CUSTOM_COOKIES = os.getenv("DLSITE_COOKIES", "")  # 예: session=abc123;adultconfirmed=1
 
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
@@ -125,168 +117,64 @@ def translate_with_gpt_batch(tags, batch_idx=""):
         logger.error(f"GPT translation error for batch {batch_idx}: {e}", exc_info=True)
         return tags
 
-# DLsite 인증 페이지 처리
-def handle_adult_check(session, url):
-    try:
-        logger.debug("Attempting to handle adult check")
-        response = session.get(url, timeout=10)
-        if 'adult_check' in response.text.lower() or 'age-verification' in response.url:
-            logger.debug("Adult verification page detected")
-            soup = BeautifulSoup(response.text, 'html.parser')
-            form = soup.select_one('form[action*="adult_check"]')
-            if not form:
-                logger.error("Adult check form not found")
-                return False
-            action = urljoin(url, form.get('action', '/maniax/age-verification'))
-            data = {input_tag.get('name'): input_tag.get('value', '') for input_tag in form.select('input')}
-            data['adult_check'] = '1'  # 인증 확인
-            response = session.post(action, data=data, timeout=10)
-            logger.debug(f"Adult check POST response: {response.status_code}")
-            if response.status_code == 200:
-                return True
-            logger.error(f"Adult check failed: Status {response.status_code}")
-            return False
-        return True
-    except Exception as e:
-        logger.error(f"Error handling adult check: {e}", exc_info=True)
-        return False
+# RJ 데이터 가공
+def process_rj_item(item):
+    if 'error' in item:
+        return item
+    rj_code = item.get('rj_code')
+    cached = get_cached_data('rj', rj_code)
+    if cached:
+        return cached
 
-# DLsite 직접 스크래핑 (requests 기반)
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type(Exception),
-    before_sleep=lambda retry_state: logger.warning(
-        f"Retrying DLsite request (attempt {retry_state.attempt_number}/3)"
-    )
-)
-def fetch_from_dlsite_direct(rj_code):
-    url = f'https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html'
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://www.dlsite.com/maniax/',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-User': '?1'
-    }
-    cookies = {'adultconfirmed': '1'}
-    if CUSTOM_COOKIES:
-        try:
-            for cookie in CUSTOM_COOKIES.split(';'):
-                if cookie.strip():
-                    key, value = cookie.strip().split('=', 1)
-                    cookies[key] = value
-            logger.debug(f"Using custom cookies: {cookies}")
-        except Exception as e:
-            logger.warning(f"Invalid custom cookies format: {e}")
+    tags_jp = item.get('tags_jp', [])
+    tags_kr = []
+    tags_to_translate = []
+    tag_priorities = []
 
-    proxies = {'https': PROXY_URL} if PROXY_URL else None
-    try:
-        logger.info(f"Fetching DLsite data for RJ code: {rj_code}")
-        session = requests.Session()
-        session.headers.update(headers)
-
-        # 초기 요청으로 세션 쿠키 획득
-        initial_response = session.get('https://www.dlsite.com/maniax/', timeout=10)
-        logger.debug(f"Initial session response: {initial_response.status_code}")
-
-        # 인증 페이지 처리
-        if not handle_adult_check(session, url):
-            logger.error(f"Failed to handle adult check for RJ code {rj_code}")
-            return None
-
-        # 메인 페이지 요청
-        response = session.get(url, cookies=cookies, proxies=proxies, timeout=10)
-        response.encoding = 'utf-8'
-        logger.debug(f"DLsite response status: {response.status_code}, URL: {response.url}")
-        logger.debug(f"Response content (first 500 chars): {response.text[:500]}")
-
-        if response.status_code != 200:
-            logger.error(f"HTTP Error: Status code {response.status_code} for RJ code {rj_code}")
-            return None
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-        if 'age-verification' in response.url or 'adult_check' in response.text.lower():
-            logger.warning(f"Adult verification page detected for RJ code {rj_code}")
-            return None
-
-        title_elem = soup.select_one('#work_name')
-        if not title_elem:
-            logger.error(f"Error: Title not found for RJ code {rj_code}")
-            return None
-
-        tags_elem = soup.select('div.main_genre a')
-        date_elem = soup.select_one('th:-soup-contains("販売日") + td a')
-        thumb_elem = soup.select_one('meta[property="og:image"]') or soup.select_one('img.work_thumb')
-        rating_elem = soup.select_one('span[itemprop="ratingValue"]')
-        maker_elem = soup.select_one('span.maker_name a')
-
-        thumbnail_url = ''
-        if thumb_elem:
-            thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
-            if not thumbnail_url.startswith('http'):
-                thumbnail_url = urljoin(url, thumbnail_url)
-            logger.debug(f"Thumbnail URL found: {thumbnail_url}")
-
-        tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
-        tags_kr = []
-        tags_to_translate = []
-        tag_priorities = []
-
-        for tag in tags_jp:
-            cached_tag = get_cached_tag(tag)
-            if cached_tag:
-                tags_kr.append(cached_tag['tag_kr'])
-                tag_priorities.append(cached_tag.get('priority', 10))
-            else:
-                tags_to_translate.append(tag)
-                tag_priorities.append(10)
-
-        if tags_to_translate:
-            translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
-            for jp, kr in zip(tags_to_translate, translated_tags):
-                priority = 10
-                if kr in ["RPG", "액션", "판타지"]:
-                    priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
-                tags_kr.append(kr)
-                cache_tag(jp, kr, priority)
-                tag_priorities[tags_kr.index(kr)] = priority
-
-        if tags_kr:
-            primary_tag_idx = tag_priorities.index(max(tag_priorities))
-            primary_tag = tags_kr[primary_tag_idx]
+    for tag in tags_jp:
+        cached_tag = get_cached_tag(tag)
+        if cached_tag:
+            tags_kr.append(cached_tag['tag_kr'])
+            tag_priorities.append(cached_tag.get('priority', 10))
         else:
-            primary_tag = "기타"
+            tags_to_translate.append(tag)
+            tag_priorities.append(10)
 
-        data = {
-            'rj_code': rj_code,
-            'title_jp': title_elem.text.strip(),
-            'title_kr': None,
-            'primary_tag': primary_tag,
-            'tags_jp': tags_jp,
-            'tags': tags_kr,
-            'release_date': date_elem.text.strip() if date_elem else '',
-            'thumbnail_url': thumbnail_url,
-            'rating': float(rating_elem.text.strip()) if rating_elem else 0.0,
-            'link': url,
-            'platform': 'rj',
-            'maker': maker_elem.text.strip() if maker_elem else '',
-            'timestamp': time.time()
-        }
-        cache_data('rj', rj_code, data)
-        logger.info(f"Successfully fetched DLsite data for RJ code: {rj_code}")
-        return data
-    except Exception as e:
-        logger.error(f"Error fetching DLsite for RJ code {rj_code}: {e}", exc_info=True)
-        return None
+    if tags_to_translate:
+        translated_tags = translate_with_gpt_batch(tags_to_translate, batch_idx=rj_code)
+        for jp, kr in zip(tags_to_translate, translated_tags):
+            priority = 10
+            if kr in ["RPG", "액션", "판타지"]:
+                priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
+            tags_kr.append(kr)
+            cache_tag(jp, kr, priority)
+            tag_priorities[tags_kr.index(kr)] = priority
 
-# Steam 데이터 처리 (기존 유지)
+    if tags_kr:
+        primary_tag_idx = tag_priorities.index(max(tag_priorities))
+        primary_tag = tags_kr[primary_tag_idx]
+    else:
+        primary_tag = "기타"
+
+    processed_data = {
+        'rj_code': rj_code,
+        'title_jp': item.get('title_jp'),
+        'title_kr': None,
+        'primary_tag': primary_tag,
+        'tags_jp': tags_jp,
+        'tags': tags_kr,
+        'release_date': item.get('release_date', ''),
+        'thumbnail_url': item.get('thumbnail_url', ''),
+        'rating': item.get('rating', 0.0),
+        'link': item.get('link', ''),
+        'platform': 'rj',
+        'maker': item.get('maker', ''),
+        'timestamp': time.time()
+    }
+    cache_data('rj', rj_code, processed_data)
+    return processed_data
+
+# Steam 데이터 처리
 def fetch_from_steam(identifier):
     cached = get_cached_data('steam', identifier)
     if cached:
@@ -312,25 +200,39 @@ def process_games():
         logger.info(f"Task {request.headers.get('X-Cloud-Trace-Context', 'unknown')}: Processing {len(items)} items")
 
         results = []
-        for item in items:
-            rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
-            if rj_match:
-                rj_code = rj_match.group(0).upper()
-                cached = get_cached_data('rj', rj_code)
-                if cached:
-                    results.append(cached)
-                    continue
-                data = fetch_from_dlsite_direct(rj_code)
-                if data:
-                    results.append(data)
+        missing = []
+
+        # 문자열 배열 (초기 요청) 또는 객체 배열 (크롤링 데이터) 처리
+        if items and isinstance(items[0], str):
+            # 초기 요청: 캐시 확인
+            for item in items:
+                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
+                if rj_match:
+                    rj_code = rj_match.group(0).upper()
+                    cached = get_cached_data('rj', rj_code)
+                    if cached:
+                        results.append(cached)
+                    else:
+                        missing.append(rj_code)
+                        results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
                 else:
-                    results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
-            else:
-                data = fetch_from_steam(item)
-                results.append(data)
+                    data = fetch_from_steam(item)
+                    results.append(data)
+        else:
+            # 크롤링 데이터 처리
+            for item in items:
+                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item.get('rj_code', ''), re.IGNORECASE)
+                if rj_match and 'error' not in item:
+                    processed = process_rj_item(item)
+                    results.append(processed)
+                elif 'error' in item:
+                    results.append(item)
+                else:
+                    data = fetch_from_steam(item.get('title', item))
+                    results.append(data)
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
-        return jsonify({'results': results, 'task_id': task_id})
+        return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
     except Exception as e:
         logger.error(f"Error processing games: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
@@ -341,20 +243,6 @@ def get_progress(task_id):
         return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
     except Exception as e:
         logger.error(f"Error fetching progress for task {task_id}: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/dlsite/<rj_code>', methods=['GET'])
-def get_dlsite_data(rj_code):
-    try:
-        rj_code = rj_code.upper()
-        if not re.match(r'^RJ\d{6,8}$', rj_code):
-            return jsonify({'error': 'Invalid RJ code format'}), 400
-        data = fetch_from_dlsite_direct(rj_code)
-        if data:
-            return jsonify(data)
-        return jsonify({'error': f'Game not found for {rj_code}'}), 404
-    except Exception as e:
-        logger.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
