@@ -99,7 +99,7 @@ def translate_with_gpt_batch(tags, batch_idx=""):
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": R"system", "content": "You are a translator specializing in Japanese to Korean."},
+                {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=100
@@ -184,6 +184,7 @@ def process_steam_item(identifier):
 def process_games():
     try:
         data = request.get_json()
+        logger.info(f"Received request with data: {json.dumps(data, ensure_ascii=False)[:1000]}")
         items = data.get('items', [])
         logger.info(f"Processing {len(items)} items")
 
@@ -218,15 +219,17 @@ def process_games():
                     results.append(process_steam_item(item.get('title', item)))
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
+        logger.info(f"Returning response for task_id: {task_id}")
         return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
     except Exception as e:
-        logger.error(f"Error processing games: {e}")
+        logger.error(f"Error processing games: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
-# 진행 상황 엔드포인트 (단순화)
+# 진행 상황 엔드포인트
 @app.route('/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     try:
+        logger.info(f"Progress request for task_id: {task_id}")
         return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
     except Exception as e:
         logger.error(f"Progress error for task {task_id}: {e}")

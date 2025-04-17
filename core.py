@@ -62,7 +62,6 @@ class FetchWorker(QThread):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
         }
-
         response = requests.get(url, headers=headers, timeout=10)
         response.encoding = 'utf-8'
 
@@ -115,9 +114,18 @@ class FetchWorker(QThread):
         )
     )
     def make_request(self, url, method='post', json_data=None):
-        if method == 'post':
-            return requests.post(url, json=json_data, timeout=30)
-        return requests.get(url, timeout=10)
+        logging.debug(f"Sending {method.upper()} request to {url} with data: {json_data}")
+        try:
+            if method == 'post':
+                response = requests.post(url, json=json_data, timeout=30)
+            else:
+                response = requests.get(url, timeout=10)
+            logging.debug(f"Received response: status={response.status_code}, content={response.text[:1000]}")
+            response.raise_for_status()
+            return response
+        except Exception as e:
+            logging.error(f"Request failed: {e}")
+            raise
 
     def run(self):
         try:
@@ -128,14 +136,10 @@ class FetchWorker(QThread):
                 return
 
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
-            logging.info(f"Starting fetch for {total_items} items")
+            logging.info(f"Starting fetch for {total_items} items: {self.items}")
 
             # 1. Firestore 캐시 확인
             response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
-            if response.status_code != 200:
-                self.error.emit(f"서버 오류: 상태 코드 {response.status_code} - {response.text}")
-                return
-
             response_data = response.json()
             results = response_data.get("results", [])
             missing = response_data.get("missing", [])
@@ -168,9 +172,6 @@ class FetchWorker(QThread):
             # 3. 로컬 크롤링 결과를 Firestore에 저장
             if local_results:
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
-                if response.status_code != 200:
-                    self.error.emit(f"Firestore 저장 실패: 상태 코드 {response.status_code} - {response.text}")
-                    return
                 response_data = response.json()
                 results = response_data.get("results", [])  # 최종 결과로 갱신
 
@@ -265,14 +266,16 @@ class MainWindowLogic(MainWindowUI):
             self.table.setUpdatesEnabled(False)
             for row, (result, data) in enumerate(zip(self.results, game_data)):
                 result['game_data'] = data
+                rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", result['original'], re.IGNORECASE)
+                rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else '기타'
+
                 if "error" in data:
                     logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data['error']}")
-                    result['suggested'] = f"[기타][기타]{result['original']}"
+                    result['suggested'] = f"[{rj_code}][기타]{result['original']}"  # RJ 코드 유지
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
                     continue
 
-                rj_code = data.get('rj_code', '기타')
                 tag = data.get('primary_tag', '기타')
                 title = data.get('title_kr', data.get('title_jp', result['original']))
                 maker = data.get('maker', '')
@@ -333,8 +336,8 @@ class MainWindowLogic(MainWindowUI):
         self.table.setUpdatesEnabled(False)
         for idx, original in enumerate(files):
             rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
-            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else None
-            suggested = f"[{rj_code}][기타]{original}" if rj_match else f"[기타][기타]{original}"
+            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else '기타'
+            suggested = f"[{rj_code}][기타]{original}"
 
             result = {
                 'original': original,
