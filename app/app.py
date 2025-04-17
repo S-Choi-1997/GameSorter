@@ -5,6 +5,7 @@ import time
 from urllib.parse import urljoin
 import psutil
 import requests
+import re
 from flask import Flask, request, jsonify
 from google.cloud import firestore
 from bs4 import BeautifulSoup
