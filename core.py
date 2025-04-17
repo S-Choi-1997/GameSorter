@@ -27,17 +27,17 @@ class FetchWorker(QThread):
         self.task_id = None
 
     @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+        stop=tenacity.stop_after_attempt(5),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=15),
         retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
         before_sleep=lambda retry_state: logging.warning(
-            f"Retrying request (attempt {retry_state.attempt_number}/3) after {retry_state.next_action.sleep} seconds"
+            f"Retrying request (attempt {retry_state.attempt_number}/5) after {retry_state.next_action.sleep} seconds"
         )
     )
     def make_request(self, url, method='post', json_data=None):
         if method == 'post':
             return requests.post(url, json=json_data, timeout=30)
-        return requests.get(url, timeout=5)
+        return requests.get(url, timeout=10)
 
     def run(self):
         try:
@@ -68,26 +68,29 @@ class FetchWorker(QThread):
                 self.log.emit("데이터 가져오기 완료")
                 return
 
-            timeout = 300  # 5분 타임아웃
+            timeout = 600  # 10분 타임아웃
             start_time = time.time()
             while time.time() - start_time < timeout:
-                progress_response = self.make_request(f"{self.server_url}/progress/{self.task_id}", method='get')
-                if progress_response.status_code != 200:
-                    self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
-                    return
+                try:
+                    progress_response = self.make_request(f"{self.server_url}/progress/{self.task_id}", method='get')
+                    if progress_response.status_code != 200:
+                        self.error.emit(f"진행 상황 조회 실패: {progress_response.text}")
+                        return
 
-                progress = progress_response.json()
-                completed = progress.get("completed", 0)
-                total = progress.get("total", total_items)
-                status = progress.get("status", "processing")
+                    progress = progress_response.json()
+                    completed = progress.get("completed", 0)
+                    total = progress.get("total", total_items)
+                    status = progress.get("status", "processing")
 
-                percentage = int((completed / total) * 100)
-                self.progress.emit(percentage)
-                self.log.emit(f"처리 중: {completed}/{total} ({percentage}%)")
+                    percentage = int((completed / total) * 100)
+                    self.progress.emit(percentage)
+                    self.log.emit(f"처리 중: {completed}/{total} ({percentage}%)")
 
-                if status == "completed":
-                    break
-                time.sleep(1)
+                    if status == "completed":
+                        break
+                    time.sleep(2)
+                except requests.exceptions.RequestException as e:
+                    logging.warning(f"Progress request failed: {e}, retrying...")
 
             if status != "completed":
                 self.error.emit("작업이 타임아웃되었습니다")
@@ -153,6 +156,7 @@ class MainWindowLogic(MainWindowUI):
     def fetch_game_data_and_update(self):
         if not self.results:
             self.log_label.setText("먼저 폴더를 선택하세요.")
+            QMessageBox.warning(self, "경고", "폴더를 선택하세요.")
             return
 
         self.log_label.setText("서버에서 데이터 가져오는 중...")
@@ -178,37 +182,46 @@ class MainWindowLogic(MainWindowUI):
         self.worker.start()
 
     def on_fetch_finished(self, game_data):
-        if not game_data:
-            self.log_label.setText("데이터 가져오기 실패")
-            return
+        try:
+            if not game_data:
+                self.log_label.setText("데이터 가져오기 실패")
+                QMessageBox.warning(self, "오류", "데이터를 가져오지 못했습니다.")
+                return
 
-        error_count = 0
-        for result, data in zip(self.results, game_data):
-            result['game_data'] = data
-            if "error" in data:
-                logging.warning(f"Error for {data.get('rj_code', 'Unknown')}: {data['error']}")
-                result['suggested'] = f"[기타][기타]{result['original']}"
-                error_count += 1
-                continue
+            error_count = 0
+            self.table.setUpdatesEnabled(False)
+            for row, (result, data) in enumerate(zip(self.results, game_data)):
+                result['game_data'] = data
+                if "error" in data:
+                    logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data['error']}")
+                    result['suggested'] = f"[기타][기타]{result['original']}"
+                    error_count += 1
+                    self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+                    continue
 
-            rj_code = data.get('rj_code', '기타')
-            tag = data.get('primary_tag', '기타')
-            title = data.get('title_kr', data.get('title', result['original']))
-            maker = data.get('maker', '')
+                rj_code = data.get('rj_code', '기타')
+                tag = data.get('primary_tag', '기타')
+                title = data.get('title_kr', data.get('title_jp', result['original']))
+                maker = data.get('maker', '')
 
-            title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
-            title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-            maker_tag = f"[{maker}]" if maker else ""
-            result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
-            logging.debug(f"Processed {rj_code}: thumbnail_url={data.get('thumbnail_url', 'None')}")
+                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+                title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+                maker_tag = f"[{maker}]" if maker else ""
+                result['suggested'] = f"[{rj_code}][{tag}]{maker_tag}{title}"
+                logging.debug(f"Processed {rj_code or title}: thumbnail_url={data.get('thumbnail_url', 'None')}")
 
-        self.table.setUpdatesEnabled(False)
-        for row in range(self.table.rowCount()):
-            self.table.setItem(row, 2, QTableWidgetItem(self.results[row]['suggested']))
-        self.table.setUpdatesEnabled(True)
-        self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
-        if error_count > 0:
-            QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
+                self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+
+            self.table.setUpdatesEnabled(True)
+            self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
+            if error_count > 0:
+                QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
+            if error_count == len(self.results):
+                QMessageBox.warning(self, "경고", "모든 항목을 처리하지 못했습니다. RJ 코드가 유효한지 확인하세요.")
+        except Exception as e:
+            logging.error(f"on_fetch_finished error: {e}", exc_info=True)
+            self.log_label.setText("데이터 처리 중 오류 발생")
+            QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
 
     def on_fetch_error(self, error_msg):
         max_length = 100
@@ -277,50 +290,61 @@ class MainWindowLogic(MainWindowUI):
         self.update_select_all_state()
 
     def on_table_cell_clicked(self, row, column):
-        data = self.results[row]['game_data']
-        if not data or "error" in data:
-            self.game_data_panel.clear_game_data()
-            return
-        self.game_data_panel.load_game_data(data)
+        try:
+            data = self.results[row]['game_data']
+            if not data or "error" in data:
+                self.game_data_panel.clear_game_data()
+                return
+            self.game_data_panel.load_game_data(data)
+        except Exception as e:
+            logging.error(f"Table cell clicked error: {e}", exc_info=True)
+            self.log_label.setText("게임 데이터 로드 중 오류")
 
     def update_select_all_state(self):
-        if self.table.rowCount() == 0:
+        try:
+            if self.table.rowCount() == 0:
+                self.select_all_box.blockSignals(True)
+                self.select_all_box.setChecked(False)
+                self.select_all_box.setEnabled(False)
+                self.select_all_box.blockSignals(False)
+                return
+
+            all_checked = True
+            none_checked = True
+            for row in range(self.table.rowCount()):
+                chk = self.table.cellWidget(row, 0)
+                if chk.isChecked():
+                    none_checked = False
+                else:
+                    all_checked = False
+
             self.select_all_box.blockSignals(True)
-            self.select_all_box.setChecked(False)
-            self.select_all_box.setEnabled(False)
-            self.select_all_box.blockSignals(False)
-            return
-
-        all_checked = True
-        none_checked = True
-        for row in range(self.table.rowCount()):
-            chk = self.table.cellWidget(row, 0)
-            if chk.isChecked():
-                none_checked = False
+            self.select_all_box.setEnabled(True)
+            if all_checked:
+                self.select_all_box.setChecked(True)
+            elif none_checked:
+                self.select_all_box.setChecked(False)
             else:
-                all_checked = False
-
-        self.select_all_box.blockSignals(True)
-        self.select_all_box.setEnabled(True)
-        if all_checked:
-            self.select_all_box.setChecked(True)
-        elif none_checked:
-            self.select_all_box.setChecked(False)
-        else:
-            self.select_all_box.setTristate(True)
-            self.select_all_box.setCheckState(Qt.CheckState.PartiallyChecked)
-        self.select_all_box.blockSignals(False)
+                self.select_all_box.setTristate(True)
+                self.select_all_box.setCheckState(Qt.CheckState.PartiallyChecked)
+            self.select_all_box.blockSignals(False)
+        except Exception as e:
+            logging.error(f"Update select all state error: {e}", exc_info=True)
 
     def toggle_all_selection(self, state):
-        checked = state == Qt.Checked
-        self.log_label.setText("전체 선택 상태 변경 중...")
-        self.table.setUpdatesEnabled(False)
-        for row in range(self.table.rowCount()):
-            chk = self.table.cellWidget(row, 0)
-            chk.setChecked(checked)
-        self.table.setUpdatesEnabled(True)
-        self.log_label.setText(f"전체 선택 {'완료' if checked else '해제'}")
-        self.update_select_all_state()
+        try:
+            checked = state == Qt.Checked
+            self.log_label.setText("전체 선택 상태 변경 중...")
+            self.table.setUpdatesEnabled(False)
+            for row in range(self.table.rowCount()):
+                chk = self.table.cellWidget(row, 0)
+                chk.setChecked(checked)
+            self.table.setUpdatesEnabled(True)
+            self.log_label.setText(f"전체 선택 {'완료' if checked else '해제'}")
+            self.update_select_all_state()
+        except Exception as e:
+            logging.error(f"Toggle all selection error: {e}", exc_info=True)
+            self.log_label.setText("전체 선택 처리 중 오류")
 
     def get_unique_path(self, new_path):
         base, ext = os.path.splitext(new_path)
@@ -331,44 +355,49 @@ class MainWindowLogic(MainWindowUI):
         return new_path
 
     def rename_files(self):
-        total = self.table.rowCount()
-        self.progress_bar.setValue(0)
-        self.log_label.setText("파일 이름 변경 중...")
-        completed = 0
-        errors = []
+        try:
+            total = self.table.rowCount()
+            self.progress_bar.setValue(0)
+            self.log_label.setText("파일 이름 변경 중...")
+            completed = 0
+            errors = []
 
-        for row in range(total):
-            self.progress_bar.setValue(int((row + 1) / total * 100))
-            chk = self.table.cellWidget(row, 0)
-            if not chk.isChecked():
-                continue
+            for row in range(total):
+                self.progress_bar.setValue(int((row + 1) / total * 100))
+                chk = self.table.cellWidget(row, 0)
+                if not chk.isChecked():
+                    continue
 
-            original_path = self.results[row]['path']
-            original_name = os.path.basename(original_path)
-            new_name = self.results[row]['suggested']
+                original_path = self.results[row]['path']
+                original_name = os.path.basename(original_path)
+                new_name = self.results[row]['suggested']
 
-            if new_name == original_name or '[오류]' in new_name:
-                continue
+                if new_name == original_name or '[오류]' in new_name:
+                    continue
 
-            new_path = os.path.join(self.folder_path, new_name)
-            new_path = self.get_unique_path(new_path)
+                new_path = os.path.join(self.folder_path, new_name)
+                new_path = self.get_unique_path(new_path)
 
-            try:
-                self.log_label.setText(f"이름 변경: {original_name} → {new_name}")
-                os.rename(original_path, new_path)
-                self.results[row]['path'] = new_path
-                completed += 1
-                self.status_label.setText(f"파일: {total}개")
-                logging.info(f"Renamed: {original_name} -> {new_name}")
-            except Exception as e:
-                errors.append(f"{original_path}: {e}")
-                logging.error(f"Rename error: {original_path}: {str(e)}")
+                try:
+                    self.log_label.setText(f"이름 변경: {original_name} → {new_name}")
+                    os.rename(original_path, new_path)
+                    self.results[row]['path'] = new_path
+                    completed += 1
+                    self.status_label.setText(f"파일: {total}개")
+                    logging.info(f"Renamed: {original_name} -> {new_name}")
+                except Exception as e:
+                    errors.append(f"{original_path}: {e}")
+                    logging.error(f"Rename error: {original_path}: {str(e)}")
 
-        self.progress_bar.setValue(100)
-        if errors:
-            QMessageBox.warning(self, "오류", f"다음 파일 이름 변경 실패:\n" + "\n".join(errors[:5]))
-        self.log_label.setText(f"이름 변경 완료: {completed}개 파일 변경됨.")
-        self.update_select_all_state()
+            self.progress_bar.setValue(100)
+            if errors:
+                QMessageBox.warning(self, "오류", f"다음 파일 이름 변경 실패:\n" + "\n".join(errors[:5]))
+            self.log_label.setText(f"이름 변경 완료: {completed}개 파일 변경됨.")
+            self.update_select_all_state()
+        except Exception as e:
+            logging.error(f"Rename files error: {e}", exc_info=True)
+            self.log_label.setText("파일 이름 변경 중 오류")
+            QMessageBox.critical(self, "오류", f"파일 이름 변경 중 오류: {str(e)}")
 
 if __name__ == "__main__":
     import sys

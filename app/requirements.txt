@@ -6,4 +6,5 @@ beautifulsoup4>=4.11.0
 gunicorn>=20.1.0
 python-dotenv
 psutil>=5.9.0
-tenacity>=8.2.3
+PySide6>=6.5.0
+tenacity>=8.2.0

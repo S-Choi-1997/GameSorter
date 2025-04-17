@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import os
 import time
 import logging
+import signal
+import sys
 from dotenv import load_dotenv
 from openai import OpenAI
 import hashlib
@@ -43,6 +45,20 @@ except Exception as e:
 # 진행 상황 저장
 progress_data = {}
 
+# SIGTERM 핸들러
+def handle_sigterm(*args):
+    logger.info("Received SIGTERM, shutting down gracefully")
+    # 진행 상황 저장
+    try:
+        with open('progress_data.json', 'w') as f:
+            json.dump(progress_data, f)
+        logger.info("Progress data saved")
+    except Exception as e:
+        logger.error(f"Error saving progress data: {e}")
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, handle_sigterm)
+
 # 재시도 데코레이터
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(3),
@@ -66,7 +82,7 @@ def get_cached_tag(tag_jp):
     tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
     tag_doc = tag_ref.get()
     if tag_doc.exists:
-        logger.info(f"Cache hit for tag: {tag_jp}")
+        logger.debug(f"Cache hit for tag: {tag_jp}")
         return tag_doc.to_dict()
     return None
 
@@ -76,7 +92,7 @@ def cache_tag(tag_jp, tag_kr, priority=10):
     tag_ref = db.collection('tags').document(hashlib.md5(tag_jp.encode('utf-8')).hexdigest())
     try:
         tag_ref.set({'tag_jp': tag_jp, 'tag_kr': tag_kr, 'priority': priority})
-        logger.info(f"Cached tag: {tag_jp} -> {tag_kr} with priority {priority}")
+        logger.debug(f"Cached tag: {tag_jp} -> {tag_kr} with priority {priority}")
     except Exception as e:
         logger.error(f"Error caching tag: {e}", exc_info=True)
 
@@ -115,17 +131,29 @@ def generate_doc_id(title):
     return hashlib.md5(title.encode('utf-8')).hexdigest()
 
 # DLsite 직접 스크래핑 함수
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+    retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException),
+    before_sleep=lambda retry_state: logger.warning(
+        f"Retrying DLsite request (attempt {retry_state.attempt_number}/3)"
+    )
+)
 def fetch_from_dlsite_direct(rj_code):
     url = f'https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5'
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://www.dlsite.com/maniax/',
+        'DNT': '1',
+        'Connection': 'keep-alive'
     }
     try:
         time.sleep(1)
         logger.info(f"Fetching DLsite data for RJ code: {rj_code}")
-        response = requests.get(url, headers=headers, timeout=10)
+        session = requests.Session()
+        response = session.get(url, headers=headers, timeout=10)
         response.encoding = 'utf-8'
         if response.status_code != 200:
             logger.error(f"HTTP Error: Status code {response.status_code} for RJ code {rj_code}")
@@ -148,7 +176,7 @@ def fetch_from_dlsite_direct(rj_code):
             thumbnail_url = ''
         else:
             thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
-            logger.info(f"Thumbnail URL found: {thumbnail_url}")
+            logger.debug(f"Thumbnail URL found: {thumbnail_url}")
 
         tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip() and '[Error]' not in tag.text][:5]
         tags_kr = []
@@ -240,7 +268,15 @@ def fetch_from_firestore(title, platform):
     if game.exists:
         logger.info(f"Cache hit for {platform} game: {title}")
         return game.to_dict()
-    return None
+    logger.debug(f"No cache found for {platform} game: {title}")
+    return {
+        'title': title,
+        'platform': platform,
+        'primary_tag': '기타',
+        'tags': ['기타'],
+        'thumbnail_url': '',
+        'timestamp': time.time()
+    }
 
 # 여러 제목 처리 엔드포인트
 @app.route('/games', methods=['POST'])
@@ -280,14 +316,7 @@ def get_games():
                         batch_results.append({"rj_code": rj_code, "platform": "rj", "error": f"Game not found for {rj_code}"})
                 else:
                     game_data = fetch_from_firestore(item, 'steam')
-                    if game_data:
-                        batch_results.append(game_data)
-                    else:
-                        game_data = fetch_from_firestore(item, 'other')
-                        if game_data:
-                            batch_results.append(game_data)
-                        else:
-                            batch_results.append({"title": item, "platform": "steam", "error": f"Game not found for {item}"})
+                    batch_results.append(game_data)
 
             if titles_to_translate:
                 translated_titles = translate_with_gpt_batch(titles_to_translate, batch_idx=batch_idx)
@@ -347,10 +376,16 @@ def get_progress(task_id):
 
 # 이미지 프록시 엔드포인트
 @app.route('/proxy_image/<path:image_url>')
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+    retry=tenacity.retry_if_exception_type(requests.exceptions.RequestException)
+)
 def proxy_image(image_url):
     try:
         response = requests.get(image_url, stream=True, timeout=5)
         if response.status_code == 200:
+            logger.debug(f"Proxied image: {image_url}")
             return Response(response.iter_content(chunk_size=1024), content_type=response.headers['Content-Type'])
         logger.error(f"Image proxy failed: Status code {response.status_code} for {image_url}")
         return {"error": "Image not found"}, 404
