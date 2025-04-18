@@ -167,6 +167,32 @@ class FetchWorker(QThread):
         except Exception as e:
             logging.error(f"Request failed: {e}")
             raise
+    
+    def retry_fetch(self, request_items):
+        retry_rj_codes = [
+            item.get("rj_code") for item in request_items
+            if item.get("platform") == "rj" and item.get("rj_code")
+        ]
+
+        if not retry_rj_codes:
+            self.log.emit("재요청할 항목이 없습니다.")
+            return
+
+        self.log.emit("🌀 5초 후 캐시 재요청 중...")
+        time.sleep(5)
+
+        try:
+            response_retry = self.make_request(
+                f"{self.server_url}/games",
+                method='post',
+                json_data={"items": retry_rj_codes}
+            )
+            reloaded_results = response_retry.get("results", [])
+            self.result.emit(reloaded_results)
+            self.log.emit(f"✅ 재요청 완료: {len(reloaded_results)}개 항목")
+        except Exception as e:
+            logging.error(f"재요청 실패: {e}", exc_info=True)
+            self.log.emit(f"재요청 실패: {str(e)}")
 
     def run(self):
         try:
@@ -310,6 +336,10 @@ class FetchWorker(QThread):
 
             logging.info(f"Returning {len(final_results)} results")
             self.result.emit(final_results)
+            # ✅ 5초 후 재요청
+            time.sleep(5)
+            self.retry_fetch(request_items)
+            self.log.emit(f"재로딩 완료")
 
         except Exception as e:
             self.error.emit(f"작업 실패: {str(e)}")

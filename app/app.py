@@ -102,19 +102,21 @@ def get_cached_tag(tag_jp):
 
 def normalize_tag_id(tag_jp):
     # Firestore 문서 ID로 쓸 수 있도록 슬래시 제거 또는 대체
-    return tag_jp.replace("/", "__")
+    return tag_jp.replace("/", "-")
 def cache_tag(tag_jp, tag_kr, priority):
     if not db:
         return
     try:
         safe_tag_id = normalize_tag_id(tag_jp)
+        normalized_tag_kr = normalize_tag_id(tag_kr)  # 🔥 하이픈 등으로 정제
+
         doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(safe_tag_id)
         doc_ref.set({
             'tag_jp': tag_jp,        # 원본 그대로 저장
-            'tag_kr': tag_kr,
+            'tag_kr': normalized_tag_kr,
             'priority': priority
         })
-        logger.info(f"Cached tag: {tag_jp} → {tag_kr} (id: {safe_tag_id})")
+        logger.info(f"Cached tag: {tag_jp} → {normalized_tag_kr} (id: {safe_tag_id})")
     except Exception as e:
         logger.error(f"Tag cache error for {tag_jp}: {e}")
 
@@ -219,6 +221,8 @@ def process_rj_item(item):
         return cached
 
     tags_jp = item.get('tags_jp', [])
+    tags_jp = [tag.strip() for tag in tags_jp]  # 공백 제거
+    tags_jp = [normalize_tag_id(tag) for tag in tags_jp]
     title_jp = item.get('title_jp', '')
     tags_kr = []
     tags_to_translate = []
@@ -480,6 +484,7 @@ def process_and_save_rj_item(item):
     rj_code = item.get("rj_code", "unknown")
     title_jp = item.get("title_jp", "")
     tags_jp = item.get("tags_jp", [])
+    tags_jp = [normalize_tag_id(tag) for tag in tags_jp]
 
     if not title_jp and not tags_jp:
         logger.warning(f"[⚠️ INCOMPLETE ITEM] {rj_code}: title_jp/tags_jp 없음")
