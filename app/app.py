@@ -77,7 +77,8 @@ def get_cached_tag(tag_jp):
     if not db:
         return None
     try:
-        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
+        safe_tag_id = normalize_tag_id(tag_jp)
+        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(safe_tag_id)
         doc = doc_ref.get()
         if doc.exists:
             return doc.to_dict()
@@ -86,17 +87,22 @@ def get_cached_tag(tag_jp):
         logger.error(f"Tag cache error for {tag_jp}: {e}")
         return None
 
+
+def normalize_tag_id(tag_jp):
+    # Firestore 문서 ID로 쓸 수 있도록 슬래시 제거 또는 대체
+    return tag_jp.replace("/", "__")
 def cache_tag(tag_jp, tag_kr, priority):
     if not db:
         return
     try:
-        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(tag_jp)
+        safe_tag_id = normalize_tag_id(tag_jp)
+        doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(safe_tag_id)
         doc_ref.set({
-            'tag_jp': tag_jp,
+            'tag_jp': tag_jp,        # 원본 그대로 저장
             'tag_kr': tag_kr,
             'priority': priority
         })
-        logger.info(f"Cached tag: {tag_jp} -> {tag_kr}")
+        logger.info(f"Cached tag: {tag_jp} → {tag_kr} (id: {safe_tag_id})")
     except Exception as e:
         logger.error(f"Tag cache error for {tag_jp}: {e}")
 
