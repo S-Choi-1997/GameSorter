@@ -375,6 +375,22 @@ def process_games():
         return jsonify({'error': str(e)}), 500
 
 
+def save_to_firestore(platform, identifier, data):
+    if not db:
+        logger.error("Firestore client not initialized")
+        return
+    try:
+        if not identifier:
+            logger.warning(f"[⚠️ 저장 생략] identifier가 없음: {data}")
+            return
+        normalized_id = identifier.upper() if platform == 'rj' else identifier
+        doc_ref = db.collection('games').document(platform).collection('items').document(normalized_id)
+        doc_ref.set(data, merge=True)
+        logger.info(f"[💾 저장 완료] {platform}/items/{normalized_id}")
+    except Exception as e:
+        logger.error(f"[🔥 Firestore 저장 실패] {platform}:{identifier} → {e}", exc_info=True)
+
+
 # 진행 상황 엔드포인트
 @app.route('/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
