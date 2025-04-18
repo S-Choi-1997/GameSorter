@@ -310,6 +310,46 @@ def get_progress(task_id):
     except Exception as e:
         logger.error(f"Progress error for task {task_id}: {e}")
         return jsonify({'error': str(e)}), 500
+@app.route("/sync-tags", methods=["POST"])
+def sync_tags_to_games():
+    try:
+        logger.info("Starting tag re-sync for all games...")
+
+        # 1. 태그 변환 테이블 생성
+        tag_map = {
+            doc.id: doc.to_dict().get("tag_kr", doc.id)
+            for doc in db.collection("tags").document("jp_to_kr").collection("mappings").stream()
+        }
+        tag_priority = {
+            doc.id: doc.to_dict().get("priority", 10)
+            for doc in db.collection("tags").document("jp_to_kr").collection("mappings").stream()
+        }
+
+        # 2. RJ 게임 문서들 업데이트
+        games_ref = db.collection("games").document("rj").collection("items")
+        updated_count = 0
+
+        for doc in games_ref.stream():
+            game = doc.to_dict()
+            tags_jp = game.get("tags_jp", [])
+            if not tags_jp:
+                continue
+
+            tags_kr = [tag_map.get(jp, "기타") for jp in tags_jp]
+            primary_tag = max(tags_kr, key=lambda t: tag_priority.get(t, 0), default="기타")
+
+            games_ref.document(doc.id).update({
+                "tags": tags_kr,
+                "primary_tag": primary_tag
+            })
+            updated_count += 1
+
+        logger.info(f"Completed tag sync. Updated {updated_count} documents.")
+        return jsonify({"updated": updated_count})
+
+    except Exception as e:
+        logger.error(f"/sync-tags error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # GCP에서만 실행
