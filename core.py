@@ -352,7 +352,6 @@ class MainWindowLogic(MainWindowUI):
             self.table.setUpdatesEnabled(False)
 
             for row, result in enumerate(self.results):
-                # 결과에 해당하는 game_data 찾기
                 match = None
                 for d in game_data:
                     if result.get("rj_code") and d.get("rj_code") == result.get("rj_code"):
@@ -368,6 +367,7 @@ class MainWindowLogic(MainWindowUI):
                     result['selected_tag'] = "기타"
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+
                     combo = self.table.cellWidget(row, 3)
                     if not combo:
                         combo = QComboBox()
@@ -395,18 +395,10 @@ class MainWindowLogic(MainWindowUI):
                 if not tag or tag.strip() == "":
                     tag = "기타"
 
-                # ✅ 공백 제거 후 빈 제목이면 대괄호만 출력
-                final_title = final_title.strip()
-                if not final_title:
-                    result['suggested'] = f"[{rj_code}][{tag}]"
-                else:
-                    result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
-
                 # ✅ 제목 판단 + Fallback 처리
                 original_title = result.get('original_title') or result.get('original')
                 title_kr = match.get('title_kr') or match.get('title_jp') or original_title
 
-                # ✅ 조건 개선
                 if not original_title or original_title.strip() == "" or len(original_title.strip()) < 2:
                     final_title = title_kr
                 elif needs_translation(original_title):
@@ -414,17 +406,21 @@ class MainWindowLogic(MainWindowUI):
                 else:
                     final_title = original_title
 
-                # ✅ fallback 한 번 더: title_kr도 없을 때 최소한 rj_code라도
                 if not final_title or final_title.strip() == "":
-                    final_title = rj_code  # 최소한 이건 있어야 함
-                    
-                    
+                    final_title = rj_code
 
-                final_title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", final_title, flags=re.IGNORECASE).strip()
+                final_title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*", "", final_title, flags=re.IGNORECASE)
                 final_title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", final_title, flags=re.IGNORECASE).strip()
                 final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-')
+                final_title = final_title.strip() if final_title else ""
 
-                result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
+                if not final_title:
+                    result['suggested'] = f"[{rj_code}][{tag}]"
+                else:
+                    result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
+
+
+                result['selected_tag'] = tag
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
                 combo = self.table.cellWidget(row, 3)
@@ -448,10 +444,12 @@ class MainWindowLogic(MainWindowUI):
             self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
             if error_count > 0:
                 QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
+
         except Exception as e:
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
             QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
+
 
 
 

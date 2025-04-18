@@ -296,8 +296,9 @@ def process_games():
                 if rj_match:
                     rj_code = rj_match.group(0).upper()
                     cached = get_cached_data('rj', rj_code)
-                    if cached:
-                        results.append(cached)  # ✅ 여기서 error 포함되었더라도 그냥 써야 함
+                    if cached is not None:
+                        # ❗ error 포함되어도 무조건 append, missing에는 넣지 않음
+                        results.append(cached)
                     else:
                         missing.append(rj_code)
                         results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
@@ -395,7 +396,7 @@ def reorder_tags():
 
             original_tags = tags[:]
             # 🔽 우선순위 정렬
-            sorted_tags = sorted(tags, key=lambda t: tag_priority.get(t, 0), reverse=True)
+            sorted_tags = sorted(tags, key=lambda t: -tag_priority.get(t, 10))  # ✅ 높은 점수 우선
             primary_tag = sorted_tags[0] if sorted_tags else "기타"
 
             # ✅ 변경사항 있을 경우에만 업데이트
