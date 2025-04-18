@@ -153,7 +153,11 @@ class FetchWorker(QThread):
 
             if self.use_firestore_cache:
                 logging.info("Checking Firestore cache")
-                response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
+                response = self.make_request(
+                    f"{self.server_url}/games",
+                    method='post',
+                    json_data={"items": self.items}
+                )
                 response_data = response.json()
                 missing = response_data.get("missing", [])
                 logging.info(f"🔥 서버 응답 missing: {missing}")
@@ -174,7 +178,11 @@ class FetchWorker(QThread):
                         local_results.append(data)
                     except Exception as e:
                         logging.error(f"Local crawl failed for {rj_code}: {e}")
-                        local_results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
+                        local_results.append({
+                            'error': f'Game not found for {rj_code}',
+                            'platform': 'rj',
+                            'rj_code': rj_code
+                        })
                 else:
                     local_results.append({
                         'title': item,
@@ -191,36 +199,31 @@ class FetchWorker(QThread):
 
             if local_results:
                 logging.info(f"Sending {len(local_results)} crawled items to server")
-                self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
+                self.make_request(
+                    f"{self.server_url}/games",
+                    method='post',
+                    json_data={"items": local_results}
+                )
 
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
 
             # ✅ 최종 fetch 후 한 번만 emit
-            logging.info("Re-fetching all items from cache after saving translated ones")
+            logging.info("📦 캐시에서 전체 데이터 재조회 (최종)")
             final_response = self.make_request(
                 f"{self.server_url}/games",
                 method='post',
                 json_data={"items": self.items}
             )
             final_data = final_response.json().get("results", [])
-            self.result.emit(final_data)  # UI는 여기서만 갱신
+            self.result.emit(final_data)  # ✅ 딱 한 번만 emit
 
-            
-            
-            logging.info("Re-fetching all items from cache after saving translated ones")
-            final_response = self.make_request(
-                f"{self.server_url}/games",
-                method='post',
-                json_data={"items": self.items}
-            )
-            final_data = final_response.json().get("results", [])
-            self.result.emit(final_data)  # 최종 UI 업데이트
         except Exception as e:
             self.error.emit(f"작업 실패: {str(e)}")
             logging.error(f"FetchWorker error: {str(e)}", exc_info=True)
         finally:
             self.finished.emit()
+
 
 class MainWindowLogic(MainWindowUI):
     def __init__(self):

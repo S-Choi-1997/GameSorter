@@ -188,12 +188,20 @@ def process_rj_item(item):
                 'timestamp': time.time()
             }
 
+        # ✅ 에러가 있어도 최소 구조는 정상 데이터처럼 구성
         error_data = {
             'rj_code': rj_code,
-            'error': item.get('error'),
             'platform': 'rj',
+            'title': "알 수 없음",
+            'title_kr': "알 수 없음",
+            'title_jp': "不明",
+            'tags': ["기타"],
+            'tags_jp': ["その他"],
+            'primary_tag': "기타",
+            'error': item.get('error'),
             'timestamp': time.time()
         }
+
         logger.warning(f"[ERROR ITEM] 캐시에 저장: {rj_code}")
         cache_data('rj', rj_code, error_data)
         return error_data
