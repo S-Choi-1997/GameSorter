@@ -175,16 +175,16 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 # RJ 데이터 처리
 def process_rj_item(item):
     if 'error' in item:
-        rj_code = item.get('rj_code')
+        rj_code = item.get('rj_code') or 'invalid'
         error_data = {
             'rj_code': rj_code,
             'error': item.get('error'),
             'platform': 'rj',
             'timestamp': time.time()
         }
-        logger.warning(f"[ERROR ITEM] 캐시 시도: {json.dumps(error_data, ensure_ascii=False)}")
         cache_data('rj', rj_code, error_data)
         return error_data
+
 
 
     rj_code = item.get('rj_code')
@@ -297,10 +297,11 @@ def process_games():
                     rj_code = rj_match.group(0).upper()
                     cached = get_cached_data('rj', rj_code)
                     if cached:
-                        results.append(cached)
+                        results.append(cached)  # ✅ 여기서 error 포함되었더라도 그냥 써야 함
                     else:
                         missing.append(rj_code)
                         results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
+
                 else:
                     results.append(process_steam_item(item))
         else:
@@ -384,7 +385,7 @@ def reorder_tags():
         logger.info(f"✅ {len(tag_priority)}개의 태그 우선순위 로딩 완료")
 
         # 🔄 전체 게임 순회
-        games_ref = db.collection("games")
+        games_ref = db.collection("games").document("rj").collection("items")
         updated = 0
         for doc in games_ref.stream():
             data = doc.to_dict()

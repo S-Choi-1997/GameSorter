@@ -190,16 +190,21 @@ class FetchWorker(QThread):
 
             if local_results:
                 logging.info(f"Sending {len(local_results)} crawled items to server")
-                response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
-                response_data = response.json()
-                translated_results = response_data.get("results", [])
-                self.result.emit(translated_results)
-            else:
-                translated_results = response_data.get("results", [])
-                self.result.emit(translated_results)
+                self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
 
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
+
+            # ✅ 최종 fetch 후 한 번만 emit
+            logging.info("Re-fetching all items from cache after saving translated ones")
+            final_response = self.make_request(
+                f"{self.server_url}/games",
+                method='post',
+                json_data={"items": self.items}
+            )
+            final_data = final_response.json().get("results", [])
+            self.result.emit(final_data)  # UI는 여기서만 갱신
+
             
             
             logging.info("Re-fetching all items from cache after saving translated ones")
@@ -246,12 +251,22 @@ class MainWindowLogic(MainWindowUI):
             result = self.results[row]
             rj_code = result.get('rj_code') or "기타"
             game_data = result.get('game_data', {})
+            
             title = game_data.get('title_kr') or game_data.get('title_jp') or result['original']
             title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", title, flags=re.IGNORECASE).strip()
             title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", title, flags=re.IGNORECASE).strip()   
             title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+            
+            # ✅ 빈 문자열일 경우 대괄호 안 붙게 처리
+            title = title.strip()
+            if not title:
+                result['suggested'] = f"[{rj_code}][{tag}]"
+            else:
+                result['suggested'] = f"[{rj_code}][{tag}] {title}"
+            
             result['selected_tag'] = tag if tag else "기타"
             result['suggested'] = f"[{rj_code}][{result['selected_tag']}] {title}"
+            
             self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
             self.table.viewport().update()  # UI 즉시 갱신
             logging.debug(f"Updated suggested name for row {row}: {result['suggested']}")
@@ -373,20 +388,38 @@ class MainWindowLogic(MainWindowUI):
                 # 정상 데이터 처리
                 result['game_data'] = match
                 rj_code = result.get('rj_code') or match.get('rj_code') or "기타"
-                tags = match.get('tags') or ["기타"]
-                tag = match.get('primary_tag') or tags[0]
-                result['selected_tag'] = tag
 
-                # ✅ 제목 판단
+                tags = match.get('tags') or ["기타"]
+                tags = [t for t in tags if t.strip()]  # ✅ 빈 문자열 제거
+                tag = match.get('primary_tag') or (tags[0] if tags else "기타")
+                if not tag or tag.strip() == "":
+                    tag = "기타"
+
+                # ✅ 공백 제거 후 빈 제목이면 대괄호만 출력
+                final_title = final_title.strip()
+                if not final_title:
+                    result['suggested'] = f"[{rj_code}][{tag}]"
+                else:
+                    result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
+
+                # ✅ 제목 판단 + Fallback 처리
                 original_title = result.get('original_title') or result.get('original')
                 title_kr = match.get('title_kr') or match.get('title_jp') or original_title
 
-                if needs_translation(original_title):
+                # ✅ 조건 개선
+                if not original_title or original_title.strip() == "" or len(original_title.strip()) < 2:
+                    final_title = title_kr
+                elif needs_translation(original_title):
                     final_title = title_kr
                 else:
                     final_title = original_title
 
-                # 파일명에 쓸 제목
+                # ✅ fallback 한 번 더: title_kr도 없을 때 최소한 rj_code라도
+                if not final_title or final_title.strip() == "":
+                    final_title = rj_code  # 최소한 이건 있어야 함
+                    
+                    
+
                 final_title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", final_title, flags=re.IGNORECASE).strip()
                 final_title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", final_title, flags=re.IGNORECASE).strip()
                 final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-')
@@ -419,6 +452,7 @@ class MainWindowLogic(MainWindowUI):
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
             QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
+
 
 
     def on_fetch_error(self, error_msg):
