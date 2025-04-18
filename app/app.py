@@ -331,39 +331,49 @@ def process_games():
         if not items:
             return jsonify({'results': [], 'missing': [], 'task_id': 'none'})
 
-        # 문자열 배열 (캐시 확인) 또는 객체 배열 (크롤링 데이터) 처리
-        if isinstance(items[0], str):
-            for item in items:
-                rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
-                if rj_match:
-                    rj_code = rj_match.group(0).upper()
-                    cached = get_cached_data('rj', rj_code)
-                    if cached is not None:
-                        # ❗ error 포함되어도 무조건 append, missing에는 넣지 않음
-                        results.append(cached)
-                    else:
-                        missing.append(rj_code)
-                        results.append({'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code})
+        for item in items:
+            logger.info(f"[🔍 RECEIVED ITEM] {json.dumps(item, ensure_ascii=False)}")
 
+            # 캐시 저장 요청일 경우 (크롤링 성공 or 실패 후)
+            if item.get("timestamp"):
+                platform = item.get("platform", "rj")
+                rj_code = item.get("rj_code")
+                title = item.get("title_kr") or item.get("title") or rj_code
+
+                # 저장 처리
+                save_to_firestore(platform, rj_code, item)
+                logger.info(f"[💾 SAVED] {platform}/items/{rj_code}, title_kr={title}")
+                results.append(item)
+
+            # 캐시 확인 요청일 경우
+            else:
+                rj_code = item.get("rj_code")
+                platform = item.get("platform", "rj")
+
+                # RJ 없는 경우 steam 처리
+                if not rj_code:
+                    steam_fallback = process_steam_item(item.get("title", "untitled"))
+                    logger.info(f"[🎮 STEAM MODE] title={steam_fallback.get('title')}")
+                    results.append(steam_fallback)
+                    continue
+
+                # 캐시 확인
+                cached = get_cached_data(platform, rj_code)
+                if cached and cached.get("timestamp"):
+                    logger.info(f"[📦 CACHE HIT] {platform}:{rj_code}")
+                    results.append(cached)
                 else:
-                    results.append(process_steam_item(item))
-        else:
-            for item in items:
-                logger.info(f"[🔍 RECEIVED ITEM] {json.dumps(item, ensure_ascii=False)}")
-                rj_code = item.get('rj_code')
-                if rj_code and re.match(r'^[Rr][Jj]\d{6,8}$', rj_code, re.IGNORECASE) and 'error' not in item:
-                    results.append(process_rj_item(item))
-                elif 'error' in item:
-                    results.append(process_rj_item(item))
-                else:
-                    results.append(process_steam_item(item.get('title', item)))
+                    logger.info(f"[❌ CACHE MISS] {platform}:{rj_code}")
+                    missing.append(rj_code)
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
-        logger.info(f"Returning response for task_id: {task_id}, results: {len(results)}")
+        logger.info(f"Returning response for task_id: {task_id}, results: {len(results)}, missing: {len(missing)}")
         return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
+
     except Exception as e:
         logger.error(f"Error processing games: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
+
 
 # 진행 상황 엔드포인트
 @app.route('/progress/<task_id>', methods=['GET'])
