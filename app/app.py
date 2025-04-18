@@ -58,13 +58,21 @@ def get_cached_data(platform, identifier):
         doc = doc_ref.get()
         if doc.exists:
             data = doc.to_dict()
+
+            # ✅ 핵심 추가: timestamp가 없으면 캐시로 인정하지 않음
+            if not data.get("timestamp"):
+                logger.warning(f"Cached data found but missing timestamp: {platform}:{normalized_id}")
+                return None
+
             logger.debug(f"Cache hit for {platform}:{normalized_id}, title_kr={data.get('title_kr')}")
             return data
+
         logger.debug(f"Cache miss for {platform}:{normalized_id}")
         return None
     except Exception as e:
         logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
         return None
+
 
 def cache_data(platform, rj_code, data):
     try:

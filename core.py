@@ -9,29 +9,48 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 import logging
 import tenacity
-from ui import MainWindowUI
 from urllib.parse import urljoin
+from ui import MainWindowUI
 
+# Logging 설정
 LOG_TO_FILE = __debug__
 if LOG_TO_FILE:
     logging.basicConfig(
-        filename="gamesort.log", 
-        level=logging.DEBUG, 
+        filename="gamesort.log",
+        level=logging.DEBUG,
         format="%(asctime)s %(levelname)s %(message)s"
     )
 else:
     logging.basicConfig(level=logging.CRITICAL)
 
-# 클래스 밖 최상단에 위치
+# 유틸리티 함수
 def needs_translation(text):
-    import re
     return bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', text or ''))
 
-def is_valid_game_file(name):
+def is_valid_game_file(name, folder_path=None):
     valid_exts = ['.zip', '.7z', '.rar', '.tar', '.gz']
     ext = os.path.splitext(name)[1].lower()
+    if folder_path:
+        full_path = os.path.join(folder_path, name)
+        return os.path.isfile(full_path) and ext in valid_exts
     return ext in valid_exts
 
+def clean_rj_code(title, rj_code):
+    if not title or not rj_code:
+        return title
+    patterns = [
+        rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*",
+        rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b",
+        rf"\b{rj_code}\b",
+        rf"\bRJ\s*{rj_code[2:]}\b"
+    ]
+    cleaned = title
+    for pattern in patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    logging.debug(f"Clean RJ code: {title} -> {cleaned}")
+    return cleaned
+
+# FetchWorker 클래스 (변경 없음)
 class FetchWorker(QThread):
     progress = Signal(int)
     log = Signal(str)
@@ -39,10 +58,11 @@ class FetchWorker(QThread):
     error = Signal(str)
     finished = Signal()
 
-    def __init__(self, server_url, items, use_firestore_cache=True):
+    def __init__(self, server_url, items, folder_path=None, use_firestore_cache=True):
         super().__init__()
         self.server_url = server_url
         self.items = items
+        self.folder_path = folder_path
         self.use_firestore_cache = use_firestore_cache
 
     @tenacity.retry(
@@ -69,7 +89,7 @@ class FetchWorker(QThread):
             logging.info(f"Fetching DLsite data for {rj_code}")
             response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
             response.encoding = 'utf-8'
-            
+
             if response.status_code != 200:
                 raise Exception(f"DLsite fetch failed: Status {response.status_code}")
 
@@ -105,9 +125,13 @@ class FetchWorker(QThread):
                 if thumbnail_url and not thumbnail_url.startswith('http'):
                     thumbnail_url = urljoin(url, thumbnail_url)
 
+            original_title = title_elem.text.strip()
+            cleaned_title = clean_rj_code(original_title, rj_code)
+
             data = {
                 'rj_code': rj_code,
-                'title_jp': title_elem.text.strip(),
+                'title_jp': cleaned_title,
+                'original_title_jp': original_title,
                 'tags_jp': tags_jp,
                 'release_date': date_elem.text.strip() if date_elem else 'N/A',
                 'thumbnail_url': thumbnail_url,
@@ -117,7 +141,7 @@ class FetchWorker(QThread):
                 'rating': 0.0,
                 'timestamp': time.time()
             }
-            logging.info(f"Fetched DLsite data for {rj_code}, tags_jp={tags_jp}")
+            logging.info(f"Fetched DLsite data for {rj_code}, title_jp={cleaned_title}, tags_jp={tags_jp}")
             return data
         except Exception as e:
             logging.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
@@ -139,17 +163,15 @@ class FetchWorker(QThread):
             else:
                 response = requests.get(url, timeout=10)
             response.raise_for_status()
-            return response
+            return response.json()
         except Exception as e:
             logging.error(f"Request failed: {e}")
             raise
 
-
-    
     def run(self):
         try:
-            # ✅ 여기에 필터링 로직 추가
-            self.items = [item for item in self.items if is_valid_game_file(item)]
+            if self.folder_path:
+                self.items = [item for item in self.items if is_valid_game_file(item, self.folder_path)]
 
             total_items = len(self.items)
             if total_items == 0:
@@ -160,72 +182,134 @@ class FetchWorker(QThread):
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
             logging.info(f"Starting fetch for {total_items} items")
 
-            if self.use_firestore_cache:
-                logging.info("Checking Firestore cache")
-                response = self.make_request(
-                    f"{self.server_url}/games",
-                    method='post',
-                    json_data={"items": self.items}
-                )
-                response_data = response.json()
-                missing = response_data.get("missing", [])
-                logging.info(f"🔥 서버 응답 missing: {missing}")
-                self.task_id = response_data.get("task_id")
-                logging.info(f"Firestore cache check complete, missing items: {len(missing)}")
-            else:
-                logging.info("Firestore cache bypass mode enabled")
-                missing = self.items
-                response_data = {}
-
-            local_results = []
-            for i, item in enumerate(missing):
+            request_items = []
+            for item in self.items:
                 rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
                 if rj_match:
                     rj_code = rj_match.group(0).upper()
-                    try:
-                        data = self.get_dlsite_data(rj_code)
-                        local_results.append(data)
-                    except Exception as e:
-                        logging.error(f"Local crawl failed for {rj_code}: {e}")
-                        local_results.append({
-                            'error': f'Game not found for {rj_code}',
-                            'platform': 'rj',
-                            'rj_code': rj_code
-                        })
+                    request_items.append({'rj_code': rj_code, 'platform': 'rj'})
                 else:
-                    local_results.append({
-                        'title': item,
-                        'title_kr': item,
-                        'primary_tag': "기타",
-                        'tags': ["기타"],
-                        'thumbnail_url': '',
-                        'platform': 'steam',
-                        'timestamp': time.time()
+                    rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", item, re.IGNORECASE)
+                    rj_code = ''
+                    if rj_match:
+                        full_match = rj_match.group(0)
+                        rj_code = re.sub(r'[_\-\s]', '', full_match).upper()
+                    request_items.append({
+                        'rj_code': rj_code,
+                        'platform': 'rj' if rj_code else 'steam',
+                        'title': item
                     })
+                logging.debug(f"Request item: {request_items[-1]}")
 
-                self.progress.emit(int((i + 1) / len(missing) * 50))
-                self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
-
-            if local_results:
-                logging.info(f"Sending {len(local_results)} crawled items to server")
-                self.make_request(
+            response_data = []
+            try:
+                response = self.make_request(
                     f"{self.server_url}/games",
                     method='post',
-                    json_data={"items": local_results}
+                    json_data={"items": request_items}
                 )
+                response_data = response.get('results', [])
+                logging.info(f"Initial server response: {len(response_data)} items")
 
-            self.progress.emit(100)
-            self.log.emit("데이터 가져오기 완료")
+                # 🔥🔥 여기!! missing 항목 강제 크롤링 🔥🔥
+                missing = response.get("missing", [])
+                logging.warning(f"[core] 서버 응답 missing 개수: {len(missing)}")
+                for rj in missing:
+                    self.log.emit(f"🔍 누락된 항목 크롤링 시도: {rj}")
+                    try:
+                        data = self.get_dlsite_data(rj)
+                        # 🔁 서버에 다시 저장 요청
+                        self.make_request(
+                            f"{self.server_url}/games",
+                            method='post',
+                            json_data={"items": [data]}
+                        )
+                        logging.info(f"[core] 크롤링 및 저장 완료: {rj}")
+                    except Exception as e:
+                        logging.error(f"[core] 크롤링 실패: {rj} → {e}")
 
-            # ✅ 최종 fetch 후 한 번만 emit
-            logging.info("📦 캐시에서 전체 데이터 재조회 (최종)")
-            final_response = self.make_request(
-                f"{self.server_url}/games",
-                method='post',
-                json_data={"items": self.items}
-            )
-            final_data = final_response.json().get("results", [])
-            self.result.emit(final_data)  # ✅ 딱 한 번만 emit
+            except Exception as e:
+                logging.error(f"Server request failed: {e}", exc_info=True)
+                self.log.emit(f"서버 요청 실패, 로컬 크롤링으로 대체: {str(e)}")
+
+            final_results = []
+            for i, (item, req_item) in enumerate(zip(self.items, request_items)):
+                rj_code = req_item.get('rj_code')
+                match = None
+
+                if response_data:
+                    for d in response_data:
+                        if rj_code and d.get('rj_code') == rj_code:
+                            match = d
+                            break
+                        elif not rj_code and d.get('title_kr') == item:
+                            match = d
+                            break
+
+                if match and match.get('platform') == 'rj' and 'error' not in match:
+                    if match.get('title_kr'):
+                        match['title_kr'] = clean_rj_code(match['title_kr'], rj_code)
+                    if match.get('title_jp'):
+                        match['title_jp'] = clean_rj_code(match['title_jp'], rj_code)
+                    final_results.append(match)
+                    logging.debug(f"Server match for {rj_code or item}: {match.get('title_kr')}")
+                else:
+                    if rj_code:
+                        try:
+                            data = self.get_dlsite_data(rj_code)
+                            final_results.append(data)
+                            logging.debug(f"Local crawl success for {rj_code}: {data.get('title_jp')}")
+                            
+                            # ✅ 크롤링 성공한 경우도 서버에 저장
+                            self.make_request(
+                                f"{self.server_url}/games",
+                                method='post',
+                                json_data={"items": [data]}
+                            )
+                        except Exception as e:
+                            logging.error(f"Local crawl failed for {rj_code}: {e}")
+                            
+                            # ✅ fallback 데이터 생성
+                            fallback = {
+                                'rj_code': rj_code,
+                                'platform': 'rj',
+                                'title_kr': '',
+                                'title_jp': '',
+                                'tags': [],
+                                'tags_jp': [],
+                                'thumbnail_url': '',
+                                'primary_tag': '기타',
+                                'rating': 0.0,
+                                'release_date': 'N/A',
+                                'maker': '',
+                                'link': '',
+                                'timestamp': time.time()  # 🔥 핵심: 크롤링 시도한 증거
+                            }
+
+                            # ✅ 서버에 저장
+                            self.make_request(
+                                f"{self.server_url}/games",
+                                method='post',
+                                json_data={"items": [fallback]}
+                            )
+
+                            final_results.append(fallback)
+                    else:
+                        final_results.append({
+                            'title': item,
+                            'title_kr': item,
+                            'primary_tag': '기타',
+                            'tags': ['기타'],
+                            'thumbnail_url': '',
+                            'platform': 'steam',
+                            'timestamp': time.time()
+                        })
+
+                self.progress.emit(int((i + 1) / total_items * 100))
+                self.log.emit(f"처리 중: {item} ({i + 1}/{total_items})")
+
+            logging.info(f"Returning {len(final_results)} results")
+            self.result.emit(final_results)
 
         except Exception as e:
             self.error.emit(f"작업 실패: {str(e)}")
@@ -233,7 +317,7 @@ class FetchWorker(QThread):
         finally:
             self.finished.emit()
 
-
+# MainWindowLogic 클래스
 class MainWindowLogic(MainWindowUI):
     def __init__(self):
         super().__init__()
@@ -254,7 +338,6 @@ class MainWindowLogic(MainWindowUI):
         self.log_label.setMaximumWidth(self.table.width())
 
     def update_suggested_name(self, row, tag):
-        """태그 선택 시 suggested 이름을 즉시 업데이트"""
         try:
             if row >= len(self.results):
                 logging.error(f"Invalid row index: {row}")
@@ -264,31 +347,26 @@ class MainWindowLogic(MainWindowUI):
             result = self.results[row]
             rj_code = result.get('rj_code') or "기타"
             game_data = result.get('game_data', {})
-            
+
             title = game_data.get('title_kr') or game_data.get('title_jp') or result['original']
-            title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", title, flags=re.IGNORECASE).strip()
-            title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", title, flags=re.IGNORECASE).strip()   
+            title = clean_rj_code(title, rj_code)
             title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-            
-            # ✅ 빈 문자열일 경우 대괄호 안 붙게 처리
+
             title = title.strip()
             if not title:
                 result['suggested'] = f"[{rj_code}][{tag}]"
             else:
                 result['suggested'] = f"[{rj_code}][{tag}] {title}"
-            
+
             result['selected_tag'] = tag if tag else "기타"
-            result['suggested'] = f"[{rj_code}][{result['selected_tag']}] {title}"
-            
             self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
-            self.table.viewport().update()  # UI 즉시 갱신
+            self.table.viewport().update()
             logging.debug(f"Updated suggested name for row {row}: {result['suggested']}")
         except Exception as e:
             logging.error(f"Update suggested name error: row={row}, tag={tag}, error={e}", exc_info=True)
             self.log_label.setText(f"태그 업데이트 오류: {str(e)}")
 
     def remove_tags_from_selected(self):
-        """태그 제거: 모든 태그([RJ코드][태그])를 제거하고 순수 게임 이름만 남김"""
         try:
             updated_count = 0
             for row in range(self.table.rowCount()):
@@ -298,7 +376,6 @@ class MainWindowLogic(MainWindowUI):
 
                 result = self.results[row]
                 game_data = result.get('game_data', {})
-                # 제목 선택: title_kr > title_jp > original_title > original
                 title = (
                     game_data.get('title_kr')
                     or game_data.get('title_jp')
@@ -306,20 +383,14 @@ class MainWindowLogic(MainWindowUI):
                     or result['original']
                 )
                 rj_code = result.get('rj_code') or "기타"
-                # RJ 코드와 특수문자 제거
-                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+                title = clean_rj_code(title, rj_code)
                 title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-                # 확장자 유지
                 original_ext = os.path.splitext(result['original'])[1]
                 updated_name = title if title.endswith(original_ext) else f"{title}{original_ext}"
-                # 태그 제거된 이름 설정
                 result['suggested'] = updated_name
                 self.table.setItem(row, 2, QTableWidgetItem(updated_name))
-                # QComboBox는 현재 상태 유지, selected_tag 초기화
                 result['selected_tag'] = None
                 updated_count += 1
-
-
 
             self.log_label.setText(f"선택된 항목 {updated_count}개에서 태그 제거 완료.")
             logging.info(f"Removed tags from {updated_count} items.")
@@ -338,16 +409,14 @@ class MainWindowLogic(MainWindowUI):
         self.progress_bar.setValue(0)
         self.fetch_data_btn.setEnabled(False)
 
-        items = [r.get('rj_code') or r['original'] for r in self.results]
-        self.worker = FetchWorker(self.SERVER_URL, items, use_firestore_cache=True)
+        items = [r['original'] for r in self.results]
+        self.worker = FetchWorker(self.SERVER_URL, items, self.folder_path, use_firestore_cache=True)
         self.worker.progress.connect(self.progress_bar.setValue)
         self.worker.log.connect(self.log_label.setText)
         self.worker.result.connect(self.on_fetch_finished)
         self.worker.error.connect(self.on_fetch_error)
         self.worker.finished.connect(self.on_fetch_finished_cleanup)
         self.worker.start()
-
-
 
     def on_fetch_finished(self, game_data):
         try:
@@ -356,7 +425,6 @@ class MainWindowLogic(MainWindowUI):
                 QMessageBox.warning(self, "오류", "데이터를 가져오지 못했습니다.")
                 return
 
-            logging.info("=== on_fetch_finished called ===")
             logging.info(f"Received game_data (length={len(game_data)}):")
             for i, d in enumerate(game_data):
                 logging.info(f"[{i}] => {json.dumps(d, ensure_ascii=False)}")
@@ -364,33 +432,21 @@ class MainWindowLogic(MainWindowUI):
             error_count = 0
             self.table.setUpdatesEnabled(False)
 
-            def clean_title(title, rj_code):
-                if not title or not rj_code:
-                    return title
-                patterns = [
-                    rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*",
-                    rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b",
-                    rf"\b{rj_code}\b"
-                ]
-                cleaned = title
-                for pattern in patterns:
-                    cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
-                return cleaned
-
             for row, result in enumerate(self.results):
                 match = None
+                rj_code = result.get('rj_code')
                 for d in game_data:
-                    if result.get("rj_code") and d.get("rj_code") == result.get("rj_code"):
+                    if rj_code and d.get('rj_code') == rj_code:
                         match = d
                         break
-                    elif not result.get("rj_code") and d.get("title_kr") == result.get("original"):
+                    elif not rj_code and d.get('title_kr') == result.get('original'):
                         match = d
                         break
 
-                if not match or "error" in match:
-                    rj_code = result.get('rj_code') or "기타"
+                if not match or 'error' in match:
+                    rj_code = rj_code or '기타'
                     result['suggested'] = f"[{rj_code}][기타] {result['original']}"
-                    result['selected_tag'] = "기타"
+                    result['selected_tag'] = '기타'
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
@@ -398,34 +454,37 @@ class MainWindowLogic(MainWindowUI):
                     if not combo:
                         combo = QComboBox()
                         self.table.setCellWidget(row, 3, combo)
-                    else:
-                        try:
-                            combo.currentTextChanged.disconnect()
-                        except TypeError:
-                            pass
                     combo.blockSignals(True)
                     combo.clear()
-                    combo.addItem("기타")
-                    combo.setCurrentText("기타")
+                    combo.addItem('기타')
+                    combo.setCurrentText('기타')
                     combo.blockSignals(False)
                     combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
+                    logging.debug(f"No match for row {row}: rj_code={rj_code}, original={result['original']}")
                     continue
 
                 result['game_data'] = match
-                rj_code = result.get('rj_code') or match.get('rj_code') or "기타"
-                tags = match.get('tags') or ["기타"]
+                rj_code = rj_code or match.get('rj_code') or '기타'
+                tags = match.get('tags') or ['기타']
                 tags = [t for t in tags if t.strip()]
-                tag = match.get('primary_tag') or (tags[0] if tags else "기타")
-                if not tag or tag.strip() == "":
-                    tag = "기타"
+                tag = match.get('primary_tag') or (tags[0] if tags else '기타')
+                if not tag or tag.strip() == '':
+                    tag = '기타'
 
                 original_title = result.get('original_title') or result.get('original')
                 title_kr = match.get('title_kr') or match.get('title_jp') or original_title
-                final_title = clean_title(title_kr, rj_code)
-                if not final_title or final_title.strip() == "":
-                    final_title = clean_title(original_title, rj_code) or rj_code
 
+                # ✅ 원래 이름에 일본어가 없다면 → 그걸 우선 사용
+                if not needs_translation(original_title):
+                    final_title = clean_rj_code(original_title, rj_code)
+                else:
+                    final_title = clean_rj_code(title_kr, rj_code)
+                    if not final_title or final_title.strip() == '':
+                        final_title = clean_rj_code(original_title, rj_code) or rj_code
+
+                # ✅ 파일명에 사용 불가한 문자 제거
                 final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-').strip()
+
                 result['suggested'] = f"[{rj_code}][{tag}] {final_title}" if final_title else f"[{rj_code}][{tag}]"
                 result['selected_tag'] = tag
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
@@ -434,17 +493,13 @@ class MainWindowLogic(MainWindowUI):
                 if not combo:
                     combo = QComboBox()
                     self.table.setCellWidget(row, 3, combo)
-                else:
-                    try:
-                        combo.currentTextChanged.disconnect()
-                    except TypeError:
-                        pass
                 combo.blockSignals(True)
                 combo.clear()
                 combo.addItems(tags)
                 combo.setCurrentText(tag)
                 combo.blockSignals(False)
                 combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
+                logging.debug(f"Matched row {row}: rj_code={rj_code}, title_kr={title_kr}, final_title={final_title}")
 
             self.table.setUpdatesEnabled(True)
             self.table.viewport().update()
@@ -452,13 +507,13 @@ class MainWindowLogic(MainWindowUI):
             if error_count > 0:
                 QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
 
+            self.status_label.setText(f"파일: {len(self.results)}개")
+            self.update_select_all_state()
+
         except Exception as e:
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
             QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
-
-
-
 
     def on_fetch_error(self, error_msg):
         max_length = 100
@@ -473,69 +528,83 @@ class MainWindowLogic(MainWindowUI):
         self.worker = None
 
     def select_folder(self):
-        self.folder_path = QFileDialog.getExistingDirectory(self, "폴더 선택")
-        if not self.folder_path:
-            logging.info("No folder selected")
-            self.log_label.setText("폴더 선택 취소됨")
-            return
+        try:
+            self.folder_path = QFileDialog.getExistingDirectory(self, "폴더 선택")
+            if not self.folder_path:
+                logging.info("No folder selected")
+                self.log_label.setText("폴더 선택 취소됨")
+                return
 
-        self.log_label.setText("폴더 스캔 중...")
-        logging.info(f"Scanning folder: {self.folder_path}")
-        self.table.setRowCount(0)
-        self.results.clear()
+            self.log_label.setText("폴더 스캔 중...")
+            logging.info(f"Scanning folder: {self.folder_path}")
+            self.table.setRowCount(0)
+            self.results.clear()
 
-        entries = os.listdir(self.folder_path)
-        files = [f for f in entries if is_valid_game_file(f)]
-        files.sort()
+            entries = os.listdir(self.folder_path)
+            files = [f for f in entries if is_valid_game_file(f, self.folder_path)]
+            files.sort()
 
-        if not files:
-            self.log_label.setText("폴더에 파일이 없습니다.")
-            self.status_label.setText("파일: 0개")
-            self.fetch_data_btn.setEnabled(False)
-            return
+            if not files:
+                self.log_label.setText("폴더에 파일이 없습니다.")
+                self.status_label.setText("파일: 0개")
+                self.fetch_data_btn.setEnabled(False)
+                return
 
-        self.table.setUpdatesEnabled(False)
-        for idx, original in enumerate(files):
-            # RJ 코드 파싱 강화
-            rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", original, re.IGNORECASE)
-            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '').replace(' ', '') if rj_match else ''
-            original_title = re.sub(r"[Rr][Jj][_\-\s]?\d{6,8}", "", original, re.IGNORECASE).strip('_').strip()
-            original_title = original_title if original_title and original_title != os.path.splitext(original)[1] else ''
-            suggested = f"[{rj_code or '기타'}][기타] {original}"
+            self.table.setUpdatesEnabled(False)
+            for idx, original in enumerate(files):
+                rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", original, re.IGNORECASE)
+                rj_code = ''
+                if rj_match:
+                    full_match = rj_match.group(0)
+                    rj_code = re.sub(r'[_\-\s]', '', full_match).upper()
 
-            result = {
-                'original': original,
-                'original_title': original_title,
-                'rj_code': rj_code,
-                'suggested': suggested,
-                'selected_tag': "기타",
-                'path': os.path.join(self.folder_path, original),
-                'game_data': {}
-            }
-            self.results.append(result)
+                original_title = original
+                if rj_code:
+                    original_title = clean_rj_code(original, rj_code)
+                    ext = os.path.splitext(original)[1]
+                    if original_title.strip() == ext or not original_title.strip():
+                        original_title = ''
+                else:
+                    name, ext = os.path.splitext(original)
+                    original_title = name if name != ext else ''
 
-            chk = QCheckBox()
-            chk.toggled.connect(lambda checked, row=idx: self.on_checkbox_changed(row, checked))
-            self.table.insertRow(idx)
-            self.table.setCellWidget(idx, 0, chk)
-            self.table.setItem(idx, 1, QTableWidgetItem(original))
-            self.table.setItem(idx, 2, QTableWidgetItem(suggested))
-            combo = QComboBox()
-            combo.addItem("기타")
-            combo.setCurrentText("기타")
-            try:
-                combo.currentTextChanged.disconnect()
-            except TypeError:
-                pass
-            combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))
-            self.table.setCellWidget(idx, 3, combo)
+                suggested = f"[{rj_code or '기타'}][기타] {original_title or original}"
+                logging.debug(f"File: {original}, Extracted rj_code: '{rj_code}', Original title: '{original_title}'")
 
-        self.table.setUpdatesEnabled(True)
-        self.table.viewport().update()
-        self.status_label.setText(f"파일: {len(self.results)}개")
-        self.log_label.setText(f"폴더 로드 완료: {len(self.results)}개 파일")
-        self.fetch_data_btn.setEnabled(True)
-        self.update_select_all_state()
+                result = {
+                    'original': original,
+                    'original_title': original_title,
+                    'rj_code': rj_code,
+                    'suggested': suggested,
+                    'selected_tag': "기타",
+                    'path': os.path.join(self.folder_path, original),
+                    'game_data': {}
+                }
+                self.results.append(result)
+
+                chk = QCheckBox()
+                chk.toggled.connect(lambda checked, row=idx: self.on_checkbox_changed(row, checked))
+                self.table.insertRow(idx)
+                self.table.setCellWidget(idx, 0, chk)
+                self.table.setItem(idx, 1, QTableWidgetItem(original))
+                self.table.setItem(idx, 2, QTableWidgetItem(suggested))
+                combo = QComboBox()
+                combo.addItem("기타")
+                combo.setCurrentText("기타")
+                combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))
+                self.table.setCellWidget(idx, 3, combo)
+
+            self.table.setUpdatesEnabled(True)
+            self.table.viewport().update()
+            self.status_label.setText(f"파일: {len(self.results)}개")
+            self.log_label.setText(f"폴더 로드 완료: {len(self.results)}개 파일")
+            self.fetch_data_btn.setEnabled(True)
+            self.update_select_all_state()
+
+        except Exception as e:
+            logging.error(f"폴더 선택 오류: {e}", exc_info=True)
+            self.log_label.setText(f"폴더 스캔 중 오류 발생: {str(e)}")
+            QMessageBox.critical(self, "오류", f"폴더 스캔 중 오류: {str(e)}")
 
     def on_checkbox_changed(self, row, checked):
         logging.debug(f"Checkbox changed: row={row}, checked={checked}")
