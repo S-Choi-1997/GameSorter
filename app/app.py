@@ -312,7 +312,7 @@ def process_games():
                 if rj_code and re.match(r'^[Rr][Jj]\d{6,8}$', rj_code, re.IGNORECASE) and 'error' not in item:
                     results.append(process_rj_item(item))
                 elif 'error' in item:
-                    results.append(item)
+                    results.append(process_rj_item(item))
                 else:
                     results.append(process_steam_item(item.get('title', item)))
 
