@@ -83,9 +83,10 @@ class GameDataPanel(QWidget):
 
     def load_game_data(self, data):
         try:
-            if "error" in data:
-                self.info_text.setText("데이터를 불러올 수 없습니다.")
+            if not data or "error" in data:
+                self.info_text.setText("데이터를 불러올 수 없습니다: 데이터가 없거나 오류가 발생했습니다.")
                 self.thumbnail_label.setText("No Thumbnail")
+                logging.debug("Empty or error data received")
                 return
 
             info = f"제목 (KR): {data.get('title_kr', 'N/A')}\n"
@@ -108,7 +109,7 @@ class GameDataPanel(QWidget):
 
         except Exception as e:
             logging.error(f"Load game data error: {e}", exc_info=True)
-            self.info_text.setText("데이터 로드 실패")
+            self.info_text.setText("데이터 로드 실패: 오류 발생")
             self.thumbnail_label.setText("Failed to load thumbnail")
 
     def clear_game_data(self):

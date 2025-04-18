@@ -27,6 +27,10 @@ def needs_translation(text):
     import re
     return bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', text or ''))
 
+def is_valid_game_file(name):
+    valid_exts = ['.zip', '.7z', '.rar', '.tar', '.gz']
+    ext = os.path.splitext(name)[1].lower()
+    return ext in valid_exts
 
 class FetchWorker(QThread):
     progress = Signal(int)
@@ -140,11 +144,16 @@ class FetchWorker(QThread):
             logging.error(f"Request failed: {e}")
             raise
 
+
+    
     def run(self):
         try:
+            # ✅ 여기에 필터링 로직 추가
+            self.items = [item for item in self.items if is_valid_game_file(item)]
+
             total_items = len(self.items)
             if total_items == 0:
-                self.log.emit("처리할 파일이 없습니다.")
+                self.log.emit("처리할 압축 파일이 없습니다.")
                 self.result.emit([])
                 return
 
@@ -355,6 +364,19 @@ class MainWindowLogic(MainWindowUI):
             error_count = 0
             self.table.setUpdatesEnabled(False)
 
+            def clean_title(title, rj_code):
+                if not title or not rj_code:
+                    return title
+                patterns = [
+                    rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*",
+                    rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b",
+                    rf"\b{rj_code}\b"
+                ]
+                cleaned = title
+                for pattern in patterns:
+                    cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+                return cleaned
+
             for row, result in enumerate(self.results):
                 match = None
                 for d in game_data:
@@ -389,41 +411,22 @@ class MainWindowLogic(MainWindowUI):
                     combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
                     continue
 
-                # 정상 데이터 처리
                 result['game_data'] = match
                 rj_code = result.get('rj_code') or match.get('rj_code') or "기타"
-
                 tags = match.get('tags') or ["기타"]
-                tags = [t for t in tags if t.strip()]  # ✅ 빈 문자열 제거
+                tags = [t for t in tags if t.strip()]
                 tag = match.get('primary_tag') or (tags[0] if tags else "기타")
                 if not tag or tag.strip() == "":
                     tag = "기타"
 
-                # ✅ 제목 판단 + Fallback 처리
                 original_title = result.get('original_title') or result.get('original')
                 title_kr = match.get('title_kr') or match.get('title_jp') or original_title
-
-                if not original_title or original_title.strip() == "" or len(original_title.strip()) < 2:
-                    final_title = title_kr
-                elif needs_translation(original_title):
-                    final_title = title_kr
-                else:
-                    final_title = original_title
-
+                final_title = clean_title(title_kr, rj_code)
                 if not final_title or final_title.strip() == "":
-                    final_title = rj_code
+                    final_title = clean_title(original_title, rj_code) or rj_code
 
-                final_title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*", "", final_title, flags=re.IGNORECASE)
-                final_title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", final_title, flags=re.IGNORECASE).strip()
-                final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-')
-                final_title = final_title.strip() if final_title else ""
-
-                if not final_title:
-                    result['suggested'] = f"[{rj_code}][{tag}]"
-                else:
-                    result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
-
-
+                final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-').strip()
+                result['suggested'] = f"[{rj_code}][{tag}] {final_title}" if final_title else f"[{rj_code}][{tag}]"
                 result['selected_tag'] = tag
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
@@ -482,7 +485,7 @@ class MainWindowLogic(MainWindowUI):
         self.results.clear()
 
         entries = os.listdir(self.folder_path)
-        files = [f for f in entries if f.lower().endswith(('.zip', '.7z', '.rar')) or os.path.isdir(os.path.join(self.folder_path, f))]
+        files = [f for f in entries if is_valid_game_file(f)]
         files.sort()
 
         if not files:
@@ -493,9 +496,10 @@ class MainWindowLogic(MainWindowUI):
 
         self.table.setUpdatesEnabled(False)
         for idx, original in enumerate(files):
-            rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
-            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else ''
-            original_title = re.sub(rf"[Rr][Jj][_\-\s]?\d{{6,8}}", "", original, re.IGNORECASE).strip('_').strip()
+            # RJ 코드 파싱 강화
+            rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", original, re.IGNORECASE)
+            rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '').replace(' ', '') if rj_match else ''
+            original_title = re.sub(r"[Rr][Jj][_\-\s]?\d{6,8}", "", original, re.IGNORECASE).strip('_').strip()
             original_title = original_title if original_title and original_title != os.path.splitext(original)[1] else ''
             suggested = f"[{rj_code or '기타'}][기타] {original}"
 
@@ -520,14 +524,14 @@ class MainWindowLogic(MainWindowUI):
             combo.addItem("기타")
             combo.setCurrentText("기타")
             try:
-                combo.currentTextChanged.disconnect()  # 기존 시그널 연결 해제
+                combo.currentTextChanged.disconnect()
             except TypeError:
                 pass
-            combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))  # ✅ row 고정
+            combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))
             self.table.setCellWidget(idx, 3, combo)
 
         self.table.setUpdatesEnabled(True)
-        self.table.viewport().update()  # UI 즉시 갱신
+        self.table.viewport().update()
         self.status_label.setText(f"파일: {len(self.results)}개")
         self.log_label.setText(f"폴더 로드 완료: {len(self.results)}개 파일")
         self.fetch_data_btn.setEnabled(True)

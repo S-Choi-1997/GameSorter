@@ -49,15 +49,18 @@ def needs_translation(title: str) -> bool:
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
     if not db:
+        logger.error("Firestore client not initialized")
         return None
     try:
-        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
+        # RJ 코드의 경우 문서 ID를 'RJxxxxx'로 통일
+        normalized_id = identifier.upper() if platform == 'rj' else identifier
+        doc_ref = db.collection('games').document(platform).collection('items').document(normalized_id)
         doc = doc_ref.get()
         if doc.exists:
             data = doc.to_dict()
-            logger.debug(f"Cache hit for {platform}:{identifier}, title_kr={data.get('title_kr')}")
+            logger.debug(f"Cache hit for {platform}:{normalized_id}, title_kr={data.get('title_kr')}")
             return data
-        logger.debug(f"Cache miss for {platform}:{identifier}")
+        logger.debug(f"Cache miss for {platform}:{normalized_id}")
         return None
     except Exception as e:
         logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
@@ -177,8 +180,6 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 def process_rj_item(item):
     if 'error' in item:
         rj_code = item.get('rj_code') or item.get('title') or item.get('original') or 'unknown'
-
-        # RJ코드가 유효하지 않으면 저장 생략 (안전 처리)
         if not re.match(r'^RJ\d{6,8}$', rj_code, re.IGNORECASE):
             logger.warning(f"[ERROR ITEM] 유효하지 않은 rj_code, 저장 생략: {rj_code}")
             return {
@@ -187,8 +188,6 @@ def process_rj_item(item):
                 'platform': 'rj',
                 'timestamp': time.time()
             }
-
-        # ✅ 에러가 있어도 최소 구조는 정상 데이터처럼 구성
         error_data = {
             'rj_code': rj_code,
             'platform': 'rj',
@@ -201,7 +200,6 @@ def process_rj_item(item):
             'error': item.get('error'),
             'timestamp': time.time()
         }
-
         logger.warning(f"[ERROR ITEM] 캐시에 저장: {rj_code}")
         cache_data('rj', rj_code, error_data)
         return error_data
@@ -218,6 +216,23 @@ def process_rj_item(item):
     tags_to_translate = []
     tag_priorities = []
 
+    # RJ 코드 제거 함수
+    def clean_title(title, rj_code):
+        if not title or not rj_code:
+            return title
+        patterns = [
+            rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*",
+            rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b",
+            rf"\b{rj_code}\b"
+        ]
+        cleaned = title
+        for pattern in patterns:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+        return cleaned
+
+    # title_jp 정제
+    cleaned_title_jp = clean_title(title_jp, rj_code)
+
     for tag in tags_jp:
         cached_tag = get_cached_tag(tag)
         if cached_tag:
@@ -227,29 +242,29 @@ def process_rj_item(item):
             tag_priorities.append(priority)
         else:
             tags_to_translate.append(tag)
-            tag_priorities.append(10)  # 기본값 설정 (순서 유지 위해)
+            tag_priorities.append(10)
 
     translated_tags = tags_jp
-    translated_title = title_jp
+    translated_title = cleaned_title_jp
 
-    if needs_translation(title_jp) or tags_to_translate:
-        logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
+    if needs_translation(cleaned_title_jp) or tags_to_translate:
+        logger.debug(f"Translating for {rj_code}: title_jp={cleaned_title_jp}, tags={tags_to_translate}")
         translated_tags, translated_title = translate_with_gpt_batch(
             tags_to_translate,
-            title_jp if needs_translation(title_jp) else None,
+            cleaned_title_jp if needs_translation(cleaned_title_jp) else None,
             batch_idx=rj_code
         )
+        # 번역된 제목도 RJ 코드 제거
+        translated_title = clean_title(translated_title or cleaned_title_jp, rj_code)
         for i, (jp, kr) in enumerate(zip(tags_to_translate, translated_tags)):
-            # Firestore에서 설정된 priority 먼저 조회
             existing = get_cached_tag(jp)
             priority = existing.get("priority", 10) if existing else 10
             tags_kr.append(kr)
             tag_priorities.append(priority)
             cache_tag(jp, kr, priority)
     else:
-        logger.debug(f"No translation needed for {rj_code}: title_jp={title_jp}")
+        logger.debug(f"No translation needed for {rj_code}: title_jp={cleaned_title_jp}")
 
-    # ✅ priority 기준으로 정렬
     tag_with_priority = list(zip(tags_kr, tag_priorities))
     tag_with_priority.sort(key=lambda x: x[1], reverse=True)
     tags_kr_sorted = [tag for tag, _ in tag_with_priority]
@@ -257,8 +272,8 @@ def process_rj_item(item):
 
     processed_data = {
         'rj_code': rj_code,
-        'title_jp': title_jp,
-        'title_kr': translated_title or title_jp or rj_code,
+        'title_jp': cleaned_title_jp,
+        'title_kr': translated_title or cleaned_title_jp or rj_code,
         'primary_tag': primary_tag,
         'tags_jp': tags_jp,
         'tags': tags_kr_sorted,
@@ -266,7 +281,7 @@ def process_rj_item(item):
         'thumbnail_url': item.get('thumbnail_url', ''),
         'rating': item.get('rating', 0.0),
         'link': item.get('link', ''),
-        'platform': item.get('platform', 'rj'),
+        'platform': 'rj',
         'maker': item.get('maker', ''),
         'timestamp': time.time()
     }
