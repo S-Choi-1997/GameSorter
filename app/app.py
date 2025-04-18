@@ -307,6 +307,7 @@ def process_games():
                     results.append(process_steam_item(item))
         else:
             for item in items:
+                logger.info(f"[🔍 RECEIVED ITEM] {json.dumps(item, ensure_ascii=False)}")
                 rj_code = item.get('rj_code')
                 if rj_code and re.match(r'^[Rr][Jj]\d{6,8}$', rj_code, re.IGNORECASE) and 'error' not in item:
                     results.append(process_rj_item(item))

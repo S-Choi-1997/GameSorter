@@ -156,6 +156,7 @@ class FetchWorker(QThread):
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
                 response_data = response.json()
                 missing = response_data.get("missing", [])
+                logging.info(f"🔥 서버 응답 missing: {missing}")
                 self.task_id = response_data.get("task_id")
                 logging.info(f"Firestore cache check complete, missing items: {len(missing)}")
             else:
