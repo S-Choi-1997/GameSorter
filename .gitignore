@@ -3,3 +3,4 @@ app/.env
 /thumbnails
 /build
 /dist
+.log

@@ -175,17 +175,27 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 # RJ 데이터 처리
 def process_rj_item(item):
     if 'error' in item:
-        rj_code = item.get('rj_code') or 'invalid'
+        rj_code = item.get('rj_code') or item.get('title') or item.get('original') or 'unknown'
+
+        # RJ코드가 유효하지 않으면 저장 생략 (안전 처리)
+        if not re.match(r'^RJ\d{6,8}$', rj_code, re.IGNORECASE):
+            logger.warning(f"[ERROR ITEM] 유효하지 않은 rj_code, 저장 생략: {rj_code}")
+            return {
+                'rj_code': rj_code,
+                'error': item.get('error'),
+                'platform': 'rj',
+                'timestamp': time.time()
+            }
+
         error_data = {
             'rj_code': rj_code,
             'error': item.get('error'),
             'platform': 'rj',
             'timestamp': time.time()
         }
+        logger.warning(f"[ERROR ITEM] 캐시에 저장: {rj_code}")
         cache_data('rj', rj_code, error_data)
         return error_data
-
-
 
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)

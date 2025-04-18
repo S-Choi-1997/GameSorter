@@ -172,3 +172,176 @@ Exception: DLsite fetch failed: Status 404
 2025-04-18 20:16:11,514 INFO Received game_data (length=2):
 2025-04-18 20:16:11,514 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
 2025-04-18 20:16:11,514 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:22:55,832 INFO Starting fetch for 2 items
+2025-04-18 20:22:55,832 INFO Checking Firestore cache
+2025-04-18 20:22:55,833 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:22:55,834 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:00,119 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:00,119 INFO 🔥 서버 응답 missing: ['RJ263090', 'RJ331162']
+2025-04-18 20:23:00,119 INFO Firestore cache check complete, missing items: 2
+2025-04-18 20:23:00,119 INFO Fetching DLsite data for RJ263090
+2025-04-18 20:23:00,120 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:00,739 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ263090.html HTTP/1.1" 404 None
+2025-04-18 20:23:00,741 ERROR Error fetching DLsite data for RJ263090: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:00,742 INFO Fetching DLsite data for RJ331162
+2025-04-18 20:23:00,743 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:01,338 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ331162.html HTTP/1.1" 404 None
+2025-04-18 20:23:01,339 ERROR Error fetching DLsite data for RJ331162: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:01,341 INFO Sending 2 crawled items to server
+2025-04-18 20:23:01,341 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:01,342 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:02,149 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 292
+2025-04-18 20:23:02,150 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:02,150 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:02,151 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:02,903 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:02,904 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:02,904 INFO === on_fetch_finished called ===
+2025-04-18 20:23:02,904 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:02,904 INFO Received game_data (length=2):
+2025-04-18 20:23:02,904 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:02,904 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:02,906 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:03,643 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:03,645 INFO === on_fetch_finished called ===
+2025-04-18 20:23:03,646 INFO Received game_data (length=2):
+2025-04-18 20:23:03,647 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:03,647 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:06,232 INFO Starting fetch for 2 items
+2025-04-18 20:23:06,233 INFO Checking Firestore cache
+2025-04-18 20:23:06,233 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:06,234 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:06,995 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:06,995 INFO 🔥 서버 응답 missing: ['RJ263090', 'RJ331162']
+2025-04-18 20:23:06,995 INFO Firestore cache check complete, missing items: 2
+2025-04-18 20:23:06,995 INFO Fetching DLsite data for RJ263090
+2025-04-18 20:23:06,997 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:07,559 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ263090.html HTTP/1.1" 404 None
+2025-04-18 20:23:07,560 ERROR Error fetching DLsite data for RJ263090: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:07,562 INFO Fetching DLsite data for RJ331162
+2025-04-18 20:23:07,563 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:08,136 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ331162.html HTTP/1.1" 404 None
+2025-04-18 20:23:08,137 ERROR Error fetching DLsite data for RJ331162: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:08,138 INFO Sending 2 crawled items to server
+2025-04-18 20:23:08,139 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:08,140 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:08,906 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 292
+2025-04-18 20:23:08,908 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:08,908 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:08,909 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:09,656 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:09,657 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:09,657 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:09,657 INFO === on_fetch_finished called ===
+2025-04-18 20:23:09,657 INFO Received game_data (length=2):
+2025-04-18 20:23:09,657 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:09,657 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:09,658 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:10,422 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:10,423 INFO === on_fetch_finished called ===
+2025-04-18 20:23:10,424 INFO Received game_data (length=2):
+2025-04-18 20:23:10,426 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:10,426 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:27,090 INFO Scanning folder: H:/yangame/방주/테스트
+2025-04-18 20:23:27,737 INFO Starting fetch for 2 items
+2025-04-18 20:23:27,737 INFO Checking Firestore cache
+2025-04-18 20:23:27,737 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:27,739 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:28,486 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:28,487 INFO 🔥 서버 응답 missing: ['RJ263090', 'RJ331162']
+2025-04-18 20:23:28,487 INFO Firestore cache check complete, missing items: 2
+2025-04-18 20:23:28,487 INFO Fetching DLsite data for RJ263090
+2025-04-18 20:23:28,488 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:29,081 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ263090.html HTTP/1.1" 404 None
+2025-04-18 20:23:29,082 ERROR Error fetching DLsite data for RJ263090: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:29,083 INFO Fetching DLsite data for RJ331162
+2025-04-18 20:23:29,085 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:29,653 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ331162.html HTTP/1.1" 404 None
+2025-04-18 20:23:29,654 ERROR Error fetching DLsite data for RJ331162: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:29,656 INFO Sending 2 crawled items to server
+2025-04-18 20:23:29,656 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:29,658 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:30,475 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 292
+2025-04-18 20:23:30,476 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:30,476 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:30,477 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:31,214 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:31,215 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:31,215 INFO === on_fetch_finished called ===
+2025-04-18 20:23:31,215 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:31,215 INFO Received game_data (length=2):
+2025-04-18 20:23:31,215 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:31,215 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:31,216 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:31,957 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:31,958 INFO === on_fetch_finished called ===
+2025-04-18 20:23:31,960 INFO Received game_data (length=2):
+2025-04-18 20:23:31,960 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:31,961 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:36,660 INFO Starting fetch for 2 items
+2025-04-18 20:23:36,660 INFO Checking Firestore cache
+2025-04-18 20:23:36,660 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:36,661 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:37,383 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:37,383 INFO 🔥 서버 응답 missing: ['RJ263090', 'RJ331162']
+2025-04-18 20:23:37,383 INFO Firestore cache check complete, missing items: 2
+2025-04-18 20:23:37,383 INFO Fetching DLsite data for RJ263090
+2025-04-18 20:23:37,384 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:37,960 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ263090.html HTTP/1.1" 404 None
+2025-04-18 20:23:37,961 ERROR Error fetching DLsite data for RJ263090: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:37,963 INFO Fetching DLsite data for RJ331162
+2025-04-18 20:23:37,964 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-18 20:23:38,548 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ331162.html HTTP/1.1" 404 None
+2025-04-18 20:23:38,549 ERROR Error fetching DLsite data for RJ331162: DLsite fetch failed: Status 404
+Traceback (most recent call last):
+  File "E:\Projects\game-sort\core.py", line 70, in get_dlsite_data
+    raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+Exception: DLsite fetch failed: Status 404
+2025-04-18 20:23:38,551 INFO Sending 2 crawled items to server
+2025-04-18 20:23:38,551 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:38,552 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:39,351 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 291
+2025-04-18 20:23:39,352 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:39,352 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:39,354 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:40,105 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:40,105 INFO Re-fetching all items from cache after saving translated ones
+2025-04-18 20:23:40,105 INFO === on_fetch_finished called ===
+2025-04-18 20:23:40,105 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-18 20:23:40,105 INFO Received game_data (length=2):
+2025-04-18 20:23:40,106 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:40,106 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
+2025-04-18 20:23:40,107 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-18 20:23:40,848 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 251
+2025-04-18 20:23:40,850 INFO === on_fetch_finished called ===
+2025-04-18 20:23:40,851 INFO Received game_data (length=2):
+2025-04-18 20:23:40,852 INFO [0] => {"error": "Game not found for RJ263090", "platform": "rj", "rj_code": "RJ263090"}
+2025-04-18 20:23:40,852 INFO [1] => {"error": "Game not found for RJ331162", "platform": "rj", "rj_code": "RJ331162"}
