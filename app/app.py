@@ -64,12 +64,13 @@ def get_cached_data(platform, identifier):
         return None
 
 def cache_data(platform, rj_code, data):
-    doc_id = f"{platform}_{rj_code}"
     try:
-        db.collection("games").document(doc_id).set(data, merge=True)
-        logger.info(f"[CACHE] 저장됨: {doc_id}")
+        doc_ref = db.collection("games").document(platform).collection("items").document(rj_code)
+        doc_ref.set(data, merge=True)
+        logger.info(f"[CACHE] 저장됨: {platform}/items/{rj_code}")
     except Exception as e:
-        logger.error(f"[CACHE ERROR] 저장 실패: {doc_id}, error={e}", exc_info=True)
+        logger.error(f"[CACHE ERROR] 저장 실패: {platform}/{rj_code}, error={e}", exc_info=True)
+
 
 
 # 태그 캐시
