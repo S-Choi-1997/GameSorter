@@ -87,6 +87,11 @@
       background-color: #1d4ed8;
     }
     
+    button:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
+    }
+    
     .add-tag-form {
       display: flex;
       flex-direction: column;
@@ -159,47 +164,208 @@
       text-align: center;
       padding: 2rem 0;
     }
+    
+    /* PIN 모달 스타일 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    
+    .modal {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .pin-input-container {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .pin-input {
+      width: 3rem;
+      height: 3rem;
+      font-size: 1.5rem;
+      text-align: center;
+      border: 2px solid #d1d5db;
+      border-radius: 0.375rem;
+    }
+    
+    .pin-input:focus {
+      border-color: #2563eb;
+      outline: none;
+    }
+    
+    .pin-error {
+      color: #ef4444;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+    }
+    
+    .app-content {
+      display: none; /* 인증 전에는 앱 내용 숨김 */
+    }
+    
+    /* 헤더 영역 스타일 */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    .sync-btn {
+      background-color: #059669;
+    }
+    
+    .sync-btn:hover {
+      background-color: #047857;
+    }
+    
+    .sync-btn:disabled {
+      background-color: #a7f3d0;
+    }
+    
+    /* 로딩 스피너 */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* 확인 모달 */
+    .confirm-modal {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>태그 관리자</h1>
-    
-    <div class="search-add-section">
-      <div class="search-container">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="search" id="search-input" placeholder="태그 검색...">
+  <!-- PIN 입력 모달 -->
+  <div id="pin-modal" class="modal-overlay">
+    <div class="modal">
+      <h2 class="modal-title">PIN 번호 입력</h2>
+      <p style="text-align: center;">태그 관리자에 접근하려면 4자리 PIN을 입력하세요.</p>
+      
+      <div class="pin-input-container">
+        <input type="password" maxlength="1" class="pin-input" data-index="0">
+        <input type="password" maxlength="1" class="pin-input" data-index="1">
+        <input type="password" maxlength="1" class="pin-input" data-index="2">
+        <input type="password" maxlength="1" class="pin-input" data-index="3">
       </div>
       
-      <div class="add-tag-form">
-        <h2>새 태그 추가</h2>
-        <div class="add-tag-inputs">
-          <input type="text" id="new-tag-jp" placeholder="일본어 태그">
-          <input type="text" id="new-tag-kr" placeholder="한국어 태그">
-          <input type="number" id="new-tag-priority" placeholder="우선순위" value="10">
-        </div>
-        <button id="add-tag-btn">태그 추가</button>
+      <div id="pin-error" class="pin-error">
+        잘못된 PIN 번호입니다. 다시 시도해주세요.
+      </div>
+      
+      <div class="modal-actions">
+        <button id="verify-pin-btn">확인</button>
       </div>
     </div>
-    
-    <table>
-      <thead>
-        <tr>
-          <th>일본어 태그</th>
-          <th>한국어 태그</th>
-          <th>우선순위</th>
-          <th>액션</th>
-        </tr>
-      </thead>
-      <tbody id="tags-table-body">
-        <tr>
-          <td colspan="4" class="loading-row">로딩 중...</td>
-        </tr>
-      </tbody>
-    </table>
+  </div>
+  
+  <!-- DB 동기화 확인 모달 -->
+  <div id="sync-confirm-modal" class="modal-overlay confirm-modal">
+    <div class="modal">
+      <h2 class="modal-title">DB 재설정 확인</h2>
+      <p style="text-align: center; margin-bottom: 1.5rem;">
+        이 작업은 모든 게임 문서에 태그 정보를 동기화합니다.<br>
+        계속 진행하시겠습니까?
+      </p>
+      
+      <div class="modal-actions" style="display: flex; gap: 1rem; justify-content: center;">
+        <button id="cancel-sync-btn" style="background-color: #6b7280;">취소</button>
+        <button id="confirm-sync-btn">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 앱 컨텐츠 (인증 후 표시) -->
+  <div id="app-content" class="app-content">
+    <div class="container">
+      <div class="header-container">
+        <h1>태그 관리자</h1>
+        <div class="header-actions">
+          <button id="sync-db-btn" class="sync-btn">DB 재설정</button>
+        </div>
+      </div>
+      
+      <div class="search-add-section">
+        <div class="search-container">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" id="search-input" placeholder="태그 검색...">
+        </div>
+        
+        <div class="add-tag-form">
+          <h2>새 태그 추가</h2>
+          <div class="add-tag-inputs">
+            <input type="text" id="new-tag-jp" placeholder="일본어 태그">
+            <input type="text" id="new-tag-kr" placeholder="한국어 태그">
+            <input type="number" id="new-tag-priority" placeholder="우선순위" value="10">
+          </div>
+          <button id="add-tag-btn">태그 추가</button>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>일본어 태그</th>
+            <th>한국어 태그</th>
+            <th>우선순위</th>
+            <th>액션</th>
+          </tr>
+        </thead>
+        <tbody id="tags-table-body">
+          <tr>
+            <td colspan="4" class="loading-row">로딩 중...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
   
   <div id="toast" class="toast">
@@ -209,9 +375,20 @@
   
   <script>
     // API URL - 실제 Cloud Run URL로 변경하세요
-    const API_URL = "https://tagsite-28083845590.us-central1.run.app";
+    const API_URL = "https://your-cloud-run-url.run.app";
     
     // DOM 요소
+    const pinModal = document.getElementById('pin-modal');
+    const pinInputs = document.querySelectorAll('.pin-input');
+    const pinError = document.getElementById('pin-error');
+    const verifyPinBtn = document.getElementById('verify-pin-btn');
+    const appContent = document.getElementById('app-content');
+    
+    const syncDbBtn = document.getElementById('sync-db-btn');
+    const syncConfirmModal = document.getElementById('sync-confirm-modal');
+    const cancelSyncBtn = document.getElementById('cancel-sync-btn');
+    const confirmSyncBtn = document.getElementById('confirm-sync-btn');
+    
     const searchInput = document.getElementById('search-input');
     const newTagJp = document.getElementById('new-tag-jp');
     const newTagKr = document.getElementById('new-tag-kr');
@@ -225,8 +402,146 @@
     // 태그 데이터
     let tags = [];
     
-    // 페이지 로드 시 태그 가져오기
-    document.addEventListener('DOMContentLoaded', fetchTags);
+    // PIN 입력 처리
+    pinInputs.forEach((input, index) => {
+      // 입력 시 다음 입력란으로 포커스 이동
+      input.addEventListener('input', function() {
+        if (this.value.length === 1) {
+          const nextIndex = parseInt(this.dataset.index) + 1;
+          if (nextIndex < pinInputs.length) {
+            pinInputs[nextIndex].focus();
+          }
+        }
+      });
+      
+      // 백스페이스 처리
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && this.value.length === 0) {
+          const prevIndex = parseInt(this.dataset.index) - 1;
+          if (prevIndex >= 0) {
+            pinInputs[prevIndex].focus();
+          }
+        }
+      });
+    });
+    
+    // PIN 확인 버튼 클릭
+    verifyPinBtn.addEventListener('click', verifyPin);
+    
+    // PIN 입력 후 엔터키 처리
+    pinInputs[pinInputs.length - 1].addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        verifyPin();
+      }
+    });
+    
+    // DB 재설정 버튼 클릭
+    syncDbBtn.addEventListener('click', function() {
+      syncConfirmModal.style.display = 'flex';
+    });
+    
+    // 동기화 취소 버튼
+    cancelSyncBtn.addEventListener('click', function() {
+      syncConfirmModal.style.display = 'none';
+    });
+    
+    // 동기화 확인 버튼
+    confirmSyncBtn.addEventListener('click', syncDatabase);
+    
+    // PIN 확인 함수
+    async function verifyPin() {
+      let pin = '';
+      pinInputs.forEach(input => {
+        pin += input.value;
+      });
+      
+      if (pin.length !== 4) {
+        showPinError();
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/auth`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ pin }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // PIN 인증 성공
+          pinModal.style.display = 'none';
+          appContent.style.display = 'block';
+          
+          // 태그 데이터 로드
+          fetchTags();
+        } else {
+          // PIN 인증 실패
+          showPinError();
+          clearPinInputs();
+        }
+      } catch (error) {
+        console.error('PIN 확인 오류:', error);
+        showPinError('서버 연결 오류. 다시 시도해주세요.');
+      }
+    }
+    
+    // PIN 오류 표시
+    function showPinError(message) {
+      pinError.textContent = message || '잘못된 PIN 번호입니다. 다시 시도해주세요.';
+      pinError.style.display = 'block';
+      
+      // 3초 후 오류 메시지 숨김
+      setTimeout(() => {
+        pinError.style.display = 'none';
+      }, 3000);
+    }
+    
+    // PIN 입력 초기화
+    function clearPinInputs() {
+      pinInputs.forEach(input => {
+        input.value = '';
+      });
+      pinInputs[0].focus();
+    }
+    
+    // DB 동기화 함수
+    async function syncDatabase() {
+      // 모달 닫기
+      syncConfirmModal.style.display = 'none';
+      
+      // 버튼 로딩 상태로 변경
+      syncDbBtn.disabled = true;
+      syncDbBtn.innerHTML = '<span class="spinner"></span>동기화 중...';
+      
+      try {
+        const response = await fetch(`${API_URL}/sync-tags`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('DB 동기화에 실패했습니다');
+        }
+        
+        const data = await response.json();
+        
+        // 성공 메시지 표시
+        showToast('성공', `DB 동기화 완료: ${data.updated}개 게임 문서 업데이트됨`, 'success');
+      } catch (error) {
+        console.error('DB 동기화 오류:', error);
+        showToast('오류', '데이터베이스 동기화에 실패했습니다. 다시 시도해주세요.', 'error');
+      } finally {
+        // 버튼 상태 복원
+        syncDbBtn.disabled = false;
+        syncDbBtn.innerHTML = 'DB 재설정';
+      }
+    }
     
     // 검색 기능
     searchInput.addEventListener('input', filterTags);
@@ -372,6 +687,11 @@
         toast.style.display = 'none';
       }, 3000);
     }
+    
+    // 페이지 로드 시 PIN 입력 모달 표시 (태그 데이터는 PIN 인증 후 로드)
+    document.addEventListener('DOMContentLoaded', function() {
+      pinInputs[0].focus();
+    });
   </script>
 </body>
 </html>
