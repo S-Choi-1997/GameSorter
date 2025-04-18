@@ -63,18 +63,14 @@ def get_cached_data(platform, identifier):
         logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
         return None
 
-def cache_data(platform, identifier, data):
-    if not db:
-        return
+def cache_data(platform, rj_code, data):
+    doc_id = f"{platform}_{rj_code}"
     try:
-        # title_kr 유효성 검사
-        if needs_translation(data.get('title_kr', '')):
-            logger.warning(f"Invalid title_kr for {platform}:{identifier}: {data.get('title_kr')} contains Japanese")
-        doc_ref = db.collection('games').document(platform).collection('items').document(identifier)
-        doc_ref.set(data)
-        logger.info(f"Cached data for {platform}:{identifier}, title_kr={data.get('title_kr')}")
+        db.collection("games").document(doc_id).set(data, merge=True)
+        logger.info(f"[CACHE] 저장됨: {doc_id}")
     except Exception as e:
-        logger.error(f"Cache error for {platform}:{identifier}: {e}")
+        logger.error(f"[CACHE ERROR] 저장 실패: {doc_id}, error={e}", exc_info=True)
+
 
 # 태그 캐시
 def get_cached_tag(tag_jp):
@@ -180,8 +176,8 @@ def process_rj_item(item):
             'platform': 'rj',
             'timestamp': time.time()
         }
+        logger.warning(f"[ERROR ITEM] 캐시 시도: {json.dumps(error_data, ensure_ascii=False)}")
         cache_data('rj', rj_code, error_data)
-        logger.info(f"Cached missing RJ item: {rj_code}")
         return error_data
 
 
@@ -371,11 +367,17 @@ def sync_tags_to_games():
 @app.route('/reorder-tags', methods=['POST'])
 def reorder_tags():
     try:
+        logger.info("🔧 태그 재정렬 작업 시작")
+
+        # ✅ 태그 우선순위 로드
         tag_priority = {
             doc.id: doc.to_dict().get("priority", 10)
             for doc in db.collection("tags").document("jp_to_kr").collection("mappings").stream()
         }
 
+        logger.info(f"✅ {len(tag_priority)}개의 태그 우선순위 로딩 완료")
+
+        # 🔄 전체 게임 순회
         games_ref = db.collection("games")
         updated = 0
         for doc in games_ref.stream():
@@ -384,22 +386,26 @@ def reorder_tags():
             if not tags:
                 continue
 
-            # 우선순위 기준 정렬
+            original_tags = tags[:]
+            # 🔽 우선순위 정렬
             sorted_tags = sorted(tags, key=lambda t: tag_priority.get(t, 0), reverse=True)
             primary_tag = sorted_tags[0] if sorted_tags else "기타"
 
-            # 변경사항이 있는 경우만 업데이트
+            # ✅ 변경사항 있을 경우에만 업데이트
             if sorted_tags != tags or primary_tag != data.get("primary_tag"):
                 doc.reference.update({
                     "tags": sorted_tags,
                     "primary_tag": primary_tag
                 })
+                logger.info(f"[UPDATED] {doc.id} : {original_tags} → {sorted_tags}")
                 updated += 1
 
+        logger.info(f"🟢 태그 재정렬 완료: {updated}개 문서 업데이트됨")
         return jsonify({"status": "ok", "updated_documents": updated})
     except Exception as e:
-        logger.error(f"Tag reorder error: {e}", exc_info=True)
+        logger.error(f"❌ reorder_tags 오류 발생: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     # GCP에서만 실행
