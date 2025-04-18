@@ -367,6 +367,39 @@ def sync_tags_to_games():
     except Exception as e:
         logger.error(f"/sync-tags error: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/reorder-tags', methods=['POST'])
+def reorder_tags():
+    try:
+        tag_priority = {
+            doc.id: doc.to_dict().get("priority", 10)
+            for doc in db.collection("tags").document("jp_to_kr").collection("mappings").stream()
+        }
+
+        games_ref = db.collection("games")
+        updated = 0
+        for doc in games_ref.stream():
+            data = doc.to_dict()
+            tags = data.get("tags", [])
+            if not tags:
+                continue
+
+            # 우선순위 기준 정렬
+            sorted_tags = sorted(tags, key=lambda t: tag_priority.get(t, 0), reverse=True)
+            primary_tag = sorted_tags[0] if sorted_tags else "기타"
+
+            # 변경사항이 있는 경우만 업데이트
+            if sorted_tags != tags or primary_tag != data.get("primary_tag"):
+                doc.reference.update({
+                    "tags": sorted_tags,
+                    "primary_tag": primary_tag
+                })
+                updated += 1
+
+        return jsonify({"status": "ok", "updated_documents": updated})
+    except Exception as e:
+        logger.error(f"Tag reorder error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # GCP에서만 실행

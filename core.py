@@ -22,6 +22,12 @@ if LOG_TO_FILE:
 else:
     logging.basicConfig(level=logging.CRITICAL)
 
+# 클래스 밖 최상단에 위치
+def needs_translation(text):
+    import re
+    return bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', text or ''))
+
+
 class FetchWorker(QThread):
     progress = Signal(int)
     log = Signal(str)
@@ -313,23 +319,14 @@ class MainWindowLogic(MainWindowUI):
         self.worker.finished.connect(self.on_fetch_finished_cleanup)
         self.worker.start()
 
+
+
     def on_fetch_finished(self, game_data):
         try:
             if not game_data:
                 self.log_label.setText("데이터 가져오기 실패")
                 QMessageBox.warning(self, "오류", "데이터를 가져오지 못했습니다.")
                 return
-
-            # ✔️ 진짜 전체 데이터가 아닌 임시 결과는 무시
-            if len(game_data) < len(self.results):
-                logging.info("임시 결과 무시 (불완전한 응답)")
-                return
-
-            # ✔️ 이미 처리한 전체 응답이라면 무시
-            if hasattr(self, "fetch_already_handled") and self.fetch_already_handled:
-                logging.info("중복 전체 fetch 무시")
-                return
-            self.fetch_already_handled = True
 
             logging.info("=== on_fetch_finished called ===")
             logging.info(f"Received game_data (length={len(game_data)}):")
@@ -380,10 +377,21 @@ class MainWindowLogic(MainWindowUI):
                 tag = match.get('primary_tag') or tags[0]
                 result['selected_tag'] = tag
 
-                title_kr = match.get('title_kr') or match.get('title_jp') or result['original']
-                title = re.sub(rf"\b{rj_code}\b", "", title_kr, flags=re.IGNORECASE).strip()
-                title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-                result['suggested'] = f"[{rj_code}][{tag}] {title}"
+                # ✅ 제목 판단
+                original_title = result.get('original_title') or result.get('original')
+                title_kr = match.get('title_kr') or match.get('title_jp') or original_title
+
+                if needs_translation(original_title):
+                    final_title = title_kr
+                else:
+                    final_title = original_title
+
+                # 파일명에 쓸 제목
+                final_title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", final_title, flags=re.IGNORECASE).strip()
+                final_title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", final_title, flags=re.IGNORECASE).strip()
+                final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-')
+
+                result['suggested'] = f"[{rj_code}][{tag}] {final_title}"
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
                 combo = self.table.cellWidget(row, 3)
@@ -404,13 +412,9 @@ class MainWindowLogic(MainWindowUI):
 
             self.table.setUpdatesEnabled(True)
             self.table.viewport().update()
-
-            # 메시지는 일부 실패한 경우만 띄움
+            self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
             if error_count > 0:
-                self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
                 QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
-            else:
-                self.log_label.setText("게임명 변경 완료")
         except Exception as e:
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
