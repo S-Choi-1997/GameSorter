@@ -2,6 +2,7 @@ import os
 import re
 import json
 import requests
+import time
 from bs4 import BeautifulSoup
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox
 from PySide6.QtCore import Qt, QThread, Signal
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import QApplication
 import logging
 import tenacity
 from ui import MainWindowUI
+from urllib.parse import urljoin
 
 logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -19,31 +21,11 @@ class FetchWorker(QThread):
     error = Signal(str)
     finished = Signal()
 
-    def __init__(self, server_url, items, cache_file="dlsite_cache.json"):
+    def __init__(self, server_url, items, use_firestore_cache=True):
         super().__init__()
         self.server_url = server_url
         self.items = items
-        self.cache_file = cache_file
-        self.cache = self.load_cache()
-
-    def load_cache(self):
-        try:
-            if os.path.exists(self.cache_file):
-                with open(self.cache_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            logging.info("No cache file found, starting with empty cache")
-            return {}
-        except Exception as e:
-            logging.error(f"Cache load error: {e}")
-            return {}
-
-    def save_cache(self):
-        try:
-            with open(self.cache_file, 'w', encoding='utf-8') as f:
-                json.dump(self.cache, f, ensure_ascii=False, indent=2)
-            logging.info("Cache saved successfully")
-        except Exception as e:
-            logging.error(f"Cache save error: {e}")
+        self.use_firestore_cache = use_firestore_cache
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(3),
@@ -54,57 +36,75 @@ class FetchWorker(QThread):
         )
     )
     def get_dlsite_data(self, rj_code):
-        import time
-        if rj_code in self.cache:
-            logging.info(f"Local cache hit for {rj_code}")
-            return self.cache[rj_code]
-
         url = f"https://www.dlsite.com/maniax/work/=/product_id/{rj_code}.html"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ja',
+            'Referer': 'https://www.dlsite.com/maniax/',
+            'DNT': '1',
+            'Connection': 'keep-alive'
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.encoding = 'utf-8'
+        cookies = {'adultconfirmed': '1'}  # 성인 인증 우회
 
-        if response.status_code != 200:
-            raise Exception(f"DLsite fetch failed: Status {response.status_code}")
+        try:
+            logging.info(f"Fetching DLsite data for {rj_code}")
+            response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
+            response.encoding = 'utf-8'
+            logging.debug(f"Response status: {response.status_code}, URL: {response.url}")
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        title_tag = soup.find('h1', id='work_name') or soup.find('h1', itemprop='name')
-        title_jp = title_tag.text.strip() if title_tag else (soup.find('meta', property='og:title')['content'].strip() if soup.find('meta', property='og:title') else rj_code)
+            if response.status_code != 200:
+                raise Exception(f"DLsite fetch failed: Status {response.status_code}")
 
-        tags_jp = []
-        genre_elements = soup.find_all('a', href=lambda x: x and '/maniax/genre' in x)
-        for elem in genre_elements:
-            tag = elem.text.strip()
-            if tag:
-                tags_jp.append(tag)
+            if 'age-verification' in response.url or 'adult_check' in response.text.lower():
+                logging.warning(f"Adult verification page detected for {rj_code}")
+                raise Exception("Adult verification required")
 
-        maker = soup.find('span', class_='maker_name')
-        maker = maker.text.strip() if maker else ""
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-        release_date = soup.find('th', text=re.compile('販売日')) or soup.find('th', text=re.compile('Release date'))
-        release_date = release_date.find_next('td').text.strip() if release_date else "N/A"
+            # 데이터 파싱
+            title_elem = soup.select_one('#work_name')
+            if not title_elem:
+                logging.error(f"No title found for RJ code {rj_code}")
+                raise Exception("No title found")
 
-        thumbnail = soup.find('meta', property='og:image')
-        thumbnail_url = thumbnail['content'] if thumbnail else ""
+            # 태그 선택자 (여러 구조 대응)
+            tags_elem = soup.select('div.main_genre a, div.work_genre a, .genre a')
+            tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip()][:5]
+            if not tags_jp:
+                logging.warning(f"No genre tags found for {rj_code}")
+                tags_jp = ["기타"]
 
-        data = {
-            'rj_code': rj_code,
-            'title_jp': title_jp,
-            'tags_jp': tags_jp,
-            'release_date': release_date,
-            'thumbnail_url': thumbnail_url,
-            'maker': maker,
-            'link': url,
-            'platform': 'rj',
-            'rating': 0.0,
-            'timestamp': time.time()
-        }
-        self.cache[rj_code] = data
-        self.save_cache()
-        logging.info(f"Fetched DLsite data for {rj_code}")
-        return data
+            date_elem = soup.select_one('th:contains("販売日") + td a')
+            thumb_elem = soup.select_one('meta[property="og:image"]') or soup.select_one('img.work_thumb')
+            maker_elem = soup.select_one('span.maker_name a')
+
+            thumbnail_url = ''
+            if thumb_elem:
+                thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
+                if thumbnail_url and not thumbnail_url.startswith('http'):
+                    thumbnail_url = urljoin(url, thumbnail_url)
+                logging.debug(f"Thumbnail URL: {thumbnail_url}")
+
+            data = {
+                'rj_code': rj_code,
+                'title_jp': title_elem.text.strip(),
+                'tags_jp': tags_jp,
+                'release_date': date_elem.text.strip() if date_elem else 'N/A',
+                'thumbnail_url': thumbnail_url,
+                'maker': maker_elem.text.strip() if maker_elem else 'N/A',
+                'link': url,
+                'platform': 'rj',
+                'rating': 0.0,
+                'timestamp': time.time()
+            }
+            logging.debug(f"get_dlsite_data result for {rj_code}: {data}")
+            logging.info(f"Fetched DLsite data for {rj_code}, tags_jp={tags_jp}")
+            return data
+
+        except Exception as e:
+            logging.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
+            return {'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code}
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(5),
@@ -139,13 +139,21 @@ class FetchWorker(QThread):
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
             logging.info(f"Starting fetch for {total_items} items: {self.items}")
 
-            # 1. Firestore 캐시 확인, missing만 추출
-            response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
-            response_data = response.json()
-            missing = response_data.get("missing", [])
-            self.task_id = response_data.get("task_id")
+            if self.use_firestore_cache:
+                # Firestore 캐시 체크
+                logging.info("Checking Firestore cache")
+                response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
+                response_data = response.json()
+                missing = response_data.get("missing", [])
+                self.task_id = response_data.get("task_id")
+                logging.info(f"Firestore cache check complete, missing items: {missing}")
+            else:
+                # 캐시 우회 시 모든 항목 크롤링
+                logging.info("Firestore cache bypass mode enabled")
+                missing = self.items
+                response_data = {}
 
-            # 2. Firestore에 없는 항목만 로컬 크롤링
+            # 로컬 크롤링
             local_results = []
             for i, item in enumerate(missing):
                 rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
@@ -167,17 +175,18 @@ class FetchWorker(QThread):
                         'platform': 'steam',
                         'timestamp': time.time()
                     })
+
                 self.progress.emit(int((i + 1) / len(missing) * 50))
                 self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
 
-            # 3. 모든 결과를 app.py로 보내 번역 및 저장
+            # 결과 처리
             if local_results:
+                logging.info(f"Sending {len(local_results)} crawled items to server for translation and storage")
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
                 response_data = response.json()
                 translated_results = response_data.get("results", [])
-                self.result.emit(translated_results)  # 최종 번역된 결과만 UI로 전달
+                self.result.emit(translated_results)
             else:
-                # missing이 없으면 초기 요청의 결과를 사용
                 translated_results = response_data.get("results", [])
                 self.result.emit(translated_results)
 
@@ -193,8 +202,6 @@ class MainWindowLogic(MainWindowUI):
     def __init__(self):
         super().__init__()
         self.results = []
-        self.cache_file = "dlsite_cache.json"
-        self.cache = self.load_cache()
         self.folder_path = None
         self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
@@ -209,27 +216,6 @@ class MainWindowLogic(MainWindowUI):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.log_label.setMaximumWidth(self.table.width())
-
-    def load_cache(self):
-        try:
-            if os.path.exists(self.cache_file):
-                with open(self.cache_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            logging.info("No cache file found, starting with empty cache")
-            return {}
-        except Exception as e:
-            self.log_label.setText(f"캐시 로드 오류: {str(e)}")
-            logging.error(f"Cache load error: {str(e)}")
-            return {}
-
-    def save_cache(self):
-        try:
-            with open(self.cache_file, 'w', encoding='utf-8') as f:
-                json.dump(self.cache, f, ensure_ascii=False, indent=2)
-            logging.info("Cache saved successfully")
-        except Exception as e:
-            self.log_label.setText(f"캐시 저장 오류: {str(e)}")
-            logging.error(f"Cache save error: {str(e)}")
 
     def fetch_game_data_and_update(self):
         if not self.results:
@@ -249,7 +235,7 @@ class MainWindowLogic(MainWindowUI):
             else:
                 items.append(result['original'])
 
-        self.worker = FetchWorker(self.SERVER_URL, items, self.cache_file)
+        self.worker = FetchWorker(self.SERVER_URL, items, use_firestore_cache=False)  # Firestore 캐시 우회
         self.worker.progress.connect(self.progress_bar.setValue)
         self.worker.log.connect(self.log_label.setText)
         self.worker.result.connect(self.on_fetch_finished)
