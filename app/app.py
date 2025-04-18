@@ -340,9 +340,16 @@ def process_games():
                 rj_code = item.get("rj_code")
                 title = item.get("title_kr") or item.get("title") or rj_code
 
-                # 저장 처리
-                logger.info(f"[💡 SKIP SAVE] 번역 전 데이터 수신됨: {platform}:{rj_code}")
-                continue  # 또는 process_rj_item(item) 호출
+                # ✅ 번역/저장이 필요한 경우 처리
+                if platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
+                    logger.info(f"[🌀 TRANSLATE & SAVE] {platform}:{rj_code}")
+                    processed = process_and_save_rj_item(item)
+                    results.append(processed)
+                else:
+                    cache_data(platform, rj_code, item)
+                    logger.info(f"[💾 SAVED] {platform}/items/{rj_code}, title_kr={title}")
+                    results.append(item)
+
 
 
             # 캐시 확인 요청일 경우
@@ -467,6 +474,76 @@ def reorder_tags():
     except Exception as e:
         logger.error(f"❌ reorder_tags 오류 발생: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+    
+def process_and_save_rj_item(item):
+    """번역되지 않은 RJ 항목을 처리하고 저장"""
+    rj_code = item.get("rj_code", "unknown")
+    title_jp = item.get("title_jp", "")
+    tags_jp = item.get("tags_jp", [])
+
+    if not title_jp and not tags_jp:
+        logger.warning(f"[⚠️ INCOMPLETE ITEM] {rj_code}: title_jp/tags_jp 없음")
+        return item
+
+    # title 정제
+    def clean_title(title, rj_code):
+        if not title or not rj_code:
+            return title
+        patterns = [
+            rf"[\[\(]?\b{rj_code}\b[\]\)]?[)\s,;：]*",
+            rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b",
+            rf"\b{rj_code}\b"
+        ]
+        for pattern in patterns:
+            title = re.sub(pattern, "", title, flags=re.IGNORECASE).strip()
+        return title
+
+    cleaned_title = clean_title(title_jp, rj_code)
+
+    # 태그 캐싱 확인 및 번역할 목록 추림
+    tags_kr = []
+    tags_to_translate = []
+    priorities = []
+
+    for tag in tags_jp:
+        cached_tag = get_cached_tag(tag)
+        if cached_tag:
+            tags_kr.append(cached_tag['tag_kr'])
+            priorities.append(cached_tag.get('priority', 10))
+        else:
+            tags_to_translate.append(tag)
+            priorities.append(10)
+
+    # 번역
+    translated_tags, translated_title = translate_with_gpt_batch(
+        tags_to_translate, cleaned_title if needs_translation(cleaned_title) else None, batch_idx=rj_code
+    )
+
+    # 캐싱
+    for i, jp_tag in enumerate(tags_to_translate):
+        kr_tag = translated_tags[i]
+        cache_tag(jp_tag, kr_tag, priorities[i])
+        tags_kr.append(kr_tag)
+
+    # 우선순위 정렬
+    tag_with_priority = list(zip(tags_kr, priorities))
+    tag_with_priority.sort(key=lambda x: x[1], reverse=True)
+    tags_kr_sorted = [tag for tag, _ in tag_with_priority]
+    primary_tag = tags_kr_sorted[0] if tags_kr_sorted else "기타"
+
+    # 최종 데이터 구성
+    final = {
+        **item,
+        "title_kr": translated_title or cleaned_title or title_jp,
+        "tags": tags_kr_sorted,
+        "primary_tag": primary_tag,
+        "timestamp": time.time()
+    }
+
+    # 저장
+    cache_data("rj", rj_code, final)
+    logger.info(f"[💾 AUTO SAVED] {rj_code} → {final['title_kr']}")
+    return final
 
 
 if __name__ == '__main__':

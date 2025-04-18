@@ -506,3 +506,436 @@ Traceback (most recent call last):
   File "C:\Users\nothn\AppData\Local\Programs\Python\Python311\Lib\site-packages\tenacity\__init__.py", line 421, in exc_check
     raise retry_exc from fut.exception()
 tenacity.RetryError: RetryError[<Future at 0x1fb9adee910 state=finished raised HTTPError>]
+2025-04-19 01:01:18,805 INFO Scanning folder: H:/yangame/방주
+2025-04-19 01:01:18,809 DEBUG Clean RJ code: 142 [雨宿り蛙] NTR 모험가 리네&엘자 2차수정 RJ372618.7z -> 142 [雨宿り蛙] NTR 모험가 리네&엘자 2차수정 .7z
+2025-04-19 01:01:18,809 DEBUG File: 142 [雨宿り蛙] NTR 모험가 리네&엘자 2차수정 RJ372618.7z, Extracted rj_code: 'RJ372618', Original title: '142 [雨宿り蛙] NTR 모험가 리네&엘자 2차수정 .7z'
+2025-04-19 01:01:18,810 DEBUG File: Aurelia v1.00.0.zip, Extracted rj_code: '', Original title: 'Aurelia v1.00.0'
+2025-04-19 01:01:18,810 DEBUG File: Dead-End City Blues OD Edition v1.2.1.7z, Extracted rj_code: '', Original title: 'Dead-End City Blues OD Edition v1.2.1'
+2025-04-19 01:01:18,811 DEBUG File: False Convict`s 製品版.zip, Extracted rj_code: '', Original title: 'False Convict`s 製品版'
+2025-04-19 01:01:18,811 DEBUG File: Grimhelm Collection.7z, Extracted rj_code: '', Original title: 'Grimhelm Collection'
+2025-04-19 01:01:18,812 DEBUG File: Koooon Soft Collections.7z, Extracted rj_code: '', Original title: 'Koooon Soft Collections'
+2025-04-19 01:01:18,812 DEBUG File: NTR 모험가 리네&엘자.zip, Extracted rj_code: '', Original title: 'NTR 모험가 리네&엘자'
+2025-04-19 01:01:18,813 DEBUG Clean RJ code: RJ01173055 Minamisan v1.05 SEdition.zip -> Minamisan v1.05 SEdition.zip
+2025-04-19 01:01:18,813 DEBUG File: RJ01173055 Minamisan v1.05 SEdition.zip, Extracted rj_code: 'RJ01173055', Original title: 'Minamisan v1.05 SEdition.zip'
+2025-04-19 01:01:18,814 DEBUG Clean RJ code: RJ01217516 HaitokunoShoudou_ver1.10.zip -> HaitokunoShoudou_ver1.10.zip
+2025-04-19 01:01:18,814 DEBUG File: RJ01217516 HaitokunoShoudou_ver1.10.zip, Extracted rj_code: 'RJ01217516', Original title: 'HaitokunoShoudou_ver1.10.zip'
+2025-04-19 01:01:18,815 DEBUG Clean RJ code: RJ01228927 수정2.zip -> 수정2.zip
+2025-04-19 01:01:18,815 DEBUG File: RJ01228927 수정2.zip, Extracted rj_code: 'RJ01228927', Original title: '수정2.zip'
+2025-04-19 01:01:18,816 DEBUG Clean RJ code: RJ01288065_sleepingMidori.zip -> RJ01288065_sleepingMidori.zip
+2025-04-19 01:01:18,816 DEBUG File: RJ01288065_sleepingMidori.zip, Extracted rj_code: 'RJ01288065', Original title: 'RJ01288065_sleepingMidori.zip'
+2025-04-19 01:01:18,817 DEBUG Clean RJ code: RJ01311216 이 아가씨, 너무 무지해 v1.2.2.zip -> 이 아가씨, 너무 무지해 v1.2.2.zip
+2025-04-19 01:01:18,817 DEBUG File: RJ01311216 이 아가씨, 너무 무지해 v1.2.2.zip, Extracted rj_code: 'RJ01311216', Original title: '이 아가씨, 너무 무지해 v1.2.2.zip'
+2025-04-19 01:01:18,818 DEBUG Clean RJ code: RJ181353 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip -> 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip
+2025-04-19 01:01:18,818 DEBUG File: RJ181353 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip, Extracted rj_code: 'RJ181353', Original title: '감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip'
+2025-04-19 01:01:18,820 DEBUG Clean RJ code: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip -> 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-19 01:01:18,820 DEBUG File: RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip, Extracted rj_code: 'RJ374754', Original title: '비술 상전 인법 승부 - 김머시기dlc 1.1.zip'
+2025-04-19 01:01:18,821 DEBUG File: RPGVXAce_RTP.zip, Extracted rj_code: '', Original title: 'RPGVXAce_RTP'
+2025-04-19 01:01:18,822 DEBUG File: SiNiSistar (win).zip, Extracted rj_code: '', Original title: 'SiNiSistar (win)'
+2025-04-19 01:01:18,822 DEBUG File: WE ARE BANDIT v1.14 KR.7z, Extracted rj_code: '', Original title: 'WE ARE BANDIT v1.14 KR'
+2025-04-19 01:01:18,823 DEBUG File: [Anim] Aisai x Koukan Ninkatsu Swapping.zip, Extracted rj_code: '', Original title: '[Anim] Aisai x Koukan Ninkatsu Swapping'
+2025-04-19 01:01:18,825 DEBUG Clean RJ code: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip -> [CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-19 01:01:18,825 DEBUG File: [RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip, Extracted rj_code: 'RJ01111140', Original title: '[CherisSoft] 쿠노이치 카린 v1.2.zip'
+2025-04-19 01:01:18,825 DEBUG File: 네토라레지스탕스 KR.7z, Extracted rj_code: '', Original title: '네토라레지스탕스 KR'
+2025-04-19 01:01:18,826 DEBUG File: 니트로닐 손번역(1).zip, Extracted rj_code: '', Original title: '니트로닐 손번역(1)'
+2025-04-19 01:01:18,826 DEBUG File: 니트로닐 손번역(2).zip, Extracted rj_code: '', Original title: '니트로닐 손번역(2)'
+2025-04-19 01:01:18,827 DEBUG File: 니트로닐 손번역.zip, Extracted rj_code: '', Original title: '니트로닐 손번역'
+2025-04-19 01:01:18,828 DEBUG File: 던전타운 EX v2.2.0.0 KR.7z, Extracted rj_code: '', Original title: '던전타운 EX v2.2.0.0 KR'
+2025-04-19 01:01:18,828 DEBUG File: 렌파이 The Fixer [v0.3.3.17].zip, Extracted rj_code: '', Original title: '렌파이 The Fixer [v0.3.3.17]'
+2025-04-19 01:01:18,829 DEBUG File: 몬무스 퀘스트 ver3.05 한국어.zip, Extracted rj_code: '', Original title: '몬무스 퀘스트 ver3.05 한국어'
+2025-04-19 01:01:18,830 DEBUG File: 부계에 잠든 왕녀의 아바돈 1.30.7z, Extracted rj_code: '', Original title: '부계에 잠든 왕녀의 아바돈 1.30'
+2025-04-19 01:01:18,831 DEBUG File: 부서지는 여름색+after합본.zip, Extracted rj_code: '', Original title: '부서지는 여름색+after합본'
+2025-04-19 01:01:18,832 DEBUG File: 사쿠라 고젠 v100.zip, Extracted rj_code: '', Original title: '사쿠라 고젠 v100'
+2025-04-19 01:01:18,833 DEBUG File: 아가씨최면.7z, Extracted rj_code: '', Original title: '아가씨최면'
+2025-04-19 01:01:18,833 DEBUG File: 아저씨 용사 RPG.7z, Extracted rj_code: '', Original title: '아저씨 용사 RPG'
+2025-04-19 01:01:18,834 DEBUG Clean RJ code: 아줌마 전기 [RJ291293].7z -> 아줌마 전기 .7z
+2025-04-19 01:01:18,835 DEBUG File: 아줌마 전기 [RJ291293].7z, Extracted rj_code: 'RJ291293', Original title: '아줌마 전기 .7z'
+2025-04-19 01:01:18,835 DEBUG File: 약속과 계약의 생츄어리.zip, Extracted rj_code: '', Original title: '약속과 계약의 생츄어리'
+2025-04-19 01:01:18,836 DEBUG File: 음계 인주 아라카 ver 1.31.zip, Extracted rj_code: '', Original title: '음계 인주 아라카 ver 1.31'
+2025-04-19 01:01:18,837 DEBUG File: 이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내.zip, Extracted rj_code: '', Original title: '이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내'
+2025-04-19 01:01:18,838 DEBUG File: 절대복종위기.zip, Extracted rj_code: '', Original title: '절대복종위기'
+2025-04-19 01:01:18,839 DEBUG File: 젖소이야기.zip, Extracted rj_code: '', Original title: '젖소이야기'
+2025-04-19 01:01:18,840 DEBUG File: 프린세스콜로세움ver1.00(구매보급_키락).7z, Extracted rj_code: '', Original title: '프린세스콜로세움ver1.00(구매보급_키락)'
+2025-04-19 01:01:18,841 DEBUG File: 하키카.zip, Extracted rj_code: '', Original title: '하키카'
+2025-04-19 01:01:18,842 DEBUG File: 한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라.zip, Extracted rj_code: '', Original title: '한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라'
+2025-04-19 01:01:22,443 INFO Starting fetch for 40 items
+2025-04-19 01:01:22,443 DEBUG Request item: {'rj_code': 'RJ372618', 'platform': 'rj', 'title': '142 [雨宿り蛙] NTR 모험가 리네&엘자 2차수정 RJ372618.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'Aurelia v1.00.0.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'Dead-End City Blues OD Edition v1.2.1.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'False Convict`s 製品版.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'Grimhelm Collection.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'Koooon Soft Collections.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'NTR 모험가 리네&엘자.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01173055', 'platform': 'rj', 'title': 'RJ01173055 Minamisan v1.05 SEdition.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01217516', 'platform': 'rj', 'title': 'RJ01217516 HaitokunoShoudou_ver1.10.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01228927', 'platform': 'rj', 'title': 'RJ01228927 수정2.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01288065', 'platform': 'rj', 'title': 'RJ01288065_sleepingMidori.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01311216', 'platform': 'rj', 'title': 'RJ01311216 이 아가씨, 너무 무지해 v1.2.2.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ181353', 'platform': 'rj', 'title': 'RJ181353 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ374754', 'platform': 'rj', 'title': 'RJ374754 비술 상전 인법 승부 - 김머시기dlc 1.1.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'RPGVXAce_RTP.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'SiNiSistar (win).zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': 'WE ARE BANDIT v1.14 KR.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '[Anim] Aisai x Koukan Ninkatsu Swapping.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': 'RJ01111140', 'platform': 'rj', 'title': '[RJ01111140][CherisSoft] 쿠노이치 카린 v1.2.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '네토라레지스탕스 KR.7z'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '니트로닐 손번역(1).zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '니트로닐 손번역(2).zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '니트로닐 손번역.zip'}
+2025-04-19 01:01:22,444 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '던전타운 EX v2.2.0.0 KR.7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '렌파이 The Fixer [v0.3.3.17].zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '몬무스 퀘스트 ver3.05 한국어.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '부계에 잠든 왕녀의 아바돈 1.30.7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '부서지는 여름색+after합본.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '사쿠라 고젠 v100.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '아가씨최면.7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '아저씨 용사 RPG.7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': 'RJ291293', 'platform': 'rj', 'title': '아줌마 전기 [RJ291293].7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '약속과 계약의 생츄어리.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '음계 인주 아라카 ver 1.31.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '절대복종위기.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '젖소이야기.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '프린세스콜로세움ver1.00(구매보급_키락).7z'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '하키카.zip'}
+2025-04-19 01:01:22,445 DEBUG Request item: {'rj_code': '', 'platform': 'steam', 'title': '한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라.zip'}
+2025-04-19 01:01:22,445 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:22,449 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:27,362 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 7726
+2025-04-19 01:01:27,364 INFO Initial server response: 30 items
+2025-04-19 01:01:27,364 WARNING [core] 서버 응답 missing 개수: 10
+2025-04-19 01:01:27,364 INFO Fetching DLsite data for RJ372618
+2025-04-19 01:01:27,366 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:27,802 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ372618.html HTTP/1.1" 200 None
+2025-04-19 01:01:27,891 DEBUG Clean RJ code: NTR冒険者 リーネ&エルザ -> NTR冒険者 リーネ&エルザ
+2025-04-19 01:01:27,891 INFO Fetched DLsite data for RJ372618, title_jp=NTR冒険者 リーネ&エルザ, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '男主人公', 'ツクール', '寝取られ', 'アヘ顔', '妊娠/孕ませ', '巨乳/爆乳', 'ぼて腹/妊婦']
+2025-04-19 01:01:27,892 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:27,894 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:28,580 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:28,581 INFO [core] 크롤링 및 저장 완료: RJ372618
+2025-04-19 01:01:28,581 INFO Fetching DLsite data for RJ01173055
+2025-04-19 01:01:28,583 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:29,381 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-19 01:01:29,467 DEBUG Clean RJ code: ミナミさんホテルにいこう -> ミナミさんホテルにいこう
+2025-04-19 01:01:29,467 INFO Fetched DLsite data for RJ01173055, title_jp=ミナミさんホテルにいこう, tags_jp=['R18', 'シミュレーション', 'アプリケーション', 'おさわり', 'きせかえ', '学生', '日常/生活', '中出し', '妊娠/孕ませ', 'ノーマルプレイ', '和姦']
+2025-04-19 01:01:29,469 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:29,470 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:30,171 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:30,172 INFO [core] 크롤링 및 저장 완료: RJ01173055
+2025-04-19 01:01:30,173 INFO Fetching DLsite data for RJ01217516
+2025-04-19 01:01:30,174 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:30,628 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01217516.html HTTP/1.1" 200 None
+2025-04-19 01:01:30,707 DEBUG Clean RJ code: 背徳の衝動 -> 背徳の衝動
+2025-04-19 01:01:30,707 INFO Fetched DLsite data for RJ01217516, title_jp=背徳の衝動, tags_jp=['R18', 'シミュレーション', '音声あり', 'アプリケーション', '学生', 'セーラー服', '快楽堕ち', '妊娠/孕ませ', '秘密さわさわ', '合意なし', '黒髪', '巨乳/爆乳']
+2025-04-19 01:01:30,708 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:30,709 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:31,417 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:31,419 INFO [core] 크롤링 및 저장 완료: RJ01217516
+2025-04-19 01:01:31,419 INFO Fetching DLsite data for RJ01228927
+2025-04-19 01:01:31,420 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:32,148 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01228927.html HTTP/1.1" 200 None
+2025-04-19 01:01:32,230 DEBUG Clean RJ code: 魔女の護送人 -> 魔女の護送人
+2025-04-19 01:01:32,230 INFO Fetched DLsite data for RJ01228927, title_jp=魔女の護送人, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', 'つるぺた', '退廃/背徳/インモラル', 'シリアス', '純愛', 'ツンデレ', '中出し', '命令/無理矢理', '処女']
+2025-04-19 01:01:32,231 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:32,232 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:32,917 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:32,918 INFO [core] 크롤링 및 저장 완료: RJ01228927
+2025-04-19 01:01:32,918 INFO Fetching DLsite data for RJ01288065
+2025-04-19 01:01:32,919 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:33,670 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01288065.html HTTP/1.1" 200 None
+2025-04-19 01:01:33,744 DEBUG Clean RJ code: 眠っている少女 -> 眠っている少女
+2025-04-19 01:01:33,744 INFO Fetched DLsite data for RJ01288065, title_jp=眠っている少女, tags_jp=['R18', 'シミュレーション', 'アプリケーション', '少女', 'つるぺた', '学生', 'すやすやえっち', 'パイズリ', '金髪', '貧乳/微乳', 'ツルペタ']
+2025-04-19 01:01:33,745 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:33,747 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:34,416 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:34,418 INFO [core] 크롤링 및 저장 완료: RJ01288065
+2025-04-19 01:01:34,418 INFO Fetching DLsite data for RJ01311216
+2025-04-19 01:01:34,420 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:35,163 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01311216.html HTTP/1.1" 200 None
+2025-04-19 01:01:35,242 DEBUG Clean RJ code: このお嬢様、無知につき -> このお嬢様、無知につき
+2025-04-19 01:01:35,243 INFO Fetched DLsite data for RJ01311216, title_jp=このお嬢様、無知につき, tags_jp=['R18', 'シミュレーション', '音声あり', 'アプリケーション', 'おさわり', 'つるぺた', '日常/生活', 'すやすやえっち', '中出し', 'オナニー', 'しつけ', '貧乳/微乳']
+2025-04-19 01:01:35,244 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:35,245 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:35,949 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:35,951 INFO [core] 크롤링 및 저장 완료: RJ01311216
+2025-04-19 01:01:35,951 INFO Fetching DLsite data for RJ181353
+2025-04-19 01:01:35,953 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:36,798 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ181353.html HTTP/1.1" 200 None
+2025-04-19 01:01:36,887 DEBUG Clean RJ code: 牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～ -> 牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～
+2025-04-19 01:01:36,887 INFO Fetched DLsite data for RJ181353, title_jp=牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～, tags_jp=['R18', 'アドベンチャー', '音声あり', '音楽あり', 'アプリケーション', '少女', '人妻', '妊娠/孕ませ', 'しつけ', '羞恥/恥辱', '巨乳/爆乳']
+2025-04-19 01:01:36,888 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:36,889 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:37,593 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:37,595 INFO [core] 크롤링 및 저장 완료: RJ181353
+2025-04-19 01:01:37,595 INFO Fetching DLsite data for RJ374754
+2025-04-19 01:01:37,596 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:38,446 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ374754.html HTTP/1.1" 200 None
+2025-04-19 01:01:38,531 DEBUG Clean RJ code: 秘術相伝忍法勝負 -> 秘術相伝忍法勝負
+2025-04-19 01:01:38,532 INFO Fetched DLsite data for RJ374754, title_jp=秘術相伝忍法勝負, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '女主人公', 'ツクール', '学生', '屋外', '拘束', '羞恥/恥辱', '命令/無理矢理', '口内射精']
+2025-04-19 01:01:38,533 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:38,535 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:39,199 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:39,201 INFO [core] 크롤링 및 저장 완료: RJ374754
+2025-04-19 01:01:39,201 INFO Fetching DLsite data for RJ01111140
+2025-04-19 01:01:39,203 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:39,862 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01111140.html HTTP/1.1" 200 None
+2025-04-19 01:01:39,962 DEBUG Clean RJ code: 紅蓮飛翔ピュアフレイム -> 紅蓮飛翔ピュアフレイム
+2025-04-19 01:01:39,962 INFO Fetched DLsite data for RJ01111140, title_jp=紅蓮飛翔ピュアフレイム, tags_jp=['R18', 'ロールプレイング', '音声あり', '音楽あり', '動画あり', 'アプリケーション', '断面図', '魔法少女', 'ラブラブ/あまあま', '純愛', '寝取られ', '妊娠/孕ませ', '屈辱']
+2025-04-19 01:01:39,964 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:39,965 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:40,670 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:40,671 INFO [core] 크롤링 및 저장 완료: RJ01111140
+2025-04-19 01:01:40,672 INFO Fetching DLsite data for RJ291293
+2025-04-19 01:01:40,673 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:41,396 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ291293.html HTTP/1.1" 200 None
+2025-04-19 01:01:41,513 DEBUG Clean RJ code: オバサンズ・サガ -> オバサンズ・サガ
+2025-04-19 01:01:41,513 INFO Fetched DLsite data for RJ291293, title_jp=オバサンズ・サガ, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '母親', '熟女', '人妻', 'ビッチ', 'ファンタジー', '筋肉', 'ムチムチ', '太め/デブ']
+2025-04-19 01:01:41,515 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:41,516 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:42,238 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:42,239 INFO [core] 크롤링 및 저장 완료: RJ291293
+2025-04-19 01:01:42,239 INFO Fetching DLsite data for RJ372618
+2025-04-19 01:01:42,241 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:42,696 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ372618.html HTTP/1.1" 200 None
+2025-04-19 01:01:42,775 DEBUG Clean RJ code: NTR冒険者 リーネ&エルザ -> NTR冒険者 リーネ&エルザ
+2025-04-19 01:01:42,775 INFO Fetched DLsite data for RJ372618, title_jp=NTR冒険者 リーネ&エルザ, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '男主人公', 'ツクール', '寝取られ', 'アヘ顔', '妊娠/孕ませ', '巨乳/爆乳', 'ぼて腹/妊婦']
+2025-04-19 01:01:42,776 DEBUG Local crawl success for RJ372618: NTR冒険者 リーネ&エルザ
+2025-04-19 01:01:42,776 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:42,777 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:43,491 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:43,493 INFO Fetching DLsite data for RJ01173055
+2025-04-19 01:01:43,494 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:44,119 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01173055.html HTTP/1.1" 200 None
+2025-04-19 01:01:44,202 DEBUG Clean RJ code: ミナミさんホテルにいこう -> ミナミさんホテルにいこう
+2025-04-19 01:01:44,202 INFO Fetched DLsite data for RJ01173055, title_jp=ミナミさんホテルにいこう, tags_jp=['R18', 'シミュレーション', 'アプリケーション', 'おさわり', 'きせかえ', '学生', '日常/生活', '中出し', '妊娠/孕ませ', 'ノーマルプレイ', '和姦']
+2025-04-19 01:01:44,203 DEBUG Local crawl success for RJ01173055: ミナミさんホテルにいこう
+2025-04-19 01:01:44,203 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:44,204 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:44,878 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:44,880 INFO Fetching DLsite data for RJ01217516
+2025-04-19 01:01:44,881 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:45,312 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01217516.html HTTP/1.1" 200 None
+2025-04-19 01:01:45,394 DEBUG Clean RJ code: 背徳の衝動 -> 背徳の衝動
+2025-04-19 01:01:45,395 INFO Fetched DLsite data for RJ01217516, title_jp=背徳の衝動, tags_jp=['R18', 'シミュレーション', '音声あり', 'アプリケーション', '学生', 'セーラー服', '快楽堕ち', '妊娠/孕ませ', '秘密さわさわ', '合意なし', '黒髪', '巨乳/爆乳']
+2025-04-19 01:01:45,396 DEBUG Local crawl success for RJ01217516: 背徳の衝動
+2025-04-19 01:01:45,396 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:45,397 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:46,091 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:46,093 INFO Fetching DLsite data for RJ01228927
+2025-04-19 01:01:46,094 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:46,730 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01228927.html HTTP/1.1" 200 None
+2025-04-19 01:01:46,807 DEBUG Clean RJ code: 魔女の護送人 -> 魔女の護送人
+2025-04-19 01:01:46,807 INFO Fetched DLsite data for RJ01228927, title_jp=魔女の護送人, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', 'つるぺた', '退廃/背徳/インモラル', 'シリアス', '純愛', 'ツンデレ', '中出し', '命令/無理矢理', '処女']
+2025-04-19 01:01:46,809 DEBUG Local crawl success for RJ01228927: 魔女の護送人
+2025-04-19 01:01:46,809 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:46,810 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:47,507 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:47,509 INFO Fetching DLsite data for RJ01288065
+2025-04-19 01:01:47,510 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:48,194 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01288065.html HTTP/1.1" 200 None
+2025-04-19 01:01:48,273 DEBUG Clean RJ code: 眠っている少女 -> 眠っている少女
+2025-04-19 01:01:48,273 INFO Fetched DLsite data for RJ01288065, title_jp=眠っている少女, tags_jp=['R18', 'シミュレーション', 'アプリケーション', '少女', 'つるぺた', '学生', 'すやすやえっち', 'パイズリ', '金髪', '貧乳/微乳', 'ツルペタ']
+2025-04-19 01:01:48,274 DEBUG Local crawl success for RJ01288065: 眠っている少女
+2025-04-19 01:01:48,274 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:48,275 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:48,970 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:48,971 INFO Fetching DLsite data for RJ01311216
+2025-04-19 01:01:48,973 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:49,621 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01311216.html HTTP/1.1" 200 None
+2025-04-19 01:01:49,703 DEBUG Clean RJ code: このお嬢様、無知につき -> このお嬢様、無知につき
+2025-04-19 01:01:49,703 INFO Fetched DLsite data for RJ01311216, title_jp=このお嬢様、無知につき, tags_jp=['R18', 'シミュレーション', '音声あり', 'アプリケーション', 'おさわり', 'つるぺた', '日常/生活', 'すやすやえっち', '中出し', 'オナニー', 'しつけ', '貧乳/微乳']
+2025-04-19 01:01:49,704 DEBUG Local crawl success for RJ01311216: このお嬢様、無知につき
+2025-04-19 01:01:49,704 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:49,706 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:50,384 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:50,386 INFO Fetching DLsite data for RJ181353
+2025-04-19 01:01:50,387 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:51,101 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ181353.html HTTP/1.1" 200 None
+2025-04-19 01:01:51,178 DEBUG Clean RJ code: 牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～ -> 牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～
+2025-04-19 01:01:51,179 INFO Fetched DLsite data for RJ181353, title_jp=牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～, tags_jp=['R18', 'アドベンチャー', '音声あり', '音楽あり', 'アプリケーション', '少女', '人妻', '妊娠/孕ませ', 'しつけ', '羞恥/恥辱', '巨乳/爆乳']
+2025-04-19 01:01:51,180 DEBUG Local crawl success for RJ181353: 牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～
+2025-04-19 01:01:51,180 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:51,181 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:51,918 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:51,919 INFO Fetching DLsite data for RJ374754
+2025-04-19 01:01:51,921 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:52,719 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ374754.html HTTP/1.1" 200 None
+2025-04-19 01:01:52,796 DEBUG Clean RJ code: 秘術相伝忍法勝負 -> 秘術相伝忍法勝負
+2025-04-19 01:01:52,796 INFO Fetched DLsite data for RJ374754, title_jp=秘術相伝忍法勝負, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '女主人公', 'ツクール', '学生', '屋外', '拘束', '羞恥/恥辱', '命令/無理矢理', '口内射精']
+2025-04-19 01:01:52,797 DEBUG Local crawl success for RJ374754: 秘術相伝忍法勝負
+2025-04-19 01:01:52,797 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:52,799 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:53,502 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:53,504 INFO Fetching DLsite data for RJ01111140
+2025-04-19 01:01:53,505 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:54,358 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ01111140.html HTTP/1.1" 200 None
+2025-04-19 01:01:54,484 DEBUG Clean RJ code: 紅蓮飛翔ピュアフレイム -> 紅蓮飛翔ピュアフレイム
+2025-04-19 01:01:54,485 INFO Fetched DLsite data for RJ01111140, title_jp=紅蓮飛翔ピュアフレイム, tags_jp=['R18', 'ロールプレイング', '音声あり', '音楽あり', '動画あり', 'アプリケーション', '断面図', '魔法少女', 'ラブラブ/あまあま', '純愛', '寝取られ', '妊娠/孕ませ', '屈辱']
+2025-04-19 01:01:54,486 DEBUG Local crawl success for RJ01111140: 紅蓮飛翔ピュアフレイム
+2025-04-19 01:01:54,486 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:54,487 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:55,156 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:55,158 INFO Fetching DLsite data for RJ291293
+2025-04-19 01:01:55,159 DEBUG Starting new HTTPS connection (1): www.dlsite.com:443
+2025-04-19 01:01:55,914 DEBUG https://www.dlsite.com:443 "GET /maniax/work/=/product_id/RJ291293.html HTTP/1.1" 200 None
+2025-04-19 01:01:55,993 DEBUG Clean RJ code: オバサンズ・サガ -> オバサンズ・サガ
+2025-04-19 01:01:55,993 INFO Fetched DLsite data for RJ291293, title_jp=オバサンズ・サガ, tags_jp=['R18', 'ロールプレイング', '音楽あり', 'アプリケーション', '母親', '熟女', '人妻', 'ビッチ', 'ファンタジー', '筋肉', 'ムチムチ', '太め/デブ']
+2025-04-19 01:01:55,994 DEBUG Local crawl success for RJ291293: オバサンズ・サガ
+2025-04-19 01:01:55,995 DEBUG Sending POST request to https://gamesorter-28083845590.us-central1.run.app/games
+2025-04-19 01:01:55,996 DEBUG Starting new HTTPS connection (1): gamesorter-28083845590.us-central1.run.app:443
+2025-04-19 01:01:56,673 DEBUG https://gamesorter-28083845590.us-central1.run.app:443 "POST /games HTTP/1.1" 200 77
+2025-04-19 01:01:56,675 INFO Returning 40 results
+2025-04-19 01:01:56,682 INFO Received game_data (length=40):
+2025-04-19 01:01:56,682 INFO [0] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ372618.html", "maker": "雨宿り蛙", "original_title_jp": "NTR冒険者 リーネ&エルザ", "platform": "rj", "rating": 0.0, "release_date": "2022年02月04日", "rj_code": "RJ372618", "tags_jp": ["R18", "ロールプレイング", "音楽あり", "アプリケーション", "男主人公", "ツクール", "寝取られ", "アヘ顔", "妊娠/孕ませ", "巨乳/爆乳", "ぼて腹/妊婦"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ373000/RJ372618_img_main.jpg", "timestamp": 1744992102.7758484, "title_jp": "NTR冒険者 リーネ&エルザ"}
+2025-04-19 01:01:56,682 INFO [1] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "Aurelia v1.00.0.zip", "title_kr": "Aurelia v1.00.0.zip"}
+2025-04-19 01:01:56,682 INFO [2] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "Dead-End City Blues OD Edition v1.2.1.7z", "title_kr": "Dead-End City Blues OD Edition v1.2.1.7z"}
+2025-04-19 01:01:56,682 INFO [3] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "False Convict`s 製品版.zip", "title_kr": "False Convict`s 製品版.zip"}
+2025-04-19 01:01:56,682 INFO [4] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "Grimhelm Collection.7z", "title_kr": "Grimhelm Collection.7z"}
+2025-04-19 01:01:56,682 INFO [5] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "Koooon Soft Collections.7z", "title_kr": "Koooon Soft Collections.7z"}
+2025-04-19 01:01:56,682 INFO [6] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992103.4938796, "title": "NTR 모험가 리네&엘자.zip", "title_kr": "NTR 모험가 리네&엘자.zip"}
+2025-04-19 01:01:56,682 INFO [7] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01173055.html", "maker": "プランクトンセスナ", "original_title_jp": "ミナミさんホテルにいこう", "platform": "rj", "rating": 0.0, "release_date": "2024年03月23日", "rj_code": "RJ01173055", "tags_jp": ["R18", "シミュレーション", "アプリケーション", "おさわり", "きせかえ", "学生", "日常/生活", "中出し", "妊娠/孕ませ", "ノーマルプレイ", "和姦"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg", "timestamp": 1744992104.2024815, "title_jp": "ミナミさんホテルにいこう"}
+2025-04-19 01:01:56,682 INFO [8] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01217516.html", "maker": "SOUTH TREE", "original_title_jp": "背徳の衝動", "platform": "rj", "rating": 0.0, "release_date": "2025年03月09日", "rj_code": "RJ01217516", "tags_jp": ["R18", "シミュレーション", "音声あり", "アプリケーション", "学生", "セーラー服", "快楽堕ち", "妊娠/孕ませ", "秘密さわさわ", "合意なし", "黒髪", "巨乳/爆乳"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01218000/RJ01217516_img_main.jpg", "timestamp": 1744992105.3951194, "title_jp": "背徳の衝動"}
+2025-04-19 01:01:56,683 INFO [9] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01228927.html", "maker": "ふくろうさぎ", "original_title_jp": "魔女の護送人", "platform": "rj", "rating": 0.0, "release_date": "2024年08月10日", "rj_code": "RJ01228927", "tags_jp": ["R18", "ロールプレイング", "音楽あり", "アプリケーション", "つるぺた", "退廃/背徳/インモラル", "シリアス", "純愛", "ツンデレ", "中出し", "命令/無理矢理", "処女"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01229000/RJ01228927_img_main.jpg", "timestamp": 1744992106.8076036, "title_jp": "魔女の護送人"}
+2025-04-19 01:01:56,683 INFO [10] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01288065.html", "maker": "tomotostew", "original_title_jp": "眠っている少女", "platform": "rj", "rating": 0.0, "release_date": "2024年11月09日", "rj_code": "RJ01288065", "tags_jp": ["R18", "シミュレーション", "アプリケーション", "少女", "つるぺた", "学生", "すやすやえっち", "パイズリ", "金髪", "貧乳/微乳", "ツルペタ"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg", "timestamp": 1744992108.2736187, "title_jp": "眠っている少女"}
+2025-04-19 01:01:56,683 INFO [11] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01311216.html", "maker": "からあげカンパニー", "original_title_jp": "このお嬢様、無知につき", "platform": "rj", "rating": 0.0, "release_date": "2024年12月22日", "rj_code": "RJ01311216", "tags_jp": ["R18", "シミュレーション", "音声あり", "アプリケーション", "おさわり", "つるぺた", "日常/生活", "すやすやえっち", "中出し", "オナニー", "しつけ", "貧乳/微乳"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01312000/RJ01311216_img_main.jpg", "timestamp": 1744992109.703258, "title_jp": "このお嬢様、無知につき"}
+2025-04-19 01:01:56,683 INFO [12] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ181353.html", "maker": "Norn／Miel／Cybele", "original_title_jp": "牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～", "platform": "rj", "rating": 0.0, "release_date": "2016年08月12日", "rj_code": "RJ181353", "tags_jp": ["R18", "アドベンチャー", "音声あり", "音楽あり", "アプリケーション", "少女", "人妻", "妊娠/孕ませ", "しつけ", "羞恥/恥辱", "巨乳/爆乳"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ182000/RJ181353_img_main.jpg", "timestamp": 1744992111.1787298, "title_jp": "牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～"}
+2025-04-19 01:01:56,683 INFO [13] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ374754.html", "maker": "あぶらそば日和", "original_title_jp": "秘術相伝忍法勝負", "platform": "rj", "rating": 0.0, "release_date": "2022年03月14日", "rj_code": "RJ374754", "tags_jp": ["R18", "ロールプレイング", "音楽あり", "アプリケーション", "女主人公", "ツクール", "学生", "屋外", "拘束", "羞恥/恥辱", "命令/無理矢理", "口内射精"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ375000/RJ374754_img_main.jpg", "timestamp": 1744992112.79668, "title_jp": "秘術相伝忍法勝負"}
+2025-04-19 01:01:56,683 INFO [14] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992113.504641, "title": "RPGVXAce_RTP.zip", "title_kr": "RPGVXAce_RTP.zip"}
+2025-04-19 01:01:56,683 INFO [15] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992113.504641, "title": "SiNiSistar (win).zip", "title_kr": "SiNiSistar (win).zip"}
+2025-04-19 01:01:56,683 INFO [16] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992113.504641, "title": "WE ARE BANDIT v1.14 KR.7z", "title_kr": "WE ARE BANDIT v1.14 KR.7z"}
+2025-04-19 01:01:56,683 INFO [17] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992113.504641, "title": "[Anim] Aisai x Koukan Ninkatsu Swapping.zip", "title_kr": "[Anim] Aisai x Koukan Ninkatsu Swapping.zip"}
+2025-04-19 01:01:56,683 INFO [18] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ01111140.html", "maker": "NoTears", "original_title_jp": "紅蓮飛翔ピュアフレイム", "platform": "rj", "rating": 0.0, "release_date": "2024年01月19日", "rj_code": "RJ01111140", "tags_jp": ["R18", "ロールプレイング", "音声あり", "音楽あり", "動画あり", "アプリケーション", "断面図", "魔法少女", "ラブラブ/あまあま", "純愛", "寝取られ", "妊娠/孕ませ", "屈辱"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ01112000/RJ01111140_img_main.jpg", "timestamp": 1744992114.4840162, "title_jp": "紅蓮飛翔ピュアフレイム"}
+2025-04-19 01:01:56,683 INFO [19] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "네토라레지스탕스 KR.7z", "title_kr": "네토라레지스탕스 KR.7z"}
+2025-04-19 01:01:56,683 INFO [20] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "니트로닐 손번역(1).zip", "title_kr": "니트로닐 손번역(1).zip"}
+2025-04-19 01:01:56,683 INFO [21] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "니트로닐 손번역(2).zip", "title_kr": "니트로닐 손번역(2).zip"}
+2025-04-19 01:01:56,683 INFO [22] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "니트로닐 손번역.zip", "title_kr": "니트로닐 손번역.zip"}
+2025-04-19 01:01:56,683 INFO [23] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "던전타운 EX v2.2.0.0 KR.7z", "title_kr": "던전타운 EX v2.2.0.0 KR.7z"}
+2025-04-19 01:01:56,683 INFO [24] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "렌파이 The Fixer [v0.3.3.17].zip", "title_kr": "렌파이 The Fixer [v0.3.3.17].zip"}
+2025-04-19 01:01:56,683 INFO [25] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "몬무스 퀘스트 ver3.05 한국어.zip", "title_kr": "몬무스 퀘스트 ver3.05 한국어.zip"}
+2025-04-19 01:01:56,683 INFO [26] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "부계에 잠든 왕녀의 아바돈 1.30.7z", "title_kr": "부계에 잠든 왕녀의 아바돈 1.30.7z"}
+2025-04-19 01:01:56,683 INFO [27] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "부서지는 여름색+after합본.zip", "title_kr": "부서지는 여름색+after합본.zip"}
+2025-04-19 01:01:56,683 INFO [28] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "사쿠라 고젠 v100.zip", "title_kr": "사쿠라 고젠 v100.zip"}
+2025-04-19 01:01:56,684 INFO [29] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "아가씨최면.7z", "title_kr": "아가씨최면.7z"}
+2025-04-19 01:01:56,684 INFO [30] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992115.1586518, "title": "아저씨 용사 RPG.7z", "title_kr": "아저씨 용사 RPG.7z"}
+2025-04-19 01:01:56,684 INFO [31] => {"link": "https://www.dlsite.com/maniax/work/=/product_id/RJ291293.html", "maker": "居酒屋よっちゃん", "original_title_jp": "オバサンズ・サガ", "platform": "rj", "rating": 0.0, "release_date": "2020年07月18日", "rj_code": "RJ291293", "tags_jp": ["R18", "ロールプレイング", "音楽あり", "アプリケーション", "母親", "熟女", "人妻", "ビッチ", "ファンタジー", "筋肉", "ムチムチ", "太め/デブ"], "thumbnail_url": "https://img.dlsite.jp/modpub/images2/work/doujin/RJ292000/RJ291293_img_main.jpg", "timestamp": 1744992115.9935396, "title_jp": "オバサンズ・サガ"}
+2025-04-19 01:01:56,684 INFO [32] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "약속과 계약의 생츄어리.zip", "title_kr": "약속과 계약의 생츄어리.zip"}
+2025-04-19 01:01:56,684 INFO [33] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "음계 인주 아라카 ver 1.31.zip", "title_kr": "음계 인주 아라카 ver 1.31.zip"}
+2025-04-19 01:01:56,684 INFO [34] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내.zip", "title_kr": "이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내.zip"}
+2025-04-19 01:01:56,684 INFO [35] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "절대복종위기.zip", "title_kr": "절대복종위기.zip"}
+2025-04-19 01:01:56,684 INFO [36] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "젖소이야기.zip", "title_kr": "젖소이야기.zip"}
+2025-04-19 01:01:56,684 INFO [37] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "프린세스콜로세움ver1.00(구매보급_키락).7z", "title_kr": "프린세스콜로세움ver1.00(구매보급_키락).7z"}
+2025-04-19 01:01:56,684 INFO [38] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "하키카.zip", "title_kr": "하키카.zip"}
+2025-04-19 01:01:56,684 INFO [39] => {"platform": "steam", "primary_tag": "기타", "tags": ["기타"], "thumbnail_url": "", "timestamp": 1744992116.6751103, "title": "한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라.zip", "title_kr": "한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라.zip"}
+2025-04-19 01:01:56,686 DEBUG Clean RJ code: NTR冒険者 リーネ&エルザ -> NTR冒険者 リーネ&エルザ
+2025-04-19 01:01:56,687 DEBUG Matched row 0: rj_code=RJ372618, title_kr=NTR冒険者 リーネ&エルザ, final_title=NTR冒険者 リーネ&エルザ
+2025-04-19 01:01:56,687 DEBUG Clean RJ code: Aurelia v1.00.0 -> Aurelia v1.00.0
+2025-04-19 01:01:56,687 DEBUG Matched row 1: rj_code=기타, title_kr=Aurelia v1.00.0.zip, final_title=Aurelia v1.00.0
+2025-04-19 01:01:56,687 DEBUG Clean RJ code: Dead-End City Blues OD Edition v1.2.1 -> Dead-End City Blues OD Edition v1.2.1
+2025-04-19 01:01:56,687 DEBUG Matched row 2: rj_code=기타, title_kr=Dead-End City Blues OD Edition v1.2.1.7z, final_title=Dead-End City Blues OD Edition v1.2.1
+2025-04-19 01:01:56,687 DEBUG Clean RJ code: False Convict`s 製品版.zip -> False Convict`s 製品版.zip
+2025-04-19 01:01:56,687 DEBUG Matched row 3: rj_code=기타, title_kr=False Convict`s 製品版.zip, final_title=False Convict`s 製品版.zip
+2025-04-19 01:01:56,687 DEBUG Clean RJ code: Grimhelm Collection -> Grimhelm Collection
+2025-04-19 01:01:56,688 DEBUG Matched row 4: rj_code=기타, title_kr=Grimhelm Collection.7z, final_title=Grimhelm Collection
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: Koooon Soft Collections -> Koooon Soft Collections
+2025-04-19 01:01:56,688 DEBUG Matched row 5: rj_code=기타, title_kr=Koooon Soft Collections.7z, final_title=Koooon Soft Collections
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: NTR 모험가 리네&엘자 -> NTR 모험가 리네&엘자
+2025-04-19 01:01:56,688 DEBUG Matched row 6: rj_code=기타, title_kr=NTR 모험가 리네&엘자.zip, final_title=NTR 모험가 리네&엘자
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: Minamisan v1.05 SEdition.zip -> Minamisan v1.05 SEdition.zip
+2025-04-19 01:01:56,688 DEBUG Matched row 7: rj_code=RJ01173055, title_kr=ミナミさんホテルにいこう, final_title=Minamisan v1.05 SEdition.zip
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: HaitokunoShoudou_ver1.10.zip -> HaitokunoShoudou_ver1.10.zip
+2025-04-19 01:01:56,688 DEBUG Matched row 8: rj_code=RJ01217516, title_kr=背徳の衝動, final_title=HaitokunoShoudou_ver1.10.zip
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: 수정2.zip -> 수정2.zip
+2025-04-19 01:01:56,688 DEBUG Matched row 9: rj_code=RJ01228927, title_kr=魔女の護送人, final_title=수정2.zip
+2025-04-19 01:01:56,688 DEBUG Clean RJ code: RJ01288065_sleepingMidori.zip -> RJ01288065_sleepingMidori.zip
+2025-04-19 01:01:56,689 DEBUG Matched row 10: rj_code=RJ01288065, title_kr=眠っている少女, final_title=RJ01288065_sleepingMidori.zip
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: 이 아가씨, 너무 무지해 v1.2.2.zip -> 이 아가씨, 너무 무지해 v1.2.2.zip
+2025-04-19 01:01:56,689 DEBUG Matched row 11: rj_code=RJ01311216, title_kr=このお嬢様、無知につき, final_title=이 아가씨, 너무 무지해 v1.2.2.zip
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip -> 감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip
+2025-04-19 01:01:56,689 DEBUG Matched row 12: rj_code=RJ181353, title_kr=牝犬孕ませ母娘丼～叔母と従姉妹をアヘらせメロメロなヤリまくりペット飼育♪～, final_title=감상형) 암캐 임신 모녀덮밥 Mesuinu Haramase Oyakodon.zip
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: 비술 상전 인법 승부 - 김머시기dlc 1.1.zip -> 비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-19 01:01:56,689 DEBUG Matched row 13: rj_code=RJ374754, title_kr=秘術相伝忍法勝負, final_title=비술 상전 인법 승부 - 김머시기dlc 1.1.zip
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: RPGVXAce_RTP -> RPGVXAce_RTP
+2025-04-19 01:01:56,689 DEBUG Matched row 14: rj_code=기타, title_kr=RPGVXAce_RTP.zip, final_title=RPGVXAce_RTP
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: SiNiSistar (win) -> SiNiSistar (win)
+2025-04-19 01:01:56,689 DEBUG Matched row 15: rj_code=기타, title_kr=SiNiSistar (win).zip, final_title=SiNiSistar (win)
+2025-04-19 01:01:56,689 DEBUG Clean RJ code: WE ARE BANDIT v1.14 KR -> WE ARE BANDIT v1.14 KR
+2025-04-19 01:01:56,690 DEBUG Matched row 16: rj_code=기타, title_kr=WE ARE BANDIT v1.14 KR.7z, final_title=WE ARE BANDIT v1.14 KR
+2025-04-19 01:01:56,690 DEBUG Clean RJ code: [Anim] Aisai x Koukan Ninkatsu Swapping -> [Anim] Aisai x Koukan Ninkatsu Swapping
+2025-04-19 01:01:56,690 DEBUG Matched row 17: rj_code=기타, title_kr=[Anim] Aisai x Koukan Ninkatsu Swapping.zip, final_title=[Anim] Aisai x Koukan Ninkatsu Swapping
+2025-04-19 01:01:56,690 DEBUG Clean RJ code: [CherisSoft] 쿠노이치 카린 v1.2.zip -> [CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-19 01:01:56,690 DEBUG Matched row 18: rj_code=RJ01111140, title_kr=紅蓮飛翔ピュアフレイム, final_title=[CherisSoft] 쿠노이치 카린 v1.2.zip
+2025-04-19 01:01:56,690 DEBUG Clean RJ code: 네토라레지스탕스 KR -> 네토라레지스탕스 KR
+2025-04-19 01:01:56,690 DEBUG Matched row 19: rj_code=기타, title_kr=네토라레지스탕스 KR.7z, final_title=네토라레지스탕스 KR
+2025-04-19 01:01:56,690 DEBUG Clean RJ code: 니트로닐 손번역(1) -> 니트로닐 손번역(1)
+2025-04-19 01:01:56,691 DEBUG Matched row 20: rj_code=기타, title_kr=니트로닐 손번역(1).zip, final_title=니트로닐 손번역(1)
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 니트로닐 손번역(2) -> 니트로닐 손번역(2)
+2025-04-19 01:01:56,691 DEBUG Matched row 21: rj_code=기타, title_kr=니트로닐 손번역(2).zip, final_title=니트로닐 손번역(2)
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 니트로닐 손번역 -> 니트로닐 손번역
+2025-04-19 01:01:56,691 DEBUG Matched row 22: rj_code=기타, title_kr=니트로닐 손번역.zip, final_title=니트로닐 손번역
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 던전타운 EX v2.2.0.0 KR -> 던전타운 EX v2.2.0.0 KR
+2025-04-19 01:01:56,691 DEBUG Matched row 23: rj_code=기타, title_kr=던전타운 EX v2.2.0.0 KR.7z, final_title=던전타운 EX v2.2.0.0 KR
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 렌파이 The Fixer [v0.3.3.17] -> 렌파이 The Fixer [v0.3.3.17]
+2025-04-19 01:01:56,691 DEBUG Matched row 24: rj_code=기타, title_kr=렌파이 The Fixer [v0.3.3.17].zip, final_title=렌파이 The Fixer [v0.3.3.17]
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 몬무스 퀘스트 ver3.05 한국어 -> 몬무스 퀘스트 ver3.05 한국어
+2025-04-19 01:01:56,691 DEBUG Matched row 25: rj_code=기타, title_kr=몬무스 퀘스트 ver3.05 한국어.zip, final_title=몬무스 퀘스트 ver3.05 한국어
+2025-04-19 01:01:56,691 DEBUG Clean RJ code: 부계에 잠든 왕녀의 아바돈 1.30 -> 부계에 잠든 왕녀의 아바돈 1.30
+2025-04-19 01:01:56,692 DEBUG Matched row 26: rj_code=기타, title_kr=부계에 잠든 왕녀의 아바돈 1.30.7z, final_title=부계에 잠든 왕녀의 아바돈 1.30
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 부서지는 여름색+after합본 -> 부서지는 여름색+after합본
+2025-04-19 01:01:56,692 DEBUG Matched row 27: rj_code=기타, title_kr=부서지는 여름색+after합본.zip, final_title=부서지는 여름색+after합본
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 사쿠라 고젠 v100 -> 사쿠라 고젠 v100
+2025-04-19 01:01:56,692 DEBUG Matched row 28: rj_code=기타, title_kr=사쿠라 고젠 v100.zip, final_title=사쿠라 고젠 v100
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 아가씨최면 -> 아가씨최면
+2025-04-19 01:01:56,692 DEBUG Matched row 29: rj_code=기타, title_kr=아가씨최면.7z, final_title=아가씨최면
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 아저씨 용사 RPG -> 아저씨 용사 RPG
+2025-04-19 01:01:56,692 DEBUG Matched row 30: rj_code=기타, title_kr=아저씨 용사 RPG.7z, final_title=아저씨 용사 RPG
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 아줌마 전기 .7z -> 아줌마 전기 .7z
+2025-04-19 01:01:56,692 DEBUG Matched row 31: rj_code=RJ291293, title_kr=オバサンズ・サガ, final_title=아줌마 전기 .7z
+2025-04-19 01:01:56,692 DEBUG Clean RJ code: 약속과 계약의 생츄어리 -> 약속과 계약의 생츄어리
+2025-04-19 01:01:56,692 DEBUG Matched row 32: rj_code=기타, title_kr=약속과 계약의 생츄어리.zip, final_title=약속과 계약의 생츄어리
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 음계 인주 아라카 ver 1.31 -> 음계 인주 아라카 ver 1.31
+2025-04-19 01:01:56,693 DEBUG Matched row 33: rj_code=기타, title_kr=음계 인주 아라카 ver 1.31.zip, final_title=음계 인주 아라카 ver 1.31
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내 -> 이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내
+2025-04-19 01:01:56,693 DEBUG Matched row 34: rj_code=기타, title_kr=이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내.zip, final_title=이웃에게 계속 범해져 탐욕스런 여자가 된 나의 아내
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 절대복종위기 -> 절대복종위기
+2025-04-19 01:01:56,693 DEBUG Matched row 35: rj_code=기타, title_kr=절대복종위기.zip, final_title=절대복종위기
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 젖소이야기 -> 젖소이야기
+2025-04-19 01:01:56,693 DEBUG Matched row 36: rj_code=기타, title_kr=젖소이야기.zip, final_title=젖소이야기
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 프린세스콜로세움ver1.00(구매보급_키락) -> 프린세스콜로세움ver1.00(구매보급_키락)
+2025-04-19 01:01:56,693 DEBUG Matched row 37: rj_code=기타, title_kr=프린세스콜로세움ver1.00(구매보급_키락).7z, final_title=프린세스콜로세움ver1.00(구매보급_키락)
+2025-04-19 01:01:56,693 DEBUG Clean RJ code: 하키카 -> 하키카
+2025-04-19 01:01:56,693 DEBUG Matched row 38: rj_code=기타, title_kr=하키카.zip, final_title=하키카
+2025-04-19 01:01:56,694 DEBUG Clean RJ code: 한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라 -> 한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라
+2025-04-19 01:01:56,694 DEBUG Matched row 39: rj_code=기타, title_kr=한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라.zip, final_title=한글 쯔꾸르 젊은 아내와 비보의 모험~ 빚을 갚고 남편을 되찾아라
+2025-04-19 01:01:59,895 DEBUG Loading thumbnail: 
+2025-04-19 01:02:01,337 DEBUG Loading thumbnail: 
+2025-04-19 01:02:06,011 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01229000/RJ01228927_img_main.jpg
+2025-04-19 01:02:06,012 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01229000/RJ01228927_img_main.jpg
+2025-04-19 01:02:06,013 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-19 01:02:06,466 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01229000/RJ01228927_img_main.jpg HTTP/1.1" 200 134935
+2025-04-19 01:02:06,486 DEBUG Thumbnail downloaded and cached successfully
+2025-04-19 01:02:06,759 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01218000/RJ01217516_img_main.jpg
+2025-04-19 01:02:06,760 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01218000/RJ01217516_img_main.jpg
+2025-04-19 01:02:06,761 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-19 01:02:07,168 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01218000/RJ01217516_img_main.jpg HTTP/1.1" 200 125372
+2025-04-19 01:02:07,174 DEBUG Thumbnail downloaded and cached successfully
+2025-04-19 01:02:09,203 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01174000/RJ01173055_img_main.jpg
+2025-04-19 01:02:09,204 DEBUG Loading cached thumbnail: thumbnails\c7579bf2cee2b4cb6e9272e6722b0d9e1d39d3bd.jpg
+2025-04-19 01:02:09,238 DEBUG Cached thumbnail loaded successfully
+2025-04-19 01:02:10,170 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01229000/RJ01228927_img_main.jpg
+2025-04-19 01:02:10,170 DEBUG Loading cached thumbnail: thumbnails\dad138596779148c6c44e2ead34226334573b8df.jpg
+2025-04-19 01:02:10,180 DEBUG Cached thumbnail loaded successfully
+2025-04-19 01:02:11,072 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01289000/RJ01288065_img_main.jpg
+2025-04-19 01:02:11,073 DEBUG Loading cached thumbnail: thumbnails\bb0caa4544e5fdc5ba2317e24a542bdb81e07963.jpg
+2025-04-19 01:02:11,083 DEBUG Cached thumbnail loaded successfully
+2025-04-19 01:02:11,734 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01312000/RJ01311216_img_main.jpg
+2025-04-19 01:02:11,734 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01312000/RJ01311216_img_main.jpg
+2025-04-19 01:02:11,736 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-19 01:02:12,145 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ01312000/RJ01311216_img_main.jpg HTTP/1.1" 200 215516
+2025-04-19 01:02:12,158 DEBUG Thumbnail downloaded and cached successfully
+2025-04-19 01:02:16,093 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ182000/RJ181353_img_main.jpg
+2025-04-19 01:02:16,094 DEBUG Downloading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ182000/RJ181353_img_main.jpg
+2025-04-19 01:02:16,095 DEBUG Starting new HTTPS connection (1): img.dlsite.jp:443
+2025-04-19 01:02:16,518 DEBUG https://img.dlsite.jp:443 "GET /modpub/images2/work/doujin/RJ182000/RJ181353_img_main.jpg HTTP/1.1" 200 110153
+2025-04-19 01:02:16,529 DEBUG Thumbnail downloaded and cached successfully
+2025-04-19 01:02:17,005 DEBUG Loading thumbnail: https://img.dlsite.jp/modpub/images2/work/doujin/RJ01218000/RJ01217516_img_main.jpg
+2025-04-19 01:02:17,006 DEBUG Loading cached thumbnail: thumbnails\9c2a6a13c54e9d65afdf80c8e18264113a78a726.jpg
+2025-04-19 01:02:17,015 DEBUG Cached thumbnail loaded successfully
