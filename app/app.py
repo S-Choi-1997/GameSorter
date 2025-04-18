@@ -341,9 +341,9 @@ def process_games():
                 title = item.get("title_kr") or item.get("title") or rj_code
 
                 # 저장 처리
-                save_to_firestore(platform, rj_code, item)
-                logger.info(f"[💾 SAVED] {platform}/items/{rj_code}, title_kr={title}")
-                results.append(item)
+                logger.info(f"[💡 SKIP SAVE] 번역 전 데이터 수신됨: {platform}:{rj_code}")
+                continue  # 또는 process_rj_item(item) 호출
+
 
             # 캐시 확인 요청일 경우
             else:
@@ -374,21 +374,6 @@ def process_games():
         logger.error(f"Error processing games: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
-
-def save_to_firestore(platform, identifier, data):
-    if not db:
-        logger.error("Firestore client not initialized")
-        return
-    try:
-        if not identifier:
-            logger.warning(f"[⚠️ 저장 생략] identifier가 없음: {data}")
-            return
-        normalized_id = identifier.upper() if platform == 'rj' else identifier
-        doc_ref = db.collection('games').document(platform).collection('items').document(normalized_id)
-        doc_ref.set(data, merge=True)
-        logger.info(f"[💾 저장 완료] {platform}/items/{normalized_id}")
-    except Exception as e:
-        logger.error(f"[🔥 Firestore 저장 실패] {platform}:{identifier} → {e}", exc_info=True)
 
 
 # 진행 상황 엔드포인트
