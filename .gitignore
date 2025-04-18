@@ -1,2 +1,5 @@
 .env
 app/.env
+/thumbnails
+/build
+/dist

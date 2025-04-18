@@ -4,7 +4,7 @@ import json
 import requests
 import time
 from bs4 import BeautifulSoup
-from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox, QComboBox
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
 import logging
@@ -12,7 +12,15 @@ import tenacity
 from ui import MainWindowUI
 from urllib.parse import urljoin
 
-logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
+LOG_TO_FILE = __debug__
+if LOG_TO_FILE:
+    logging.basicConfig(
+        filename="gamesort.log", 
+        level=logging.DEBUG, 
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+else:
+    logging.basicConfig(level=logging.CRITICAL)
 
 class FetchWorker(QThread):
     progress = Signal(int)
@@ -45,14 +53,13 @@ class FetchWorker(QThread):
             'DNT': '1',
             'Connection': 'keep-alive'
         }
-        cookies = {'adultconfirmed': '1'}  # 성인 인증 우회
+        cookies = {'adultconfirmed': '1'}
 
         try:
             logging.info(f"Fetching DLsite data for {rj_code}")
             response = requests.get(url, headers=headers, cookies=cookies, timeout=10)
             response.encoding = 'utf-8'
-            logging.debug(f"Response status: {response.status_code}, URL: {response.url}")
-
+            
             if response.status_code != 200:
                 raise Exception(f"DLsite fetch failed: Status {response.status_code}")
 
@@ -61,16 +68,19 @@ class FetchWorker(QThread):
                 raise Exception("Adult verification required")
 
             soup = BeautifulSoup(response.text, 'html.parser')
-
-            # 데이터 파싱
             title_elem = soup.select_one('#work_name')
             if not title_elem:
                 logging.error(f"No title found for RJ code {rj_code}")
                 raise Exception("No title found")
 
-            # 태그 선택자 (여러 구조 대응)
             tags_elem = soup.select('div.main_genre a, div.work_genre a, .genre a')
-            tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip()][:5]
+            tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip()]
+            if not tags_jp:
+                genre_th = soup.find('th', string=re.compile(r'ジャンル'))
+                if genre_th:
+                    genre_td = genre_th.find_next_sibling('td')
+                    if genre_td:
+                        tags_jp = [a.text.strip() for a in genre_td.select('a') if a.text.strip()]
             if not tags_jp:
                 logging.warning(f"No genre tags found for {rj_code}")
                 tags_jp = ["기타"]
@@ -84,7 +94,6 @@ class FetchWorker(QThread):
                 thumbnail_url = thumb_elem.get('content') or thumb_elem.get('src')
                 if thumbnail_url and not thumbnail_url.startswith('http'):
                     thumbnail_url = urljoin(url, thumbnail_url)
-                logging.debug(f"Thumbnail URL: {thumbnail_url}")
 
             data = {
                 'rj_code': rj_code,
@@ -98,10 +107,8 @@ class FetchWorker(QThread):
                 'rating': 0.0,
                 'timestamp': time.time()
             }
-            logging.debug(f"get_dlsite_data result for {rj_code}: {data}")
             logging.info(f"Fetched DLsite data for {rj_code}, tags_jp={tags_jp}")
             return data
-
         except Exception as e:
             logging.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
             return {'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code}
@@ -115,13 +122,12 @@ class FetchWorker(QThread):
         )
     )
     def make_request(self, url, method='post', json_data=None):
-        logging.debug(f"Sending {method.upper()} request to {url} with data: {json_data}")
+        logging.debug(f"Sending {method.upper()} request to {url}")
         try:
             if method == 'post':
                 response = requests.post(url, json=json_data, timeout=30)
             else:
                 response = requests.get(url, timeout=10)
-            logging.debug(f"Received response: status={response.status_code}, content={response.text[:1000]}")
             response.raise_for_status()
             return response
         except Exception as e:
@@ -137,23 +143,20 @@ class FetchWorker(QThread):
                 return
 
             self.log.emit(f"총 {total_items}개 파일 처리 시작")
-            logging.info(f"Starting fetch for {total_items} items: {self.items}")
+            logging.info(f"Starting fetch for {total_items} items")
 
             if self.use_firestore_cache:
-                # Firestore 캐시 체크
                 logging.info("Checking Firestore cache")
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": self.items})
                 response_data = response.json()
                 missing = response_data.get("missing", [])
                 self.task_id = response_data.get("task_id")
-                logging.info(f"Firestore cache check complete, missing items: {missing}")
+                logging.info(f"Firestore cache check complete, missing items: {len(missing)}")
             else:
-                # 캐시 우회 시 모든 항목 크롤링
                 logging.info("Firestore cache bypass mode enabled")
                 missing = self.items
                 response_data = {}
 
-            # 로컬 크롤링
             local_results = []
             for i, item in enumerate(missing):
                 rj_match = re.match(r'^[Rr][Jj]\d{6,8}$', item, re.IGNORECASE)
@@ -179,9 +182,8 @@ class FetchWorker(QThread):
                 self.progress.emit(int((i + 1) / len(missing) * 50))
                 self.log.emit(f"로컬 크롤링: {item} ({i + 1}/{len(missing)})")
 
-            # 결과 처리
             if local_results:
-                logging.info(f"Sending {len(local_results)} crawled items to server for translation and storage")
+                logging.info(f"Sending {len(local_results)} crawled items to server")
                 response = self.make_request(f"{self.server_url}/games", method='post', json_data={"items": local_results})
                 response_data = response.json()
                 translated_results = response_data.get("results", [])
@@ -192,6 +194,16 @@ class FetchWorker(QThread):
 
             self.progress.emit(100)
             self.log.emit("데이터 가져오기 완료")
+            
+            
+            logging.info("Re-fetching all items from cache after saving translated ones")
+            final_response = self.make_request(
+                f"{self.server_url}/games",
+                method='post',
+                json_data={"items": self.items}
+            )
+            final_data = final_response.json().get("results", [])
+            self.result.emit(final_data)  # 최종 UI 업데이트
         except Exception as e:
             self.error.emit(f"작업 실패: {str(e)}")
             logging.error(f"FetchWorker error: {str(e)}", exc_info=True)
@@ -206,16 +218,81 @@ class MainWindowLogic(MainWindowUI):
         self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
 
-        # UI 이벤트 연결
         self.select_folder_btn.clicked.connect(self.select_folder)
         self.fetch_data_btn.clicked.connect(self.fetch_game_data_and_update)
         self.rename_btn.clicked.connect(self.rename_files)
+        self.remove_tag_btn.clicked.connect(self.remove_tags_from_selected)
         self.select_all_box.stateChanged.connect(self.toggle_all_selection)
         self.table.cellClicked.connect(self.on_table_cell_clicked)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.log_label.setMaximumWidth(self.table.width())
+
+    def update_suggested_name(self, row, tag):
+        """태그 선택 시 suggested 이름을 즉시 업데이트"""
+        try:
+            if row >= len(self.results):
+                logging.error(f"Invalid row index: {row}")
+                return
+
+            logging.debug(f"Updating suggested name for row {row} with tag {tag}")
+            result = self.results[row]
+            rj_code = result.get('rj_code') or "기타"
+            game_data = result.get('game_data', {})
+            title = game_data.get('title_kr') or game_data.get('title_jp') or result['original']
+            title = re.sub(rf"[\[\(]?\b{rj_code}\b[\]\)]?", "", title, flags=re.IGNORECASE).strip()
+            title = re.sub(rf"[ _\-]?\bRJ\s*{rj_code[2:]}\b", "", title, flags=re.IGNORECASE).strip()   
+            title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+            result['selected_tag'] = tag if tag else "기타"
+            result['suggested'] = f"[{rj_code}][{result['selected_tag']}] {title}"
+            self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+            self.table.viewport().update()  # UI 즉시 갱신
+            logging.debug(f"Updated suggested name for row {row}: {result['suggested']}")
+        except Exception as e:
+            logging.error(f"Update suggested name error: row={row}, tag={tag}, error={e}", exc_info=True)
+            self.log_label.setText(f"태그 업데이트 오류: {str(e)}")
+
+    def remove_tags_from_selected(self):
+        """태그 제거: 모든 태그([RJ코드][태그])를 제거하고 순수 게임 이름만 남김"""
+        try:
+            updated_count = 0
+            for row in range(self.table.rowCount()):
+                chk = self.table.cellWidget(row, 0)
+                if not chk.isChecked():
+                    continue
+
+                result = self.results[row]
+                game_data = result.get('game_data', {})
+                # 제목 선택: title_kr > title_jp > original_title > original
+                title = (
+                    game_data.get('title_kr')
+                    or game_data.get('title_jp')
+                    or result.get('original_title')
+                    or result['original']
+                )
+                rj_code = result.get('rj_code') or "기타"
+                # RJ 코드와 특수문자 제거
+                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+                title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
+                # 확장자 유지
+                original_ext = os.path.splitext(result['original'])[1]
+                updated_name = title if title.endswith(original_ext) else f"{title}{original_ext}"
+                # 태그 제거된 이름 설정
+                result['suggested'] = updated_name
+                self.table.setItem(row, 2, QTableWidgetItem(updated_name))
+                # QComboBox는 현재 상태 유지, selected_tag 초기화
+                result['selected_tag'] = None
+                updated_count += 1
+
+
+
+            self.log_label.setText(f"선택된 항목 {updated_count}개에서 태그 제거 완료.")
+            logging.info(f"Removed tags from {updated_count} items.")
+        except Exception as e:
+            logging.error(f"태그 제거 중 오류: {e}", exc_info=True)
+            self.log_label.setText("태그 제거 처리 중 오류 발생")
+            QMessageBox.critical(self, "오류", f"태그 제거 중 오류: {str(e)}")
 
     def fetch_game_data_and_update(self):
         if not self.results:
@@ -227,15 +304,8 @@ class MainWindowLogic(MainWindowUI):
         self.progress_bar.setValue(0)
         self.fetch_data_btn.setEnabled(False)
 
-        items = []
-        for result in self.results:
-            rj_code = result.get('rj_code', '')
-            if rj_code:
-                items.append(rj_code)
-            else:
-                items.append(result['original'])
-
-        self.worker = FetchWorker(self.SERVER_URL, items, use_firestore_cache=False)  # Firestore 캐시 우회
+        items = [r.get('rj_code') or r['original'] for r in self.results]
+        self.worker = FetchWorker(self.SERVER_URL, items, use_firestore_cache=True)
         self.worker.progress.connect(self.progress_bar.setValue)
         self.worker.log.connect(self.log_label.setText)
         self.worker.result.connect(self.on_fetch_finished)
@@ -250,43 +320,102 @@ class MainWindowLogic(MainWindowUI):
                 QMessageBox.warning(self, "오류", "데이터를 가져오지 못했습니다.")
                 return
 
+            # ✔️ 진짜 전체 데이터가 아닌 임시 결과는 무시
+            if len(game_data) < len(self.results):
+                logging.info("임시 결과 무시 (불완전한 응답)")
+                return
+
+            # ✔️ 이미 처리한 전체 응답이라면 무시
+            if hasattr(self, "fetch_already_handled") and self.fetch_already_handled:
+                logging.info("중복 전체 fetch 무시")
+                return
+            self.fetch_already_handled = True
+
+            logging.info("=== on_fetch_finished called ===")
+            logging.info(f"Received game_data (length={len(game_data)}):")
+            for i, d in enumerate(game_data):
+                logging.info(f"[{i}] => {json.dumps(d, ensure_ascii=False)}")
+
             error_count = 0
             self.table.setUpdatesEnabled(False)
-            for row, (result, data) in enumerate(zip(self.results, game_data)):
-                result['game_data'] = data
-                rj_code = result.get('rj_code') or data.get('rj_code') or "기타"
 
-                if "error" in data or not data:
-                    logging.warning(f"Error for {data.get('rj_code', data.get('title', 'Unknown'))}: {data.get('error', 'No data')}")
+            for row, result in enumerate(self.results):
+                # 결과에 해당하는 game_data 찾기
+                match = None
+                for d in game_data:
+                    if result.get("rj_code") and d.get("rj_code") == result.get("rj_code"):
+                        match = d
+                        break
+                    elif not result.get("rj_code") and d.get("title_kr") == result.get("original"):
+                        match = d
+                        break
+
+                if not match or "error" in match:
+                    rj_code = result.get('rj_code') or "기타"
                     result['suggested'] = f"[{rj_code}][기타] {result['original']}"
+                    result['selected_tag'] = "기타"
                     error_count += 1
                     self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+                    combo = self.table.cellWidget(row, 3)
+                    if not combo:
+                        combo = QComboBox()
+                        self.table.setCellWidget(row, 3, combo)
+                    else:
+                        try:
+                            combo.currentTextChanged.disconnect()
+                        except TypeError:
+                            pass
+                    combo.blockSignals(True)
+                    combo.clear()
+                    combo.addItem("기타")
+                    combo.setCurrentText("기타")
+                    combo.blockSignals(False)
+                    combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
                     continue
 
-                tag = data.get('primary_tag') or "기타"
-                title_kr = data.get('title_kr') or data.get('title_jp') or result['original']
+                # 정상 데이터 처리
+                result['game_data'] = match
+                rj_code = result.get('rj_code') or match.get('rj_code') or "기타"
+                tags = match.get('tags') or ["기타"]
+                tag = match.get('primary_tag') or tags[0]
+                result['selected_tag'] = tag
 
-                # 제목에서 RJ 코드 제거 및 파일 이름에 적합하게 정리
-                title = title_kr
-                title = re.sub(rf"\b{rj_code}\b", "", title, flags=re.IGNORECASE).strip()
+                title_kr = match.get('title_kr') or match.get('title_jp') or result['original']
+                title = re.sub(rf"\b{rj_code}\b", "", title_kr, flags=re.IGNORECASE).strip()
                 title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
-
-                # 최종 이름 조합: [RJ코드][태그] 제목
                 result['suggested'] = f"[{rj_code}][{tag}] {title}"
-                logging.debug(f"Processed {rj_code}: title_kr={data.get('title_kr')}, title_jp={data.get('title_jp')}, final_title={title}, thumbnail_url={data.get('thumbnail_url', 'None')}")
-
                 self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
 
+                combo = self.table.cellWidget(row, 3)
+                if not combo:
+                    combo = QComboBox()
+                    self.table.setCellWidget(row, 3, combo)
+                else:
+                    try:
+                        combo.currentTextChanged.disconnect()
+                    except TypeError:
+                        pass
+                combo.blockSignals(True)
+                combo.clear()
+                combo.addItems(tags)
+                combo.setCurrentText(tag)
+                combo.blockSignals(False)
+                combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
+
             self.table.setUpdatesEnabled(True)
-            self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
+            self.table.viewport().update()
+
+            # 메시지는 일부 실패한 경우만 띄움
             if error_count > 0:
+                self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
                 QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
-            if error_count == len(self.results):
-                QMessageBox.warning(self, "경고", "모든 항목을 처리하지 못했습니다. RJ 코드가 유효한지 확인하세요.")
+            else:
+                self.log_label.setText("게임명 변경 완료")
         except Exception as e:
             logging.error(f"on_fetch_finished error: {e}", exc_info=True)
             self.log_label.setText("데이터 처리 중 오류 발생")
             QMessageBox.critical(self, "오류", f"데이터 처리 중 오류: {str(e)}")
+
 
     def on_fetch_error(self, error_msg):
         max_length = 100
@@ -326,11 +455,8 @@ class MainWindowLogic(MainWindowUI):
         for idx, original in enumerate(files):
             rj_match = re.search(r"[Rr][Jj][_\-\s]?\d{6,8}", original, re.IGNORECASE)
             rj_code = rj_match.group(0).upper().replace('_', '').replace('-', '') if rj_match else ''
-            
-            # RJ 코드 제거 후 원래 제목 추출
             original_title = re.sub(rf"[Rr][Jj][_\-\s]?\d{{6,8}}", "", original, re.IGNORECASE).strip('_').strip()
             original_title = original_title if original_title and original_title != os.path.splitext(original)[1] else ''
-            
             suggested = f"[{rj_code or '기타'}][기타] {original}"
 
             result = {
@@ -338,6 +464,7 @@ class MainWindowLogic(MainWindowUI):
                 'original_title': original_title,
                 'rj_code': rj_code,
                 'suggested': suggested,
+                'selected_tag': "기타",
                 'path': os.path.join(self.folder_path, original),
                 'game_data': {}
             }
@@ -349,9 +476,18 @@ class MainWindowLogic(MainWindowUI):
             self.table.setCellWidget(idx, 0, chk)
             self.table.setItem(idx, 1, QTableWidgetItem(original))
             self.table.setItem(idx, 2, QTableWidgetItem(suggested))
-            logging.debug(f"Added row {idx}: {original}, original_title={original_title}")
+            combo = QComboBox()
+            combo.addItem("기타")
+            combo.setCurrentText("기타")
+            try:
+                combo.currentTextChanged.disconnect()  # 기존 시그널 연결 해제
+            except TypeError:
+                pass
+            combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))  # ✅ row 고정
+            self.table.setCellWidget(idx, 3, combo)
 
         self.table.setUpdatesEnabled(True)
+        self.table.viewport().update()  # UI 즉시 갱신
         self.status_label.setText(f"파일: {len(self.results)}개")
         self.log_label.setText(f"폴더 로드 완료: {len(self.results)}개 파일")
         self.fetch_data_btn.setEnabled(True)
@@ -363,6 +499,8 @@ class MainWindowLogic(MainWindowUI):
 
     def on_table_cell_clicked(self, row, column):
         try:
+            if column == 3:
+                return
             data = self.results[row]['game_data']
             if not data or "error" in data:
                 self.game_data_panel.clear_game_data()

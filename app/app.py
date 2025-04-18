@@ -175,6 +175,7 @@ def process_rj_item(item):
     if 'error' in item:
         logger.debug(f"Skipping error item: {item.get('rj_code')}")
         return item
+
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
     if cached and cached.get('title_kr') and not needs_translation(cached.get('title_kr')):
@@ -190,16 +191,17 @@ def process_rj_item(item):
     for tag in tags_jp:
         cached_tag = get_cached_tag(tag)
         if cached_tag:
-            tags_kr.append(cached_tag['tag_kr'])
-            tag_priorities.append(cached_tag.get('priority', 10))
+            kr = cached_tag['tag_kr']
+            priority = cached_tag.get('priority', 10)
+            tags_kr.append(kr)
+            tag_priorities.append(priority)
         else:
             tags_to_translate.append(tag)
-            tag_priorities.append(10)
+            tag_priorities.append(10)  # 기본값 설정 (순서 유지 위해)
 
     translated_tags = tags_jp
     translated_title = title_jp
 
-    # 일본어 포함 여부 확인
     if needs_translation(title_jp) or tags_to_translate:
         logger.debug(f"Translating for {rj_code}: title_jp={title_jp}, tags={tags_to_translate}")
         translated_tags, translated_title = translate_with_gpt_batch(
@@ -207,25 +209,29 @@ def process_rj_item(item):
             title_jp if needs_translation(title_jp) else None,
             batch_idx=rj_code
         )
-        for jp, kr in zip(tags_to_translate, translated_tags):
-            priority = 10
-            if kr in ["RPG", "액션", "판타지"]:
-                priority = {"RPG": 100, "액션": 90, "판타지": 80}.get(kr, 10)
+        for i, (jp, kr) in enumerate(zip(tags_to_translate, translated_tags)):
+            # Firestore에서 설정된 priority 먼저 조회
+            existing = get_cached_tag(jp)
+            priority = existing.get("priority", 10) if existing else 10
             tags_kr.append(kr)
+            tag_priorities.append(priority)
             cache_tag(jp, kr, priority)
-            tag_priorities[tags_kr.index(kr)] = priority
     else:
         logger.debug(f"No translation needed for {rj_code}: title_jp={title_jp}")
 
-    primary_tag = tags_kr[tag_priorities.index(max(tag_priorities))] if tags_kr else "기타"
+    # ✅ priority 기준으로 정렬
+    tag_with_priority = list(zip(tags_kr, tag_priorities))
+    tag_with_priority.sort(key=lambda x: x[1], reverse=True)
+    tags_kr_sorted = [tag for tag, _ in tag_with_priority]
+    primary_tag = tags_kr_sorted[0] if tags_kr_sorted else "기타"
 
     processed_data = {
         'rj_code': rj_code,
         'title_jp': title_jp,
-        'title_kr': translated_title or title_jp or rj_code,  # 번역 없으면 title_jp 또는 rj_code
+        'title_kr': translated_title or title_jp or rj_code,
         'primary_tag': primary_tag,
         'tags_jp': tags_jp,
-        'tags': tags_kr,
+        'tags': tags_kr_sorted,
         'release_date': item.get('release_date', 'N/A'),
         'thumbnail_url': item.get('thumbnail_url', ''),
         'rating': item.get('rating', 0.0),
@@ -234,9 +240,11 @@ def process_rj_item(item):
         'maker': item.get('maker', ''),
         'timestamp': time.time()
     }
+
     cache_data('rj', rj_code, processed_data)
     logger.info(f"Processed RJ item: {rj_code}, title_kr={processed_data['title_kr']}")
     return processed_data
+
 
 # Steam 데이터 처리
 def process_steam_item(identifier):
