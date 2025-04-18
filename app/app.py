@@ -173,8 +173,17 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 # RJ 데이터 처리
 def process_rj_item(item):
     if 'error' in item:
-        logger.debug(f"Skipping error item: {item.get('rj_code')}")
-        return item
+        rj_code = item.get('rj_code')
+        error_data = {
+            'rj_code': rj_code,
+            'error': item.get('error'),
+            'platform': 'rj',
+            'timestamp': time.time()
+        }
+        cache_data('rj', rj_code, error_data)
+        logger.info(f"Cached missing RJ item: {rj_code}")
+        return error_data
+
 
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
