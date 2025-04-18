@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>태그 관리자</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #f9fafb;
+      color: #111827;
+      line-height: 1.5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    .search-add-section {
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+      .search-add-section {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    .search-container {
+      position: relative;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 0.75rem;
+      color: #6b7280;
+    }
+    
+    input, button {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.875rem;
+    }
+    
+    input {
+      width: 100%;
+      background-color: white;
+    }
+    
+    input[type="search"] {
+      padding-left: 2.5rem;
+    }
+    
+    button {
+      background-color: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .add-tag-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .add-tag-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    th {
+      font-weight: 600;
+      color: #4b5563;
+      background-color: #f9fafb;
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .save-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 300px;
+      display: none;
+      z-index: 50;
+    }
+    
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+    
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+    
+    .toast-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .loading-row {
+      text-align: center;
+      padding: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>태그 관리자</h1>
+    
+    <div class="search-add-section">
+      <div class="search-container">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="search" id="search-input" placeholder="태그 검색...">
+      </div>
+      
+      <div class="add-tag-form">
+        <h2>새 태그 추가</h2>
+        <div class="add-tag-inputs">
+          <input type="text" id="new-tag-jp" placeholder="일본어 태그">
+          <input type="text" id="new-tag-kr" placeholder="한국어 태그">
+          <input type="number" id="new-tag-priority" placeholder="우선순위" value="10">
+        </div>
+        <button id="add-tag-btn">태그 추가</button>
+      </div>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>일본어 태그</th>
+          <th>한국어 태그</th>
+          <th>우선순위</th>
+          <th>액션</th>
+        </tr>
+      </thead>
+      <tbody id="tags-table-body">
+        <tr>
+          <td colspan="4" class="loading-row">로딩 중...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="toast" class="toast">
+    <div class="toast-title" id="toast-title"></div>
+    <div class="toast-message" id="toast-message"></div>
+  </div>
+  
+  <script>
+    // API URL - 실제 Cloud Run URL로 변경하세요
+    const API_URL = "https://your-cloud-run-url.run.app";
+    
+    // DOM 요소
+    const searchInput = document.getElementById('search-input');
+    const newTagJp = document.getElementById('new-tag-jp');
+    const newTagKr = document.getElementById('new-tag-kr');
+    const newTagPriority = document.getElementById('new-tag-priority');
+    const addTagBtn = document.getElementById('add-tag-btn');
+    const tagsTableBody = document.getElementById('tags-table-body');
+    const toast = document.getElementById('toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMessage = document.getElementById('toast-message');
+    
+    // 태그 데이터
+    let tags = [];
+    
+    // 페이지 로드 시 태그 가져오기
+    document.addEventListener('DOMContentLoaded', fetchTags);
+    
+    // 검색 기능
+    searchInput.addEventListener('input', filterTags);
+    
+    // 새 태그 추가
+    addTagBtn.addEventListener('click', handleAddTag);
+    
+    // 태그 가져오기
+    async function fetchTags() {
+      try {
+        const response = await fetch(`${API_URL}/tags`);
+        if (!response.ok) {
+          throw new Error('태그를 가져오는데 실패했습니다');
+        }
+        
+        tags = await response.json();
+        renderTags();
+      } catch (error) {
+        console.error('태그 가져오기 오류:', error);
+        showToast('오류', '태그를 가져오는데 실패했습니다. 다시 시도해주세요.', 'error');
+        tagsTableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="loading-row">데이터를 불러올 수 없습니다</td>
+          </tr>
+        `;
+      }
+    }
+    
+    // 태그 업데이트
+    async function updateTag(tag) {
+      try {
+        const response = await fetch(`${API_URL}/tags`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tag),
+        });
+        
+        if (!response.ok) {
+          throw new Error('태그 업데이트에 실패했습니다');
+        }
+        
+        showToast('성공', `태그 업데이트: ${tag.tag_jp} → ${tag.tag_kr}`, 'success');
+        await fetchTags();
+      } catch (error) {
+        console.error('태그 업데이트 오류:', error);
+        showToast('오류', '태그 업데이트에 실패했습니다. 다시 시도해주세요.', 'error');
+      }
+    }
+    
+    // 태그 렌더링
+    function renderTags() {
+      const searchQuery = searchInput.value.toLowerCase();
+      const filteredTags = tags.filter(tag => 
+        tag.tag_jp.toLowerCase().includes(searchQuery) || 
+        tag.tag_kr.toLowerCase().includes(searchQuery)
+      );
+      
+      if (filteredTags.length === 0) {
+        tagsTableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="loading-row">
+              ${searchQuery ? '검색 결과가 없습니다' : '태그가 없습니다'}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      tagsTableBody.innerHTML = filteredTags.map(tag => `
+        <tr data-tag-jp="${tag.tag_jp}">
+          <td>${tag.tag_jp}</td>
+          <td>
+            <input type="text" value="${tag.tag_kr}" data-field="tag_kr">
+          </td>
+          <td>
+            <input type="number" value="${tag.priority}" data-field="priority">
+          </td>
+          <td>
+            <button class="save-btn">저장</button>
+          </td>
+        </tr>
+      `).join('');
+      
+      // 저장 버튼에 이벤트 리스너 추가
+      document.querySelectorAll('.save-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const row = this.closest('tr');
+          const tagJp = row.dataset.tagJp;
+          const tagKr = row.querySelector('[data-field="tag_kr"]').value;
+          const priority = parseInt(row.querySelector('[data-field="priority"]').value);
+          
+          updateTag({
+            tag_jp: tagJp,
+            tag_kr: tagKr,
+            priority: priority
+          });
+        });
+      });
+    }
+    
+    // 태그 필터링
+    function filterTags() {
+      renderTags();
+    }
+    
+    // 새 태그 추가
+    async function handleAddTag() {
+      const tagJp = newTagJp.value.trim();
+      const tagKr = newTagKr.value.trim();
+      const priority = parseInt(newTagPriority.value);
+      
+      if (!tagJp || !tagKr) {
+        showToast('오류', '일본어 태그와 한국어 태그는 필수입니다', 'error');
+        return;
+      }
+      
+      const newTag = {
+        tag_jp: tagJp,
+        tag_kr: tagKr,
+        priority: priority
+      };
+      
+      try {
+        await updateTag(newTag);
+        newTagJp.value = '';
+        newTagKr.value = '';
+        newTagPriority.value = '10';
+      } catch (error) {
+        console.error('태그 추가 오류:', error);
+      }
+    }
+    
+    // 토스트 메시지 표시
+    function showToast(title, message, type = 'success') {
+      toastTitle.textContent = title;
+      toastMessage.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.style.display = 'block';
+      
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
