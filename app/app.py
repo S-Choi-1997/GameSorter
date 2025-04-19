@@ -306,8 +306,8 @@ def process_steam_item(identifier):
         'primary_tag': "기타",
         'tags': ["기타"],
         'thumbnail_url': '',
-        'platform': '기타',  # 🔥 platform을 "steam" → "기타"로 변경
-        'timestamp': time.time()
+        'platform': '기타'  # 🔥 platform을 "steam" → "기타"로 변경
+        # 'timestamp': time.time()
     }
 
 
