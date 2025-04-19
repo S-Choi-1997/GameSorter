@@ -110,8 +110,20 @@ def sync_tags_to_games():
             if not tags_jp:
                 continue
 
-            tags_kr = [tag_map.get(jp, "기타") for jp in tags_jp]
-            best_tag = max(tags_kr, key=lambda t: tag_priority.get(t, 10), default="기타")
+            # tag_jp -> (tag_kr, priority) 형태로 변환
+            tags_with_priority = [
+                (tag_map.get(jp, "기타"), tag_priority.get(jp, 10))
+                for jp in tags_jp
+            ]
+
+            # priority 내림차순 정렬
+            tags_with_priority.sort(key=lambda x: x[1], reverse=True)
+
+            # 정렬된 태그 이름 리스트
+            tags_kr = [tag for tag, _ in tags_with_priority]
+
+            # 가장 높은 우선순위의 태그를 primary_tag로 선택
+            best_tag = tags_kr[0] if tags_kr else "기타"
 
             doc_ref = db.collection('games').document('rj').collection('items').document(doc.id)
             doc_ref.update({
