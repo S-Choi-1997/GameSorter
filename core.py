@@ -60,6 +60,7 @@ class FetchWorker(QThread):
 
     def __init__(self, server_url, items, folder_path=None, use_firestore_cache=True):
         super().__init__()
+        
         self.server_url = server_url
         self.items = items
         self.folder_path = folder_path
@@ -169,13 +170,25 @@ class FetchWorker(QThread):
             raise
     
     def retry_fetch(self, request_items):
+        def is_permanently_failed(rj_code):
+            try:
+                url = f"{self.server_url}/check_permanent_failure/{rj_code}"
+                response = requests.get(url, timeout=5)
+                return response.json().get("permanent_failure", False)
+            except Exception as e:
+                logging.warning(f"Permanent failure 확인 실패: {rj_code} → {e}")
+                return False  # 확인 실패 시 재시도 허용
+
+        # ✅ 영구 실패 아닌 것만 필터링
         retry_rj_codes = [
             item.get("rj_code") for item in request_items
-            if item.get("platform") == "rj" and item.get("rj_code")
+            if item.get("platform") == "rj"
+            and item.get("rj_code")
+            and not is_permanently_failed(item.get("rj_code"))
         ]
 
         if not retry_rj_codes:
-            self.log.emit("재요청할 항목이 없습니다.")
+            self.log.emit("재요청할 항목이 없습니다. (모두 404로 확인됨)")
             return
 
         self.log.emit("🌀 5초 후 캐시 재요청 중...")
@@ -193,6 +206,7 @@ class FetchWorker(QThread):
         except Exception as e:
             logging.error(f"재요청 실패: {e}", exc_info=True)
             self.log.emit(f"재요청 실패: {str(e)}")
+
 
     def run(self):
         try:
@@ -309,7 +323,9 @@ class FetchWorker(QThread):
                                 'release_date': 'N/A',
                                 'maker': '',
                                 'link': '',
-                                'timestamp': time.time()  # 🔥 핵심: 크롤링 시도한 증거
+                                'status': '404',              # ✅ 명시적 404
+                                'permanent_error': True,      # ✅ 실패 플래그
+                                'timestamp': time.time()
                             }
 
                             # ✅ 서버에 저장
@@ -318,6 +334,10 @@ class FetchWorker(QThread):
                                 method='post',
                                 json_data={"items": [fallback]}
                             )
+                            # 🔧 전송 전에 빈 문자열 필드 정리
+                            for f in final_results:
+                                if isinstance(f.get("title_kr"), str) and not f["title_kr"].strip():
+                                    f["title_kr"] = None
 
                             final_results.append(fallback)
                     else:
@@ -351,10 +371,14 @@ class FetchWorker(QThread):
 class MainWindowLogic(MainWindowUI):
     def __init__(self):
         super().__init__()
+        
+
+        
         self.results = []
         self.folder_path = None
         self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
         self.worker = None
+
 
         self.select_folder_btn.clicked.connect(self.select_folder)
         self.fetch_data_btn.clicked.connect(self.fetch_game_data_and_update)
@@ -362,6 +386,13 @@ class MainWindowLogic(MainWindowUI):
         self.remove_tag_btn.clicked.connect(self.remove_tags_from_selected)
         self.select_all_box.stateChanged.connect(self.toggle_all_selection)
         self.table.cellClicked.connect(self.on_table_cell_clicked)
+        
+        try:
+            with open("dark_style.qss", "r", encoding="utf-8") as f:
+                self.setStyleSheet(f.read())
+                logging.debug("스타일시트 로드 성공")
+        except Exception as e:
+            logging.error(f"스타일시트 로드 실패: {e}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -503,6 +534,8 @@ class MainWindowLogic(MainWindowUI):
 
                 original_title = result.get('original_title') or result.get('original')
                 title_kr = match.get('title_kr') or match.get('title_jp') or original_title
+                title_jp = match.get('title_jp') or original_title
+
 
                 # ✅ 원래 이름에 일본어가 없다면 → 그걸 우선 사용
                 if not needs_translation(original_title):
@@ -514,6 +547,14 @@ class MainWindowLogic(MainWindowUI):
 
                 # ✅ 파일명에 사용 불가한 문자 제거
                 final_title = re.sub(r'[?*:"<>|]', '', final_title).replace('/', '-').strip()
+                # ✅ 빈 제목이면 fallback 설정
+                if not final_title:
+                    final_title = title_kr or title_jp or rj_code
+                
+                # ✅ 확장자 보존
+                original_ext = os.path.splitext(result['original'])[1]
+                if not final_title.lower().endswith(original_ext.lower()):
+                    final_title += original_ext
 
                 result['suggested'] = f"[{rj_code}][{tag}] {final_title}" if final_title else f"[{rj_code}][{tag}]"
                 result['selected_tag'] = tag
@@ -582,12 +623,14 @@ class MainWindowLogic(MainWindowUI):
 
             self.table.setUpdatesEnabled(False)
             for idx, original in enumerate(files):
+                # ✅ RJ 코드 추출
                 rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", original, re.IGNORECASE)
                 rj_code = ''
                 if rj_match:
                     full_match = rj_match.group(0)
                     rj_code = re.sub(r'[_\-\s]', '', full_match).upper()
 
+                # ✅ 원래 제목 정리
                 original_title = original
                 if rj_code:
                     original_title = clean_rj_code(original, rj_code)
@@ -598,7 +641,15 @@ class MainWindowLogic(MainWindowUI):
                     name, ext = os.path.splitext(original)
                     original_title = name if name != ext else ''
 
-                suggested = f"[{rj_code or '기타'}][기타] {original_title or original}"
+                # ✅ 확장자 포함한 최종 이름
+                ext = os.path.splitext(original)[1]
+                final_title = original_title or original
+                if not final_title.lower().endswith(ext.lower()):
+                    final_title += ext
+
+                # ✅ 초기 제안 이름 구성
+                suggested = f"[{rj_code or '기타'}][기타] {final_title}"
+                
                 logging.debug(f"File: {original}, Extracted rj_code: '{rj_code}', Original title: '{original_title}'")
 
                 result = {
@@ -655,6 +706,7 @@ class MainWindowLogic(MainWindowUI):
 
     def update_select_all_state(self):
         try:
+            logging.debug("🔁 update_select_all_state 호출됨")
             if self.table.rowCount() == 0:
                 self.select_all_box.blockSignals(True)
                 self.select_all_box.setChecked(False)
@@ -666,6 +718,7 @@ class MainWindowLogic(MainWindowUI):
             none_checked = True
             for row in range(self.table.rowCount()):
                 chk = self.table.cellWidget(row, 0)
+                logging.debug(f"   🔍 row {row} 체크 상태: {chk.isChecked()}")
                 if chk.isChecked():
                     none_checked = False
                 else:
@@ -674,30 +727,55 @@ class MainWindowLogic(MainWindowUI):
             self.select_all_box.blockSignals(True)
             self.select_all_box.setEnabled(True)
             if all_checked:
+                logging.debug("   ✅ 전체 체크됨 → select_all_box.setChecked(True)")
                 self.select_all_box.setChecked(True)
             elif none_checked:
+                logging.debug("   ❎ 전체 해제됨 → select_all_box.setChecked(False)")
                 self.select_all_box.setChecked(False)
             else:
+                logging.debug("   ⚠️ 일부만 선택됨 → select_all_box.setTristate()")
                 self.select_all_box.setTristate(True)
-                self.select_all_box.setCheckState(Qt.CheckState.PartiallyChecked)
+                self.select_all_box.setCheckState(Qt.PartiallyChecked)
             self.select_all_box.blockSignals(False)
         except Exception as e:
             logging.error(f"Update select all state error: {e}", exc_info=True)
 
+
+
     def toggle_all_selection(self, state):
         try:
-            checked = state == Qt.Checked
-            self.log_label.setText("전체 선택 상태 변경 중...")
+            logging.debug(f"🟩 toggle_all_selection 호출됨: state={state}")
+
+            # ✅ 현재 상태를 보고 전체 선택 여부 판단
+            any_unchecked = any(
+                not self.table.cellWidget(row, 0).isChecked()
+                for row in range(self.table.rowCount())
+            )
+            checked = any_unchecked
+
+            logging.debug(f"   → 전체를 {'선택' if checked else '해제'}합니다.")
+
             self.table.setUpdatesEnabled(False)
+
             for row in range(self.table.rowCount()):
                 chk = self.table.cellWidget(row, 0)
+                chk.blockSignals(True)  # ✅ 시그널 막고
+                logging.debug(f"   🔄 row {row} 이전 체크 상태: {chk.isChecked()}")
                 chk.setChecked(checked)
+                chk.blockSignals(False)  # ✅ 다시 풀기
+
             self.table.setUpdatesEnabled(True)
+
+            self.update_select_all_state()  # ✅ 마지막에 한 번만 호출
+
             self.log_label.setText(f"전체 선택 {'완료' if checked else '해제'}")
-            self.update_select_all_state()
+            logging.debug(f"✅ 전체 {'선택' if checked else '해제'} 완료")
+
         except Exception as e:
             logging.error(f"Toggle all selection error: {e}", exc_info=True)
             self.log_label.setText("전체 선택 처리 중 오류")
+
+
 
     def get_unique_path(self, new_path):
         base, ext = os.path.splitext(new_path)
@@ -725,6 +803,10 @@ class MainWindowLogic(MainWindowUI):
                 original_name = os.path.basename(original_path)
                 new_name = self.results[row]['suggested']
 
+                # ✅ 확장자 누락 시 자동 보정
+                if not new_name.lower().endswith(original_ext.lower()):
+                    new_name += original_ext
+                
                 if new_name == original_name or '[오류]' in new_name:
                     continue
 

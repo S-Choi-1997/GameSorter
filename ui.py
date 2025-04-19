@@ -15,12 +15,13 @@ logging.basicConfig(filename="gamesort.log", level=logging.DEBUG, format="%(asct
 class GameDataPanel(QWidget):
     def __init__(self):
         super().__init__()
+        
         self.layout = QVBoxLayout()
         self.cache_dir = "thumbnails"
         
         # 썸네일 레이블
         self.thumbnail_label = QLabel()
-        self.thumbnail_label.setMinimumSize(300, 300)
+        self.thumbnail_label.setMinimumSize(500, 300)
         self.thumbnail_label.setAlignment(Qt.AlignCenter)
         self.thumbnail_label.setText("No Thumbnail")
         self.thumbnail_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -31,6 +32,10 @@ class GameDataPanel(QWidget):
         self.title_label.setStyleSheet("font-weight: bold; font-size: 16px;")
         self.title_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.layout.addWidget(self.title_label)
+        
+        #qss
+        self.thumbnail_label.setObjectName("thumbnail_label")
+        self.title_label.setObjectName("title_label")
 
         # 정보 텍스트
         self.info_text = QTextEdit()
@@ -52,7 +57,7 @@ class GameDataPanel(QWidget):
                 logging.debug(f"Loading cached thumbnail: {filepath}")
                 pixmap = QPixmap()
                 if pixmap.load(filepath):
-                    self.thumbnail_label.setPixmap(pixmap.scaled(300, 300, Qt.KeepAspectRatio))
+                    self.thumbnail_label.setPixmap(pixmap.scaled(500, 300, Qt.KeepAspectRatio))
                     logging.debug("Cached thumbnail loaded successfully")
                     return
                 else:
@@ -143,6 +148,8 @@ class MainWindowUI(QMainWindow):
         
         button_height = 40  # 원하는 높이로 조절
 
+
+
         self.select_folder_btn.setFixedHeight(button_height)
         self.fetch_data_btn.setFixedHeight(button_height)
         self.rename_btn.setFixedHeight(button_height)
@@ -151,6 +158,7 @@ class MainWindowUI(QMainWindow):
 
         self.table = QTableWidget(0, 4)  # ✅ 열 수를 3에서 4로 변경
         self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름", "태그 선택"])  # ✅ 태그 선택 열 추가
+        self.table.setSelectionMode(QTableWidget.NoSelection)
         self.table.setColumnWidth(0, 50)
         self.table.setColumnWidth(3, 100)  # ✅ 태그 선택 열 너비 설정
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -175,6 +183,13 @@ class MainWindowUI(QMainWindow):
         self.log_label.setMaximumWidth(self.table.width())
         self.log_label.setMinimumHeight(50)
         left_layout.addWidget(self.log_label)
+        
+        self.select_folder_btn.setObjectName("select_folder_btn")
+        self.fetch_data_btn.setObjectName("fetch_data_btn")
+        self.rename_btn.setObjectName("rename_btn")
+        self.remove_tag_btn.setObjectName("remove_tag_btn")
+        self.log_label.setObjectName("log_label")
+        self.status_label.setObjectName("status_label")
 
         self.game_data_panel = GameDataPanel()
 
