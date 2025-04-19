@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
     QTableWidget, QCheckBox, QLabel, QHeaderView, QProgressBar,
-    QSplitter, QTextEdit, QSizePolicy, QComboBox
+    QSplitter, QTextEdit, QSizePolicy, QComboBox, QFormLayout
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
@@ -37,14 +37,33 @@ class GameDataPanel(QWidget):
         self.thumbnail_label.setObjectName("thumbnail_label")
         self.title_label.setObjectName("title_label")
 
-        # 정보 텍스트
-        self.info_text = QTextEdit()
-        self.info_text.setReadOnly(True)
-        self.info_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.layout.addWidget(self.info_text)
+        # 정보 표시를 QFormLayout + QLabel로 변경
+        self.info_layout = QFormLayout()
+        
+        self.label_title_kr = QLabel()
+        self.label_title_jp = QLabel()
+        self.label_rj_code = QLabel()
+        self.label_tags = QLabel()
+        self.label_release = QLabel()
+        self.label_maker = QLabel()
+        self.label_platform = QLabel()
+        self.label_link = QLabel()
+        
+        self.info_layout.addRow("제목 (KR):", self.label_title_kr)
+        self.info_layout.addRow("제목 (JP):", self.label_title_jp)
+        self.info_layout.addRow("RJ 코드:", self.label_rj_code)
+        self.info_layout.addRow("태그:", self.label_tags)
+        self.info_layout.addRow("출시일:", self.label_release)
+        self.info_layout.addRow("제작자:", self.label_maker)
+        self.info_layout.addRow("플랫폼:", self.label_platform)
+        self.info_layout.addRow("링크:", self.label_link)
+        
+        info_widget = QWidget()
+        info_widget.setLayout(self.info_layout)
+        self.layout.addWidget(info_widget)
 
         # 레이아웃 설정
-        self.layout.setStretchFactor(self.info_text, 1)
+        self.layout.setStretchFactor(info_widget, 1)
         self.setLayout(self.layout)
 
     def load_thumbnail_manually(self, url):
@@ -89,20 +108,57 @@ class GameDataPanel(QWidget):
     def load_game_data(self, data):
         try:
             if not data or "error" in data:
-                self.info_text.setText("데이터를 불러올 수 없습니다: 데이터가 없거나 오류가 발생했습니다.")
+                self.label_title_kr.setText("데이터를 불러올 수 없습니다: 데이터가 없거나 오류가 발생했습니다.")
+                self.label_title_jp.setText("")
+                self.label_rj_code.setText("")
+                self.label_tags.setText("")
+                self.label_release.setText("")
+                self.label_maker.setText("")
+                self.label_platform.setText("")
+                self.label_link.setText("")
                 self.thumbnail_label.setText("No Thumbnail")
                 logging.debug("Empty or error data received")
                 return
 
-            info = f"제목 (KR): {data.get('title_kr', 'N/A')}\n"
-            info += f"제목 (JP): {data.get('title_jp', 'N/A')}\n"
-            info += f"RJ 코드: {data.get('rj_code', 'N/A')}\n"
-            info += f"태그: {', '.join(data.get('tags', []))}\n"
-            info += f"출시일: {data.get('release_date', 'N/A')}\n"
-            info += f"제작자: {data.get('maker', 'N/A')}\n"
-            info += f"플랫폼: {data.get('platform', 'N/A')}\n"
-            info += f"링크: {data.get('link', 'N/A')}"
-            self.info_text.setText(info)
+            # 각 QLabel에 데이터 채우기
+            self.label_title_kr.setText(data.get('title_kr', 'N/A'))
+            self.label_title_jp.setText(data.get('title_jp', 'N/A'))
+            self.label_rj_code.setText(data.get('rj_code', 'N/A'))
+            
+            # ✅ 태그를 버튼 같은 동그란 뱃지로 표시, 연분홍색 고정
+            tags = data.get('tags', [])
+            if tags:
+                tag_color = "#ffdddd"  # 연분홍색 배경
+                text_color = "#831f44"  # 텍스트용 진한 분홍색
+                
+                formatted_tags = []
+                for tag in tags:
+                    formatted_tags.append(
+                        f'<span style="background-color: {tag_color}; color: {text_color}; '
+                        f'padding: 4px 8px; border-radius: 12px; margin: 4px; display: inline-block; '
+                        f'border: 1px solid {text_color}; font-size: 13px; font-weight: bold; '  # 텍스트 굵게
+                        f'box-shadow: 1px 1px 2px #cccccc;">'  # 그림자 추가
+                        f'{tag}</span>'
+                    )
+                
+                self.label_tags.setTextFormat(Qt.RichText)
+                self.label_tags.setText(' '.join(formatted_tags))
+            else:
+                self.label_tags.setText("N/A")
+
+            self.label_release.setText(data.get('release_date', 'N/A'))
+            self.label_maker.setText(data.get('maker', 'N/A'))
+            self.label_platform.setText(data.get('platform', 'N/A'))
+            
+            # 링크를 클릭 가능하게 처리
+            url = data.get('link', 'N/A')
+            if url and url != 'N/A':
+                self.label_link.setTextFormat(Qt.RichText)
+                self.label_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
+                self.label_link.setOpenExternalLinks(True)
+                self.label_link.setText(f'<a href="{url}" style="color: white;">{url}</a>')
+            else:
+                self.label_link.setText('N/A')
 
             thumbnail_url = data.get('thumbnail_url', '')
             logging.debug(f"Loading thumbnail: {thumbnail_url}")
@@ -114,11 +170,25 @@ class GameDataPanel(QWidget):
 
         except Exception as e:
             logging.error(f"Load game data error: {e}", exc_info=True)
-            self.info_text.setText("데이터 로드 실패: 오류 발생")
+            self.label_title_kr.setText("데이터 로드 실패: 오류 발생")
+            self.label_title_jp.setText("")
+            self.label_rj_code.setText("")
+            self.label_tags.setText("")
+            self.label_release.setText("")
+            self.label_maker.setText("")
+            self.label_platform.setText("")
+            self.label_link.setText("")
             self.thumbnail_label.setText("Failed to load thumbnail")
 
     def clear_game_data(self):
-        self.info_text.setText("선택된 게임이 없습니다.")
+        self.label_title_kr.setText("선택된 게임이 없습니다.")
+        self.label_title_jp.setText("")
+        self.label_rj_code.setText("")
+        self.label_tags.setText("")
+        self.label_release.setText("")
+        self.label_maker.setText("")
+        self.label_platform.setText("")
+        self.label_link.setText("")
         self.thumbnail_label.clear()
         self.thumbnail_label.setText("No Thumbnail")
 
@@ -147,20 +217,16 @@ class MainWindowUI(QMainWindow):
         left_layout.addLayout(button_layout)
         
         button_height = 40  # 원하는 높이로 조절
-
-
-
         self.select_folder_btn.setFixedHeight(button_height)
         self.fetch_data_btn.setFixedHeight(button_height)
         self.rename_btn.setFixedHeight(button_height)
         self.remove_tag_btn.setFixedHeight(button_height)
 
-
-        self.table = QTableWidget(0, 4)  # ✅ 열 수를 3에서 4로 변경
-        self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름", "태그 선택"])  # ✅ 태그 선택 열 추가
+        self.table = QTableWidget(0, 4)  # 열 수를 3에서 4로 변경
+        self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름", "태그 선택"])
         self.table.setSelectionMode(QTableWidget.NoSelection)
         self.table.setColumnWidth(0, 50)
-        self.table.setColumnWidth(3, 100)  # ✅ 태그 선택 열 너비 설정
+        self.table.setColumnWidth(3, 100)  # 태그 선택 열 너비 설정
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)  # 태그 선택 열은 고정 너비

@@ -7,3 +7,5 @@ app/.env
 backup*
 *.bat
 *.spec
+__pycache__/
+*.py[cod]
