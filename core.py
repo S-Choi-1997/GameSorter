@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QCheckBox, QComboBox
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QApplication
+from dotenv import load_dotenv
 import logging
 import tenacity
 from urllib.parse import urljoin
@@ -22,6 +23,13 @@ if LOG_TO_FILE:
     )
 else:
     logging.basicConfig(level=logging.CRITICAL)
+    
+# .env 파일 로드
+try:
+    load_dotenv()
+    logging.info(".env 파일 로드 성공")
+except Exception as e:
+    logging.warning(f".env 파일 로드 실패: {e}")
 
 # 유틸리티 함수
 def needs_translation(text):
@@ -394,11 +402,12 @@ class MainWindowLogic(MainWindowUI):
     def __init__(self):
         super().__init__()
         
-
-        
         self.results = []
         self.folder_path = None
-        self.SERVER_URL = "https://gamesorter-28083845590.us-central1.run.app"
+        
+        self.SERVER_URL = os.getenv("GAMESORTER_API_URL", "https://gamesorter-28083845590.us-central1.run.app")
+        logging.info(f"서버 URL 설정: {self.SERVER_URL}")
+            
         self.worker = None
 
 

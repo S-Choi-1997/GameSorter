@@ -331,10 +331,27 @@ def process_games():
             return jsonify({'results': [], 'missing': [], 'task_id': 'none'})
 
         for item in items:
-            logger.info(f"[🔍 RECEIVED ITEM] {json.dumps(item, ensure_ascii=False)}")
+            # 문자열(RJ 코드)만 받은 경우 딕셔너리로 변환
+            if isinstance(item, str):
+                # RJ 코드 패턴 확인
+                if re.match(r'^RJ\d{6,8}$', item, re.IGNORECASE):
+                    item = {
+                        "rj_code": item.upper(),
+                        "platform": "rj"
+                    }
+                    logger.info(f"[🔄 STRING CONVERTED] {item['rj_code']}")
+                else:
+                    item = {
+                        "title": item,
+                        "platform": "steam"
+                    }
+                    logger.info(f"[🔄 STRING CONVERTED] Steam title: {item['title']}")
+
+            # 이제 item은 확실히 딕셔너리 타입
+            logger.info(f"[🔍 PROCESSING ITEM] {json.dumps(item, ensure_ascii=False)}")
 
             # 캐시 저장 요청일 경우 (크롤링 성공 or 실패 후)
-            if item.get("timestamp"):
+            if isinstance(item, dict) and item.get("timestamp"):
                 platform = item.get("platform", "rj")
                 rj_code = item.get("rj_code")
                 title = item.get("title_kr") or item.get("title") or rj_code
@@ -349,16 +366,15 @@ def process_games():
                     logger.info(f"[💾 SAVED] {platform}/items/{rj_code}, title_kr={title}")
                     results.append(item)
 
-
-
             # 캐시 확인 요청일 경우
             else:
-                rj_code = item.get("rj_code")
-                platform = item.get("platform", "rj")
+                rj_code = item.get("rj_code") if isinstance(item, dict) else None
+                platform = item.get("platform", "rj") if isinstance(item, dict) else "rj"
 
                 # RJ 없는 경우 steam 처리
                 if not rj_code:
-                    steam_fallback = process_steam_item(item.get("title", "untitled"))
+                    title = item.get("title", "untitled") if isinstance(item, dict) else str(item)
+                    steam_fallback = process_steam_item(title)
                     logger.info(f"[🎮 STEAM MODE] title={steam_fallback.get('title')}")
                     results.append(steam_fallback)
                     continue
