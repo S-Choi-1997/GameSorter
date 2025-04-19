@@ -161,7 +161,7 @@ class FetchWorker(QThread):
                 'error': f'Game not found for {rj_code}',
                 'rj_code': rj_code,
                 'platform': 'rj',
-                'title_kr': '',
+                'title_kr': clean_rj_code(original_title, rj_code),
                 'title_jp': '',
                 'tags': [],
                 'tags_jp': [],
@@ -173,6 +173,7 @@ class FetchWorker(QThread):
                 'link': '',
                 'status': '404',
                 'permanent_error': True,
+                'skip_translation': True,  # 번역 스킵 플래그 추가
                 'timestamp': time.time()  # ✅ 이거 없으면 서버에서 저장 안 됨!
             }
             return fallback

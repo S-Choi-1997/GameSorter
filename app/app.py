@@ -356,8 +356,13 @@ def process_games():
                 rj_code = item.get("rj_code")
                 title = item.get("title_kr") or item.get("title") or rj_code
 
-                # ✅ 번역/저장이 필요한 경우 처리
-                if platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
+                # skip_translation 플래그 또는 404 상태이면 번역 없이 바로 처리
+                if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
+                    logger.info(f"[DIRECT SAVE] {platform}:{rj_code}")
+                    processed = process_and_save_rj_item(item)  # 이미 번역 스킵 로직이 포함됨
+                    results.append(processed)
+                # 기존 번역/저장 조건
+                elif platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
                     logger.info(f"[🌀 TRANSLATE & SAVE] {platform}:{rj_code}")
                     processed = process_and_save_rj_item(item)
                     results.append(processed)
@@ -493,6 +498,23 @@ def reorder_tags():
 def process_and_save_rj_item(item):
     """번역되지 않은 RJ 항목을 처리하고 저장"""
     rj_code = item.get("rj_code", "unknown")
+    
+    # 번역 스킵 플래그 확인
+    if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
+        logger.info(f"[SKIP TRANSLATION] {rj_code}: 번역 없이 바로 저장")
+        # title_kr이 없으면 original 또는 title 필드를 사용
+        if not item.get("title_kr"):
+            original_name = item.get("original") or item.get("title") or ""
+            item["title_kr"] = clean_rj_code(original_name, rj_code)
+        
+        # 태그가 없으면 기본값 설정
+        if not item.get("tags"):
+            item["tags"] = ["기타"]
+            item["primary_tag"] = "기타"
+            
+        cache_data("rj", rj_code, item)
+        return item
+    
     title_jp = item.get("title_jp", "")
     tags_jp = item.get("tags_jp", [])
     tags_jp = [normalize_tag_id(tag) for tag in tags_jp]
