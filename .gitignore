@@ -1,0 +1,12 @@
+.env
+app/.env
+/thumbnails
+/build
+/dist
+*.log
+backup*
+*.bat
+*.spec
+__pycache__/
+*.py[cod]
+.exe
