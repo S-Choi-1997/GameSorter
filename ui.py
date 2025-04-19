@@ -142,6 +142,8 @@ class GameDataPanel(QWidget):
                     )
                 
                 self.label_tags.setTextFormat(Qt.RichText)
+                self.label_tags.setWordWrap(True)  # 🔥 이거!
+                self.label_tags.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)  # 🔥 이것도!
                 self.label_tags.setText(' '.join(formatted_tags))
             else:
                 self.label_tags.setText("N/A")
