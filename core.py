@@ -144,9 +144,31 @@ class FetchWorker(QThread):
             }
             logging.info(f"Fetched DLsite data for {rj_code}, title_jp={cleaned_title}, tags_jp={tags_jp}")
             return data
+
         except Exception as e:
             logging.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
-            return {'error': f'Game not found for {rj_code}', 'platform': 'rj', 'rj_code': rj_code}
+
+            # ✅ 실패했을 경우 fallback 데이터 반환 (🔥 timestamp 포함 필수!)
+            fallback = {
+                'error': f'Game not found for {rj_code}',
+                'rj_code': rj_code,
+                'platform': 'rj',
+                'title_kr': '',
+                'title_jp': '',
+                'tags': [],
+                'tags_jp': [],
+                'thumbnail_url': '',
+                'primary_tag': '기타',
+                'rating': 0.0,
+                'release_date': 'N/A',
+                'maker': '',
+                'link': '',
+                'status': '404',
+                'permanent_error': True,
+                'timestamp': time.time()  # ✅ 이거 없으면 서버에서 저장 안 됨!
+            }
+            return fallback
+
 
     @tenacity.retry(
         stop=tenacity.stop_after_attempt(5),
