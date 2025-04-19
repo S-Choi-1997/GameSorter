@@ -48,30 +48,25 @@ def needs_translation(title: str) -> bool:
 
 # Firestore 캐시 확인
 def get_cached_data(platform, identifier):
-    if not db:
-        logger.error("Firestore client not initialized")
-        return None
-    try:
-        # RJ 코드의 경우 문서 ID를 'RJxxxxx'로 통일
-        normalized_id = identifier.upper() if platform == 'rj' else identifier
-        doc_ref = db.collection('games').document(platform).collection('items').document(normalized_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            data = doc.to_dict()
+    normalized_id = identifier.upper().replace('-', '').replace('_', '').strip()
+    doc = db.collection("games").document(platform).collection("items").document(normalized_id).get()
 
-            # ✅ 핵심 추가: timestamp가 없으면 캐시로 인정하지 않음
-            if not data.get("timestamp"):
-                logger.warning(f"Cached data found but missing timestamp: {platform}:{normalized_id}")
-                return None
+    if doc.exists:
+        data = doc.to_dict()
 
-            logger.debug(f"Cache hit for {platform}:{normalized_id}, title_kr={data.get('title_kr')}")
+        # ✅ 404 표시된 경우 바로 반환 (재크롤링 방지)
+        if data.get("status") == "404" or data.get("permanent_error"):
+            logger.info(f"404 confirmed item: {platform}:{normalized_id}")
             return data
 
-        logger.debug(f"Cache miss for {platform}:{normalized_id}")
-        return None
-    except Exception as e:
-        logger.error(f"Firestore cache error for {platform}:{identifier}: {e}")
-        return None
+        # ✅ 타임스탬프 없는 경우 캐시 무시
+        if not data.get("timestamp"):
+            logger.warning(f"Cached data found but missing timestamp: {platform}:{normalized_id}")
+            return None
+
+        logger.debug(f"Cache hit for {platform}:{normalized_id}, title_kr={data.get('title_kr')}")
+        return data
+    return None
 
 
 def cache_data(platform, rj_code, data):
@@ -549,6 +544,20 @@ def process_and_save_rj_item(item):
     cache_data("rj", rj_code, final)
     logger.info(f"[💾 AUTO SAVED] {rj_code} → {final['title_kr']}")
     return final
+
+@app.route('/check_permanent_failure/<rj_code>', methods=['GET'])
+def check_failure(rj_code):
+    try:
+        doc = db.collection("games").document("rj").collection("items").document(rj_code).get()
+        if doc.exists:
+            data = doc.to_dict()
+            return jsonify({
+                "permanent_failure": data.get("status") == "404" or data.get("permanent_error") == True
+            })
+        return jsonify({"permanent_failure": False})
+    except Exception as e:
+        logger.error(f"Failure check error: {e}")
+        return jsonify({"permanent_failure": False})
 
 
 if __name__ == '__main__':

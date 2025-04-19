@@ -576,7 +576,27 @@ class MainWindowLogic(MainWindowUI):
             self.table.viewport().update()
             self.log_label.setText(f"게임명 변경 완료, {error_count}개 항목 실패")
             if error_count > 0:
-                QMessageBox.warning(self, "경고", f"{error_count}개 항목을 처리하지 못했습니다. 로그를 확인하세요.")
+                failed_items = []
+                for row, result in enumerate(self.results):
+                    gd = result.get("game_data")
+                    if (
+                        not gd
+                        or 'error' in gd
+                        or not gd.get('title_kr') and not gd.get('title_jp')
+                    ):
+                        filename = result.get('original', f'row={row}')
+                        failed_items.append(f"[{row}] {filename}")
+
+                logging.warning(f"⚠️ 처리 실패한 항목 {error_count}개:")
+                for item in failed_items:
+                    logging.warning(f"  ❌ {item}")
+
+                QMessageBox.warning(
+                    self,
+                    "경고",
+                    f"{error_count}개 항목을 처리하지 못했습니다.\n"
+                    f"자세한 목록은 gamesort.log 를 확인하세요."
+                )
 
             self.status_label.setText(f"파일: {len(self.results)}개")
             self.update_select_all_state()
@@ -718,7 +738,7 @@ class MainWindowLogic(MainWindowUI):
             none_checked = True
             for row in range(self.table.rowCount()):
                 chk = self.table.cellWidget(row, 0)
-                logging.debug(f"   🔍 row {row} 체크 상태: {chk.isChecked()}")
+                # logging.debug(f"   🔍 row {row} 체크 상태: {chk.isChecked()}")
                 if chk.isChecked():
                     none_checked = False
                 else:
