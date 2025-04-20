@@ -61,10 +61,8 @@
     <!-- 탭 메뉴 -->
     <div class="tabs">
       <div class="tab active" data-tab="tags">태그 관리</div>
-      <div class="tab" data-tab="game-list">GCS 게임 목록</div>
-      <div class="tab" data-tab="game-search">GCS 게임 검색</div>
-      <div class="tab" data-tab="fs-game-list">Firestore 게임 목록</div>
-      <div class="tab" data-tab="fs-game-search">Firestore 게임 검색</div>
+      <div class="tab" data-tab="game-management">GCS 게임 관리</div>
+      <div class="tab" data-tab="fs-game-management">Firestore 게임 관리</div>
     </div>
     
     <!-- 태그 관리 탭 -->
@@ -113,20 +111,24 @@
       </table>
     </div>
     
-    <!-- GCS 게임 목록 탭 -->
-    <div id="game-list-tab" class="tab-content">
+    <!-- GCS 게임 관리 탭 -->
+    <div id="game-management-tab" class="tab-content">
       <div class="header-container">
-        <h2>GCS 게임 목록</h2>
+        <h2>GCS 게임 관리</h2>
         <div class="header-actions">
-          <select id="game-list-platform-select">
+          <select id="game-platform-select">
             <option value="rj">RJ 코드</option>
           </select>
           <button id="load-games-btn">목록 불러오기</button>
           <button id="delete-all-games-btn" class="delete-btn">전체 삭제</button>
+          <div class="search-container inline-search">
+            <input type="text" id="game-code-input" placeholder="게임 코드 입력 (예: RJ123456)">
+            <button id="search-game-btn">검색</button>
+          </div>
         </div>
       </div>
       
-      <div class="game-list-container">
+      <div class="game-management-container">
         <div class="game-list-sidebar">
           <div class="search-container">
             <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -139,90 +141,83 @@
             <div class="loading-message">플랫폼을 선택하고 목록 불러오기를 클릭하세요</div>
           </div>
         </div>
-        <div id="game-details" class="game-details">
-          <div class="no-selection-message">왼쪽 목록에서 게임을 선택하세요</div>
+        <div id="game-details-container" class="game-details-container">
+          <div id="game-details" class="game-details">
+            <div class="no-selection-message">왼쪽 목록에서 게임을 선택하거나 게임 코드로 검색하세요</div>
+          </div>
+          <div id="game-edit-form" class="game-edit-form">
+            <form id="game-form" class="game-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="game-title">제목</label>
+                  <input type="text" id="game-title" name="title">
+                </div>
+                <div class="form-group">
+                  <label for="game-circle">서클</label>
+                  <input type="text" id="game-circle" name="circle">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="game-release-date">출시일</label>
+                  <input type="date" id="game-release-date" name="release_date">
+                </div>
+                <div class="form-group">
+                  <label for="game-price">가격</label>
+                  <input type="number" id="game-price" name="price">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="game-description">설명</label>
+                <textarea id="game-description" name="description"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label>태그 (일본어)</label>
+                <div id="tags-jp-container" class="tag-chips"></div>
+              </div>
+              
+              <div class="form-group">
+                <label>태그 (한국어)</label>
+                <div id="tags-kr-container" class="tag-chips"></div>
+              </div>
+              
+              <div class="form-group">
+                <label for="game-primary-tag">주요 태그</label>
+                <input type="text" id="game-primary-tag" name="primary_tag">
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" id="cancel-edit-btn">취소</button>
+                <button type="submit" id="save-game-btn">저장</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
     
-    <!-- GCS 게임 검색 탭 -->
-    <div id="game-search-tab" class="tab-content">
+    <!-- Firestore 게임 관리 탭 -->
+    <div id="fs-game-management-tab" class="tab-content">
       <div class="header-container">
-        <h2>GCS 게임 검색</h2>
-      </div>
-      
-      <div class="game-search-form">
-        <select id="platform-select">
-          <option value="rj">RJ 코드</option>
-        </select>
-        <input type="text" id="game-code-input" placeholder="게임 코드 입력 (예: RJ123456)">
-        <button id="search-game-btn">검색</button>
-      </div>
-      
-      <div id="game-data-container" class="game-data-container">
-        <form id="game-form" class="game-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="game-title">제목</label>
-              <input type="text" id="game-title" name="title">
-            </div>
-            <div class="form-group">
-              <label for="game-circle">서클</label>
-              <input type="text" id="game-circle" name="circle">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="game-release-date">출시일</label>
-              <input type="date" id="game-release-date" name="release_date">
-            </div>
-            <div class="form-group">
-              <label for="game-price">가격</label>
-              <input type="number" id="game-price" name="price">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="game-description">설명</label>
-            <textarea id="game-description" name="description"></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label>태그 (일본어)</label>
-            <div id="tags-jp-container" class="tag-chips"></div>
-          </div>
-          
-          <div class="form-group">
-            <label>태그 (한국어)</label>
-            <div id="tags-kr-container" class="tag-chips"></div>
-          </div>
-          
-          <div class="form-group">
-            <label for="game-primary-tag">주요 태그</label>
-            <input type="text" id="game-primary-tag" name="primary_tag" readonly>
-          </div>
-          
-          <button type="submit" id="save-game-btn">저장</button>
-        </form>
-      </div>
-    </div>
-    
-    <!-- Firestore 게임 목록 탭 -->
-    <div id="fs-game-list-tab" class="tab-content">
-      <div class="header-container">
-        <h2>Firestore 게임 목록</h2>
+        <h2>Firestore 게임 관리</h2>
         <div class="header-actions">
-          <select id="fs-game-list-platform-select">
+          <select id="fs-game-platform-select">
             <option value="rj">RJ 코드</option>
           </select>
           <button id="fs-load-games-btn">목록 불러오기</button>
           <button id="fs-delete-all-games-btn" class="delete-btn">전체 삭제</button>
           <button id="fs-tag-stats-btn" class="stats-btn">태그 통계</button>
+          <div class="search-container inline-search">
+            <input type="text" id="fs-game-code-input" placeholder="게임 코드 입력 (예: RJ123456)">
+            <button id="fs-search-game-btn">검색</button>
+          </div>
         </div>
       </div>
       
-      <div class="game-list-container">
+      <div class="game-management-container">
         <div class="game-list-sidebar">
           <div class="search-container">
             <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -235,103 +230,61 @@
             <div class="loading-message">플랫폼을 선택하고 목록 불러오기를 클릭하세요</div>
           </div>
         </div>
-        <div id="fs-game-details" class="game-details">
-          <div class="no-selection-message">왼쪽 목록에서 게임을 선택하세요</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Firestore 게임 검색 탭 -->
-    <div id="fs-game-search-tab" class="tab-content">
-      <div class="header-container">
-        <h2>Firestore 게임 검색</h2>
-      </div>
-      
-      <div class="search-options">
-        <div class="search-option">
-          <h3>코드로 검색</h3>
-          <div class="game-search-form">
-            <select id="fs-platform-select">
-              <option value="rj">RJ 코드</option>
-            </select>
-            <input type="text" id="fs-game-code-input" placeholder="게임 코드 입력 (예: RJ123456)">
-            <button id="fs-search-game-btn">검색</button>
+        <div id="fs-game-details-container" class="game-details-container">
+          <div id="fs-game-details" class="game-details">
+            <div class="no-selection-message">왼쪽 목록에서 게임을 선택하거나 게임 코드로 검색하세요</div>
+          </div>
+          <div id="fs-game-edit-form" class="game-edit-form">
+            <form id="fs-game-form" class="game-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fs-game-title">제목</label>
+                  <input type="text" id="fs-game-title" name="title">
+                </div>
+                <div class="form-group">
+                  <label for="fs-game-circle">서클</label>
+                  <input type="text" id="fs-game-circle" name="circle">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fs-game-release-date">출시일</label>
+                  <input type="date" id="fs-game-release-date" name="release_date">
+                </div>
+                <div class="form-group">
+                  <label for="fs-game-price">가격</label>
+                  <input type="number" id="fs-game-price" name="price">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="fs-game-description">설명</label>
+                <textarea id="fs-game-description" name="description"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label>태그 (일본어)</label>
+                <div id="fs-tags-jp-container" class="tag-chips"></div>
+              </div>
+              
+              <div class="form-group">
+                <label>태그 (한국어)</label>
+                <div id="fs-tags-kr-container" class="tag-chips"></div>
+              </div>
+              
+              <div class="form-group">
+                <label for="fs-game-primary-tag">주요 태그</label>
+                <input type="text" id="fs-game-primary-tag" name="primary_tag">
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" id="fs-cancel-edit-btn">취소</button>
+                <button type="submit" id="fs-save-game-btn">저장</button>
+              </div>
+            </form>
           </div>
         </div>
-        
-        <div class="search-option">
-          <h3>제목으로 검색</h3>
-          <div class="game-search-form">
-            <select id="fs-title-platform-select">
-              <option value="rj">RJ 코드</option>
-            </select>
-            <input type="text" id="fs-title-input" placeholder="게임 제목 입력">
-            <button id="fs-search-title-btn">검색</button>
-          </div>
-        </div>
-        
-        <div class="search-option">
-          <h3>태그로 검색</h3>
-          <div class="game-search-form">
-            <select id="fs-tag-platform-select">
-              <option value="rj">RJ 코드</option>
-            </select>
-            <input type="text" id="fs-tag-input" placeholder="태그 입력">
-            <button id="fs-search-tag-btn">검색</button>
-          </div>
-        </div>
-      </div>
-      
-      <div id="fs-search-results" class="search-results">
-        <div class="no-results-message">검색 결과가 여기에 표시됩니다</div>
-      </div>
-      
-      <div id="fs-game-data-container" class="game-data-container">
-        <form id="fs-game-form" class="game-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="fs-game-title">제목</label>
-              <input type="text" id="fs-game-title" name="title">
-            </div>
-            <div class="form-group">
-              <label for="fs-game-circle">서클</label>
-              <input type="text" id="fs-game-circle" name="circle">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="fs-game-release-date">출시일</label>
-              <input type="date" id="fs-game-release-date" name="release_date">
-            </div>
-            <div class="form-group">
-              <label for="fs-game-price">가격</label>
-              <input type="number" id="fs-game-price" name="price">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="fs-game-description">설명</label>
-            <textarea id="fs-game-description" name="description"></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label>태그 (일본어)</label>
-            <div id="fs-tags-jp-container" class="tag-chips"></div>
-          </div>
-          
-          <div class="form-group">
-            <label>태그 (한국어)</label>
-            <div id="fs-tags-kr-container" class="tag-chips"></div>
-          </div>
-          
-          <div class="form-group">
-            <label for="fs-game-primary-tag">주요 태그</label>
-            <input type="text" id="fs-game-primary-tag" name="primary_tag" readonly>
-          </div>
-          
-          <button type="submit" id="fs-save-game-btn">저장</button>
-        </form>
       </div>
     </div>
     
