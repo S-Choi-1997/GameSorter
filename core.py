@@ -55,7 +55,7 @@ def clean_rj_code(title, rj_code):
     logging.debug(f"Clean RJ code: {title} -> {cleaned}")
     return cleaned
 
-# FetchWorker 클래스 (변경 없음)
+# FetchWorker 클래스
 class FetchWorker(QThread):
     progress = Signal(int)
     log = Signal(str)
@@ -183,11 +183,11 @@ class FetchWorker(QThread):
             f"Retrying server request (attempt {retry_state.attempt_number}/5) after {retry_state.next_action.sleep} seconds"
         )
     )
-    def make_request(self, url, method='post', json_data=None):
+    def make_request(self, url, method='post', json_data=None, timeout=30):
         logging.debug(f"Sending {method.upper()} request to {url}")
         try:
             if method == 'post':
-                response = requests.post(url, json=json_data, timeout=30)
+                response = requests.post(url, json=json_data, timeout=timeout)
             else:
                 response = requests.get(url, timeout=10)
             response.raise_for_status()
@@ -196,6 +196,10 @@ class FetchWorker(QThread):
             logging.error(f"Request failed: {e}")
             raise
     
+    def strip_local_fields(self, item):
+        """로컬 전용 필드(original_로 시작하는 필드)를 제거"""
+        return {k: v for k, v in item.items() if not k.startswith("original_")}
+
     def retry_fetch(self, request_items):
         try:
             logging.debug(f"🔄 retry_fetch 시작: {len(request_items)}개 항목")
@@ -228,7 +232,7 @@ class FetchWorker(QThread):
                     f"{self.server_url}/games",
                     method='post',
                     json_data={"items": retry_items},
-                    timeout=15  # 타임아웃 추가
+                    timeout=15
                 )
                 logging.debug("📥 서버 응답 수신 완료")
                 reloaded_results = response_retry.get("results", [])
@@ -246,7 +250,6 @@ class FetchWorker(QThread):
 
     def run(self):
         try:
-            # ✅ 로그 추가 1: run() 진입 직후 self.items 상태
             logging.debug(f"[run] 초기 self.items 개수: {len(self.items)}")
             for idx, item in enumerate(self.items):
                 logging.debug(f"[run] 초기 item[{idx}]: {item}")
@@ -265,7 +268,6 @@ class FetchWorker(QThread):
                 logging.debug(f"[run] 필터링 후 self.items 개수: {len(self.items)}")
                 for idx, item in enumerate(self.items):
                     logging.debug(f"[run] 남은 item[{idx}]: {item}")
-
 
             total_items = len(self.items)
             if total_items == 0:
@@ -313,10 +315,11 @@ class FetchWorker(QThread):
                     try:
                         data = self.get_dlsite_data(rj)
                         # 🔁 서버에 다시 저장 요청
+                        safe_data = self.strip_local_fields(data)
                         self.make_request(
                             f"{self.server_url}/games",
                             method='post',
-                            json_data={"items": [data]}
+                            json_data={"items": [safe_data]}
                         )
                         logging.info(f"[core] 크롤링 및 저장 완료: {rj}")
                     except Exception as e:
@@ -355,18 +358,20 @@ class FetchWorker(QThread):
                             # DLsite 데이터 가져오기 성공 또는 fallback 데이터인 경우
                             if data.get('error'):  # fallback 데이터인 경우 파일명 정보 추가
                                 # 파일명에서 정보 추출하여 보강
-                                data['title'] = item  # 원본 파일명 저장
-                                data['title_kr'] = clean_rj_code(item, rj_code)  # 파일명에서 RJ 코드 제거
+                                data['title'] = item
+                                data['title_kr'] = clean_rj_code(item, rj_code)
+                                data['original_title'] = clean_rj_code(item, rj_code)
                                 logging.debug(f"Enhanced fallback data with filename: {item}")
                             
                             final_results.append(data)
                             logging.debug(f"Process complete for {rj_code}: {data.get('title_jp') or data.get('title_kr')}")
                             
                             # 서버에 저장
+                            safe_data = self.strip_local_fields(data)
                             self.make_request(
                                 f"{self.server_url}/games",
                                 method='post',
-                                json_data={"items": [data]}
+                                json_data={"items": [safe_data]}
                             )
                         except Exception as e:
                             logging.error(f"Local crawl failed for {rj_code}: {e}")
@@ -376,9 +381,10 @@ class FetchWorker(QThread):
                                 'error': f'Game not found for {rj_code}',
                                 'rj_code': rj_code,
                                 'platform': 'rj',
-                                'title': item,  # 원본 파일명 저장
-                                'title_kr': clean_rj_code(item, rj_code),  # 파일명에서 RJ 코드 제거
+                                'title': item,
+                                'title_kr': clean_rj_code(item, rj_code),
                                 'title_jp': '',
+                                'original_title': clean_rj_code(item, rj_code),
                                 'tags': ["기타"],
                                 'tags_jp': [],
                                 'thumbnail_url': '',
@@ -389,16 +395,17 @@ class FetchWorker(QThread):
                                 'link': '',
                                 'status': '404',
                                 'permanent_error': True,
-                                'skip_translation': True,  # 번역 스킵 플래그
+                                'skip_translation': True,
                                 'timestamp': time.time()
                             }
 
                             # 서버에 저장
                             try:
+                                safe_data = self.strip_local_fields(fallback)
                                 self.make_request(
                                     f"{self.server_url}/games",
                                     method='post',
-                                    json_data={"items": [fallback]}
+                                    json_data={"items": [safe_data]}
                                 )
                                 logging.info(f"Fallback data saved for {rj_code}")
                             except Exception as save_error:
@@ -409,6 +416,7 @@ class FetchWorker(QThread):
                         final_results.append({
                             'title': item,
                             'title_kr': item,
+                            'original_title': item,
                             'primary_tag': '기타',
                             'tags': ['기타'],
                             'thumbnail_url': '',
@@ -422,13 +430,11 @@ class FetchWorker(QThread):
             logging.info(f"Returning {len(final_results)} results")
             self.result.emit(final_results)
             
-            # 5초 대기 전 로그
             logging.debug("🕒 5초 대기 시작...")
             self.log.emit("🕒 5초 대기 중...")
             time.sleep(5)
             logging.debug("⏰ 5초 대기 완료, 재요청 시작...")
             
-            # 재요청 시작
             self.retry_fetch(request_items)
             logging.debug("✅ retry_fetch 완료")
             self.log.emit(f"재로딩 완료")
@@ -486,7 +492,7 @@ class MainWindowLogic(MainWindowUI):
             logging.debug(f"📦 result={result}")
             logging.debug(f"📦 game_data={game_data}")
 
-            # 제목 우선순위: 한국어 > 일본어 > original_title > original
+            # 제목 우선순위: original_title(일본어 아님) > title_kr > title_jp > original > rj_code
             title_kr = game_data.get('title_kr', '').strip()
             title_jp = game_data.get('title_jp', '').strip()
             original_title = result.get('original_title', '').strip()
@@ -494,7 +500,11 @@ class MainWindowLogic(MainWindowUI):
 
             logging.debug(f"🔍 원본 제목 후보들: title_kr='{title_kr}', title_jp='{title_jp}', original_title='{original_title}', original='{original}'")
 
-            title = title_kr or title_jp or original_title or original
+            # original_title이 존재하고 일본어가 아니면 우선 사용
+            if original_title and not needs_translation(original_title):
+                title = original_title
+            else:
+                title = title_kr or title_jp or original or rj_code
 
             # RJ 코드 제거
             title = clean_rj_code(title, rj_code)
@@ -572,18 +582,15 @@ class MainWindowLogic(MainWindowUI):
         self.progress_bar.setValue(0)
         self.fetch_data_btn.setEnabled(False)
 
-        # ✅ 디버깅: self.results 상태 확인
         logging.debug(f"🔍 self.results 총 {len(self.results)}개:")
         for idx, result in enumerate(self.results):
             logging.debug(f"  🔸 ROW {idx}: RJ={result.get('rj_code')}, title={result.get('original')}")
 
-        # ✅ 요청할 items 리스트 만들기
         items = []
         for idx, r in enumerate(self.results):
             rj_code = r.get('rj_code', '').strip()
             title = r.get('original', '').strip()
 
-            # title은 무조건 있어야 함
             if not title:
                 logging.warning(f"❌ [ROW {idx}] title 없음 → 제외")
                 continue
@@ -595,12 +602,10 @@ class MainWindowLogic(MainWindowUI):
             items.append(item)
             logging.debug(f"✅ [ROW {idx}] 요청 포함: {item}")
 
-        # ✅ 디버깅: 최종 items 확인
         logging.debug(f"🚀 서버로 보낼 items 개수: {len(items)}")
         for i, it in enumerate(items):
             logging.debug(f"  📨 ITEM[{i}]: {it}")
 
-        # ✅ FetchWorker 실행
         self.worker = FetchWorker(self.SERVER_URL, items, self.folder_path, use_firestore_cache=True)
         self.worker.progress.connect(self.progress_bar.setValue)
         self.worker.log.connect(self.log_label.setText)
@@ -608,7 +613,6 @@ class MainWindowLogic(MainWindowUI):
         self.worker.error.connect(self.on_fetch_error)
         self.worker.finished.connect(self.on_fetch_finished_cleanup)
         self.worker.start()
-
 
     def on_fetch_finished(self, game_data):
         try:
@@ -638,7 +642,6 @@ class MainWindowLogic(MainWindowUI):
                 if not match or 'error' in match:
                     rj_code = rj_code or '기타'
                     result['selected_tag'] = '기타'
-                    # ✅ [수정] update_suggested_name 호출로 추천 이름 생성
                     self.update_suggested_name(row, '기타')
 
                     combo = self.table.cellWidget(row, 3)
@@ -664,7 +667,6 @@ class MainWindowLogic(MainWindowUI):
                     tag = '기타'
 
                 result['selected_tag'] = tag
-                # ✅ [수정] update_suggested_name 호출로 추천 이름 생성
                 self.update_suggested_name(row, tag)
 
                 combo = self.table.cellWidget(row, 3)
@@ -697,13 +699,6 @@ class MainWindowLogic(MainWindowUI):
                 logging.warning(f"⚠️ 처리 실패한 항목 {error_count}개:")
                 for item in failed_items:
                     logging.warning(f"  ❌ {item}")
-
-                # QMessageBox.warning(
-                #     self,
-                #     "경고",
-                #     f"{error_count}개 항목을 처리하지 못했습니다.\n"
-                #     f"자세한 목록은 gamesort.log 를 확인하세요."
-                # )
 
             self.status_label.setText(f"파일: {len(self.results)}개")
             self.update_select_all_state()
@@ -738,7 +733,6 @@ class MainWindowLogic(MainWindowUI):
             self.table.setRowCount(0)
             self.results.clear()
 
-            # ✅ 하위 폴더까지 전체 탐색
             files = []
             for dirpath, _, filenames in os.walk(self.folder_path):
                 for f in filenames:
@@ -758,17 +752,15 @@ class MainWindowLogic(MainWindowUI):
             self.table.setUpdatesEnabled(False)
 
             for idx, (rel_path, full_path) in enumerate(files):
-                original = os.path.basename(rel_path)  # ✅ 파일명만 추출 (UI용)
+                original = os.path.basename(rel_path)
                 ext = os.path.splitext(original)[1]
 
-                # ✅ RJ 코드 추출
                 rj_match = re.search(r"[Rr][Jj][_\-\s]?(\d{6,8})", original, re.IGNORECASE)
                 rj_code = ''
                 if rj_match:
                     full_match = rj_match.group(0)
                     rj_code = re.sub(r'[_\-\s]', '', full_match).upper()
 
-                # ✅ 원래 제목 정리 (파일명에서 확장자 제거 → RJ 코드 제거)
                 original_title = os.path.splitext(original)[0]
                 if rj_code:
                     original_title = clean_rj_code(original_title, rj_code)
@@ -778,34 +770,31 @@ class MainWindowLogic(MainWindowUI):
                     if original_title.strip() == ext or not original_title.strip():
                         original_title = ''
 
-                # ✅ 확장자 포함 최종 표시용 제목
                 final_title = original_title or os.path.splitext(original)[0]
                 if not final_title.lower().endswith(ext.lower()):
                     final_title += ext
 
-                # ✅ 초기 추천 이름 구성
                 suggested = f"[{rj_code or '기타'}][기타] {final_title}"
 
                 logging.debug(f"File: {rel_path}, RJ: '{rj_code}', Title: '{original_title}'")
 
                 result = {
-                    'original': original,  # UI에 보여줄 파일명
-                    'original_title': original_title,  # 경로 없는 원래 제목
+                    'original': original,
+                    'original_title': original_title,
                     'rj_code': rj_code,
                     'suggested': suggested,
                     'selected_tag': "기타",
-                    'path': full_path,  # 실제 절대 경로
+                    'path': full_path,
                     'game_data': {},
-                    'relative_path': rel_path  # 참고용 상대 경로 (표시 안 함)
+                    'relative_path': rel_path
                 }
                 self.results.append(result)
 
-                # UI 구성
                 chk = QCheckBox()
                 chk.toggled.connect(lambda checked, row=idx: self.on_checkbox_changed(row, checked))
                 self.table.insertRow(idx)
                 self.table.setCellWidget(idx, 0, chk)
-                self.table.setItem(idx, 1, QTableWidgetItem(original))  # ✅ 파일명만 표시
+                self.table.setItem(idx, 1, QTableWidgetItem(original))
                 self.table.setItem(idx, 2, QTableWidgetItem(suggested))
                 combo = QComboBox()
                 combo.addItem("기타")
@@ -823,12 +812,10 @@ class MainWindowLogic(MainWindowUI):
             for idx, result in enumerate(self.results):
                 logging.debug(f"[📋 RESULT CHECK] row={idx}, RJ={result.get('rj_code')}, title={result.get('original')}")
 
-
         except Exception as e:
             logging.error(f"폴더 선택 오류: {e}", exc_info=True)
             self.log_label.setText(f"폴더 스캔 중 오류 발생: {str(e)}")
             QMessageBox.critical(self, "오류", f"폴더 스캔 중 오류: {str(e)}")
-
 
     def on_checkbox_changed(self, row, checked):
         logging.debug(f"Checkbox changed: row={row}, checked={checked}")
@@ -861,7 +848,6 @@ class MainWindowLogic(MainWindowUI):
             none_checked = True
             for row in range(self.table.rowCount()):
                 chk = self.table.cellWidget(row, 0)
-                # logging.debug(f"   🔍 row {row} 체크 상태: {chk.isChecked()}")
                 if chk.isChecked():
                     none_checked = False
                 else:
@@ -887,7 +873,6 @@ class MainWindowLogic(MainWindowUI):
         try:
             logging.debug(f"🟩 toggle_all_selection 호출됨: state={state}")
 
-            # ✅ 현재 상태를 보고 전체 선택 여부 판단
             any_unchecked = any(
                 not self.table.cellWidget(row, 0).isChecked()
                 for row in range(self.table.rowCount())
@@ -900,14 +885,14 @@ class MainWindowLogic(MainWindowUI):
 
             for row in range(self.table.rowCount()):
                 chk = self.table.cellWidget(row, 0)
-                chk.blockSignals(True)  # ✅ 시그널 막고
+                chk.blockSignals(True)
                 logging.debug(f"   🔄 row {row} 이전 체크 상태: {chk.isChecked()}")
                 chk.setChecked(checked)
-                chk.blockSignals(False)  # ✅ 다시 풀기
+                chk.blockSignals(False)
 
             self.table.setUpdatesEnabled(True)
 
-            self.update_select_all_state()  # ✅ 마지막에 한 번만 호출
+            self.update_select_all_state()
 
             self.log_label.setText(f"전체 선택 {'완료' if checked else '해제'}")
             logging.debug(f"✅ 전체 {'선택' if checked else '해제'} 완료")
@@ -942,7 +927,6 @@ class MainWindowLogic(MainWindowUI):
                 original_name = os.path.basename(original_path)
                 new_name = self.results[row]['suggested']
 
-                # ✅ 확장자 누락 시 자동 보정
                 original_ext = os.path.splitext(original_name)[1]
                 if not new_name.lower().endswith(original_ext.lower()):
                     new_name += original_ext
@@ -950,8 +934,7 @@ class MainWindowLogic(MainWindowUI):
                 if new_name == original_name or '[오류]' in new_name:
                     continue
 
-                # ✅ 상대 폴더 경로 유지
-                rel_dir = os.path.dirname(self.results[row]['relative_path'])  # ex: '테스트2'
+                rel_dir = os.path.dirname(self.results[row]['relative_path'])
                 target_dir = os.path.join(self.folder_path, rel_dir) if rel_dir else self.folder_path
                 os.makedirs(target_dir, exist_ok=True)
 
