@@ -33,7 +33,7 @@ class GameDataPanel(QWidget):
         self.title_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.layout.addWidget(self.title_label)
         
-        #qss
+        # qss
         self.thumbnail_label.setObjectName("thumbnail_label")
         self.title_label.setObjectName("title_label")
 
@@ -125,7 +125,7 @@ class GameDataPanel(QWidget):
             self.label_title_jp.setText(data.get('title_jp', 'N/A'))
             self.label_rj_code.setText(data.get('rj_code', 'N/A'))
             
-            # ✅ 태그를 버튼 같은 동그란 뱃지로 표시, 연분홍색 고정
+            # 태그를 버튼 같은 동그란 뱃지로 표시, 연분홍색 고정
             tags = data.get('tags', [])
             if tags:
                 tag_color = "#ffdddd"  # 연분홍색 배경
@@ -136,14 +136,14 @@ class GameDataPanel(QWidget):
                     formatted_tags.append(
                         f'<span style="background-color: {tag_color}; color: {text_color}; '
                         f'padding: 4px 8px; border-radius: 12px; margin: 4px; display: inline-block; '
-                        f'border: 1px solid {text_color}; font-size: 13px; font-weight: bold; '  # 텍스트 굵게
-                        f'box-shadow: 1px 1px 2px #cccccc;">'  # 그림자 추가
+                        f'border: 1px solid {text_color}; font-size: 13px; font-weight: bold; '
+                        f'box-shadow: 1px 1px 2px #cccccc;">'
                         f'{tag}</span>'
                     )
                 
                 self.label_tags.setTextFormat(Qt.RichText)
-                self.label_tags.setWordWrap(True)  # 🔥 이거!
-                self.label_tags.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)  # 🔥 이것도!
+                self.label_tags.setWordWrap(True)
+                self.label_tags.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
                 self.label_tags.setText(' '.join(formatted_tags))
             else:
                 self.label_tags.setText("N/A")
@@ -218,20 +218,22 @@ class MainWindowUI(QMainWindow):
         button_layout.addWidget(self.remove_tag_btn)
         left_layout.addLayout(button_layout)
         
-        button_height = 40  # 원하는 높이로 조절
+        button_height = 40
         self.select_folder_btn.setFixedHeight(button_height)
         self.fetch_data_btn.setFixedHeight(button_height)
         self.rename_btn.setFixedHeight(button_height)
         self.remove_tag_btn.setFixedHeight(button_height)
 
-        self.table = QTableWidget(0, 4)  # 열 수를 3에서 4로 변경
-        self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름", "태그 선택"])
+        self.table = QTableWidget(0, 5)  # 열 수를 4에서 5로 변경
+        self.table.setHorizontalHeaderLabels(["선택", "원래 이름", "제안된 이름", "태그 선택", "제목 소스"])
         self.table.setSelectionMode(QTableWidget.NoSelection)
         self.table.setColumnWidth(0, 50)
-        self.table.setColumnWidth(3, 100)  # 태그 선택 열 너비 설정
+        self.table.setColumnWidth(3, 100)
+        self.table.setColumnWidth(4, 120)  # 제목 소스 열 너비
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)  # 태그 선택 열은 고정 너비
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Fixed)
         left_layout.addWidget(self.table)
 
         status_layout = QHBoxLayout()

@@ -12,6 +12,8 @@ import logging
 import tenacity
 from urllib.parse import urljoin
 from ui import MainWindowUI
+from PySide6.QtCore import QFile
+import resources_rc
 
 # Logging 설정
 LOG_TO_FILE = __debug__
@@ -153,12 +155,10 @@ class FetchWorker(QThread):
         except Exception as e:
             logging.error(f"Error fetching DLsite data for {rj_code}: {e}", exc_info=True)
 
-            # ✅ 실패했을 경우 fallback 데이터 반환 (🔥 timestamp 포함 필수!)
             fallback = {
                 'error': f'Game not found for {rj_code}',
                 'rj_code': rj_code,
                 'platform': 'rj',
-                'title_kr': '',
                 'title_jp': '',
                 'tags': [],
                 'tags_jp': [],
@@ -170,8 +170,8 @@ class FetchWorker(QThread):
                 'link': '',
                 'status': '404',
                 'permanent_error': True,
-                'skip_translation': True,  # 번역 스킵 플래그 추가
-                'timestamp': time.time()  # ✅ 이거 없으면 서버에서 저장 안 됨!
+                'skip_translation': True,
+                'timestamp': time.time()
             }
             return fallback
 
@@ -197,15 +197,59 @@ class FetchWorker(QThread):
             raise
     
     def strip_local_fields(self, item):
-        """로컬 전용 필드(original_로 시작하는 필드)를 제거"""
         return {k: v for k, v in item.items() if not k.startswith("original_")}
+
+    def handle_missing_items(self, missing):
+        """missing 항목 처리를 위한 함수"""
+        for rj in missing:
+            self.log.emit(f"🔍 누락된 항목 크롤링 시도: {rj}")
+            try:
+                data = self.get_dlsite_data(rj)
+                
+                # 크롤링 성공한 경우에만 서버에 저장
+                if 'error' not in data and data.get('title_jp'):
+                    safe_data = self.strip_local_fields(data)
+                    self.make_request(
+                        f"{self.server_url}/games",
+                        method='post',
+                        json_data={"items": [safe_data]}
+                    )
+                    logging.info(f"[core] 크롤링 및 저장 완료: {rj}")
+                else:
+                    logging.warning(f"[core] 크롤링 실패 또는 데이터 불완전: {rj}, 서버에 저장하지 않음")
+            except Exception as e:
+                logging.error(f"[core] 크롤링 실패: {rj} → {e}")
+
+    def create_fallback_data(self, rj_code, item):
+        """fallback 데이터 생성을 위한 함수"""
+        fallback = {
+            'error': f'Game not found for {rj_code}',
+            'rj_code': rj_code,
+            'platform': 'rj',
+            'title': item,
+            'title_kr': '',
+            'title_jp': '',
+            'original_filename': clean_rj_code(item, rj_code),
+            'tags': ["기타"],
+            'tags_jp': [],
+            'thumbnail_url': '',
+            'primary_tag': '기타',
+            'rating': 0.0,
+            'release_date': 'N/A',
+            'maker': '',
+            'link': '',
+            'status': '404',
+            'permanent_error': True,
+            'skip_translation': True,
+            'timestamp': time.time()
+        }
+        return fallback
 
     def retry_fetch(self, request_items):
         try:
             logging.debug(f"🔄 retry_fetch 시작: {len(request_items)}개 항목")
             self.log.emit("🔄 재요청 준비 중...")
             
-            # 404/permanent_error 아닌 RJ 코드만 재요청
             retry_items = []
             for item in request_items:
                 if (item.get("platform") == "rj" and 
@@ -307,23 +351,9 @@ class FetchWorker(QThread):
                 response_data = response.get('results', [])
                 logging.info(f"Initial server response: {len(response_data)} items")
 
-                # 🔥🔥 여기!! missing 항목 강제 크롤링 🔥🔥
                 missing = response.get("missing", [])
                 logging.warning(f"[core] 서버 응답 missing 개수: {len(missing)}")
-                for rj in missing:
-                    self.log.emit(f"🔍 누락된 항목 크롤링 시도: {rj}")
-                    try:
-                        data = self.get_dlsite_data(rj)
-                        # 🔁 서버에 다시 저장 요청
-                        safe_data = self.strip_local_fields(data)
-                        self.make_request(
-                            f"{self.server_url}/games",
-                            method='post',
-                            json_data={"items": [safe_data]}
-                        )
-                        logging.info(f"[core] 크롤링 및 저장 완료: {rj}")
-                    except Exception as e:
-                        logging.error(f"[core] 크롤링 실패: {rj} → {e}")
+                self.handle_missing_items(missing)  # 수정: handle_missing_items 호출
 
             except Exception as e:
                 logging.error(f"Server request failed: {e}", exc_info=True)
@@ -355,18 +385,13 @@ class FetchWorker(QThread):
                         try:
                             data = self.get_dlsite_data(rj_code)
                             
-                            # DLsite 데이터 가져오기 성공 또는 fallback 데이터인 경우
-                            if data.get('error'):  # fallback 데이터인 경우 파일명 정보 추가
-                                # 파일명에서 정보 추출하여 보강
-                                data['title'] = item
-                                data['title_kr'] = clean_rj_code(item, rj_code)
-                                data['original_title'] = clean_rj_code(item, rj_code)
+                            if data.get('error'):
+                                data = self.create_fallback_data(rj_code, item)  # 수정: create_fallback_data 호출
                                 logging.debug(f"Enhanced fallback data with filename: {item}")
                             
                             final_results.append(data)
                             logging.debug(f"Process complete for {rj_code}: {data.get('title_jp') or data.get('title_kr')}")
                             
-                            # 서버에 저장
                             safe_data = self.strip_local_fields(data)
                             self.make_request(
                                 f"{self.server_url}/games",
@@ -376,32 +401,9 @@ class FetchWorker(QThread):
                         except Exception as e:
                             logging.error(f"Local crawl failed for {rj_code}: {e}")
                             
-                            # fallback 데이터 생성
-                            fallback = {
-                                'error': f'Game not found for {rj_code}',
-                                'rj_code': rj_code,
-                                'platform': 'rj',
-                                'title': item,
-                                'title_kr': clean_rj_code(item, rj_code),
-                                'title_jp': '',
-                                'original_title': clean_rj_code(item, rj_code),
-                                'tags': ["기타"],
-                                'tags_jp': [],
-                                'thumbnail_url': '',
-                                'primary_tag': '기타',
-                                'rating': 0.0,
-                                'release_date': 'N/A',
-                                'maker': '',
-                                'link': '',
-                                'status': '404',
-                                'permanent_error': True,
-                                'skip_translation': True,
-                                'timestamp': time.time()
-                            }
-
-                            # 서버에 저장
+                            data = self.create_fallback_data(rj_code, item)  # 수정: create_fallback_data 호출
                             try:
-                                safe_data = self.strip_local_fields(fallback)
+                                safe_data = self.strip_local_fields(data)
                                 self.make_request(
                                     f"{self.server_url}/games",
                                     method='post',
@@ -411,7 +413,7 @@ class FetchWorker(QThread):
                             except Exception as save_error:
                                 logging.error(f"Failed to save fallback data: {save_error}")
 
-                            final_results.append(fallback)
+                            final_results.append(data)
                     else:
                         final_results.append({
                             'title': item,
@@ -466,20 +468,17 @@ class MainWindowLogic(MainWindowUI):
         self.select_all_box.stateChanged.connect(self.toggle_all_selection)
         self.table.cellClicked.connect(self.on_table_cell_clicked)
         
-        try:
-            with open("dark_style.qss", "r", encoding="utf-8") as f:
-                self.setStyleSheet(f.read())
-                logging.debug("스타일시트 로드 성공")
-        except Exception as e:
-            logging.error(f"스타일시트 로드 실패: {e}")
+        file = QFile(":/dark_style.qss")
+        if file.open(QFile.ReadOnly | QFile.Text):
+            self.setStyleSheet(file.readAll().data().decode())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.log_label.setMaximumWidth(self.table.width())
 
-    def update_suggested_name(self, row, tag):
+    def update_suggested_name(self, row, tag=None, title_source=None):
         try:
-            logging.warning(f"🔥 [START] update_suggested_name() 진입: row={row}, tag={tag}")
+            logging.warning(f"🔥 [START] update_suggested_name() 진입: row={row}, tag={tag}, title_source={title_source}")
 
             if row >= len(self.results):
                 logging.error(f"❌ Invalid row index: {row} (총 rows: {len(self.results)})")
@@ -492,19 +491,43 @@ class MainWindowLogic(MainWindowUI):
             logging.debug(f"📦 result={result}")
             logging.debug(f"📦 game_data={game_data}")
 
-            # 제목 우선순위: original_title(일본어 아님) > title_kr > title_jp > original > rj_code
+            # 제목 소스 결정
             title_kr = game_data.get('title_kr', '').strip()
             title_jp = game_data.get('title_jp', '').strip()
             original_title = result.get('original_title', '').strip()
             original = result.get('original', '').strip()
+            original_filename = game_data.get('original_filename', '').strip()  # 추가: original_filename 지원
 
-            logging.debug(f"🔍 원본 제목 후보들: title_kr='{title_kr}', title_jp='{title_jp}', original_title='{original_title}', original='{original}'")
+            logging.debug(f"🔍 제목 후보들: title_kr='{title_kr}', title_jp='{title_jp}', original_title='{original_title}', original='{original}', original_filename='{original_filename}'")
 
-            # original_title이 존재하고 일본어가 아니면 우선 사용
-            if original_title and not needs_translation(original_title):
-                title = original_title
+            # 드롭다운에서 선택된 제목 소스 사용, 없으면 기존 우선순위
+            if title_source:
+                selected_source = title_source
             else:
-                title = title_kr or title_jp or original or rj_code
+                # 기존 우선순위: original_title(일본어 아님) > title_kr > title_jp > original_filename > original > rj_code
+                if original_title and not needs_translation(original_title):
+                    selected_source = "기존 이름"
+                elif title_kr:
+                    selected_source = "한국어 이름"
+                elif title_jp:
+                    selected_source = "일본어 이름"
+                else:
+                    selected_source = "기존 이름"
+
+            # results에 선택된 소스 저장
+            result['selected_title_source'] = selected_source
+
+            # 제목 선택
+            if selected_source == "기존 이름":
+                title = original_title or original_filename or original or rj_code
+            elif selected_source == "한국어 이름":
+                title = title_kr or title_jp or original_title or original_filename or original or rj_code
+            else:  # 일본어 이름
+                title = title_jp or title_kr or original_title or original_filename or original or rj_code
+
+            # 태그가 제공되지 않으면 기존 태그 사용
+            if tag is None:
+                tag = result.get('selected_tag', '기타')
 
             # RJ 코드 제거
             title = clean_rj_code(title, rj_code)
@@ -531,13 +554,21 @@ class MainWindowLogic(MainWindowUI):
 
             result['selected_tag'] = tag if tag else "기타"
             self.table.setItem(row, 2, QTableWidgetItem(result['suggested']))
+
+            # 제목 소스 콤보박스 업데이트
+            combo = self.table.cellWidget(row, 4)
+            if combo:
+                combo.blockSignals(True)
+                combo.setCurrentText(selected_source)
+                combo.blockSignals(False)
+
             self.table.viewport().update()
 
             logging.warning(f"✅ [END] update_suggested_name 완료: {result['suggested']}")
 
         except Exception as e:
-            logging.error(f"💥 update_suggested_name 실패: row={row}, tag={tag}, error={e}", exc_info=True)
-            self.log_label.setText(f"태그 업데이트 오류: {str(e)}")
+            logging.error(f"💥 update_suggested_name 실패: row={row}, tag={tag}, title_source={title_source}, error={e}", exc_info=True)
+            self.log_label.setText(f"제목 업데이트 오류: {str(e)}")
 
     def remove_tags_from_selected(self):
         try:
@@ -549,13 +580,22 @@ class MainWindowLogic(MainWindowUI):
 
                 result = self.results[row]
                 game_data = result.get('game_data', {})
-                title = (
-                    game_data.get('title_kr')
-                    or game_data.get('title_jp')
-                    or result.get('original_title')
-                    or result['original']
-                )
+                selected_source = result.get('selected_title_source', '기존 이름')
+                
+                title_kr = game_data.get('title_kr', '').strip()
+                title_jp = game_data.get('title_jp', '').strip()
+                original_title = result.get('original_title', '').strip()
+                original = result.get('original', '').strip()
+                original_filename = game_data.get('original_filename', '').strip()
                 rj_code = result.get('rj_code') or "기타"
+
+                if selected_source == "기존 이름":
+                    title = original_title or original_filename or original or rj_code
+                elif selected_source == "한국어 이름":
+                    title = title_kr or title_jp or original_title or original_filename or original or rj_code
+                else:
+                    title = title_jp or title_kr or original_title or original_filename or original or rj_code
+
                 title = clean_rj_code(title, rj_code)
                 title = re.sub(r'[?*:"<>|]', '', title).replace('/', '-')
                 original_ext = os.path.splitext(result['original'])[1]
@@ -642,18 +682,33 @@ class MainWindowLogic(MainWindowUI):
                 if not match or 'error' in match:
                     rj_code = rj_code or '기타'
                     result['selected_tag'] = '기타'
+                    result['selected_title_source'] = '기존 이름'
                     self.update_suggested_name(row, '기타')
 
-                    combo = self.table.cellWidget(row, 3)
-                    if not combo:
-                        combo = QComboBox()
-                        self.table.setCellWidget(row, 3, combo)
-                    combo.blockSignals(True)
-                    combo.clear()
-                    combo.addItem('기타')
-                    combo.setCurrentText('기타')
-                    combo.blockSignals(False)
-                    combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
+                    # 태그 선택 콤보박스
+                    tag_combo = self.table.cellWidget(row, 3)
+                    if not tag_combo:
+                        tag_combo = QComboBox()
+                        self.table.setCellWidget(row, 3, tag_combo)
+                    tag_combo.blockSignals(True)
+                    tag_combo.clear()
+                    tag_combo.addItem('기타')
+                    tag_combo.setCurrentText('기타')
+                    tag_combo.blockSignals(False)
+                    tag_combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, tag=text))
+
+                    # 제목 소스 콤보박스
+                    source_combo = self.table.cellWidget(row, 4)
+                    if not source_combo:
+                        source_combo = QComboBox()
+                        self.table.setCellWidget(row, 4, source_combo)
+                    source_combo.blockSignals(True)
+                    source_combo.clear()
+                    source_combo.addItems(["기존 이름", "한국어 이름", "일본어 이름"])
+                    source_combo.setCurrentText('기존 이름')
+                    source_combo.blockSignals(False)
+                    source_combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, title_source=text))
+                    
                     logging.debug(f"No match for row {row}: rj_code={rj_code}, original={result['original']}")
                     error_count += 1
                     continue
@@ -667,19 +722,48 @@ class MainWindowLogic(MainWindowUI):
                     tag = '기타'
 
                 result['selected_tag'] = tag
+
+                # 기본 제목 소스 결정
+                title_kr = match.get('title_kr', '').strip()
+                title_jp = match.get('title_jp', '').strip()
+                original_title = result.get('original_title', '').strip()
+                original_filename = match.get('original_filename', '').strip()
+                if original_title and not needs_translation(original_title):
+                    result['selected_title_source'] = '기존 이름'
+                elif title_kr:
+                    result['selected_title_source'] = '한국어 이름'
+                elif title_jp:
+                    result['selected_title_source'] = '일본어 이름'
+                else:
+                    result['selected_title_source'] = '기존 이름'
+
                 self.update_suggested_name(row, tag)
 
-                combo = self.table.cellWidget(row, 3)
-                if not combo:
-                    combo = QComboBox()
-                    self.table.setCellWidget(row, 3, combo)
-                combo.blockSignals(True)
-                combo.clear()
-                combo.addItems(tags)
-                combo.setCurrentText(tag)
-                combo.blockSignals(False)
-                combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, text))
-                logging.debug(f"Matched row {row}: rj_code={rj_code}, tag={tag}")
+                # 태그 선택 콤보박스
+                tag_combo = self.table.cellWidget(row, 3)
+                if not tag_combo:
+                    tag_combo = QComboBox()
+                    self.table.setCellWidget(row, 3, tag_combo)
+                tag_combo.blockSignals(True)
+                tag_combo.clear()
+                tag_combo.addItems(tags)
+                tag_combo.setCurrentText(tag)
+                tag_combo.blockSignals(False)
+                tag_combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, tag=text))
+
+                # 제목 소스 콤보박스
+                source_combo = self.table.cellWidget(row, 4)
+                if not source_combo:
+                    source_combo = QComboBox()
+                    self.table.setCellWidget(row, 4, source_combo)
+                source_combo.blockSignals(True)
+                source_combo.clear()
+                source_combo.addItems(["기존 이름", "한국어 이름", "일본어 이름"])
+                source_combo.setCurrentText(result['selected_title_source'])
+                source_combo.blockSignals(False)
+                source_combo.currentTextChanged.connect(lambda text, r=row: self.update_suggested_name(r, title_source=text))
+
+                logging.debug(f"Matched row {row}: rj_code={rj_code}, tag={tag}, title_source={result['selected_title_source']}")
 
             self.table.setUpdatesEnabled(True)
             self.table.viewport().update()
@@ -784,6 +868,7 @@ class MainWindowLogic(MainWindowUI):
                     'rj_code': rj_code,
                     'suggested': suggested,
                     'selected_tag': "기타",
+                    'selected_title_source': "기존 이름",
                     'path': full_path,
                     'game_data': {},
                     'relative_path': rel_path
@@ -796,11 +881,20 @@ class MainWindowLogic(MainWindowUI):
                 self.table.setCellWidget(idx, 0, chk)
                 self.table.setItem(idx, 1, QTableWidgetItem(original))
                 self.table.setItem(idx, 2, QTableWidgetItem(suggested))
-                combo = QComboBox()
-                combo.addItem("기타")
-                combo.setCurrentText("기타")
-                combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, text))
-                self.table.setCellWidget(idx, 3, combo)
+
+                # 태그 선택 콤보박스
+                tag_combo = QComboBox()
+                tag_combo.addItem("기타")
+                tag_combo.setCurrentText("기타")
+                tag_combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, tag=text))
+                self.table.setCellWidget(idx, 3, tag_combo)
+
+                # 제목 소스 콤보박스
+                source_combo = QComboBox()
+                source_combo.addItems(["기존 이름", "한국어 이름", "일본어 이름"])
+                source_combo.setCurrentText("기존 이름")
+                source_combo.currentTextChanged.connect(lambda text, r=idx: self.update_suggested_name(r, title_source=text))
+                self.table.setCellWidget(idx, 4, source_combo)
 
             self.table.setUpdatesEnabled(True)
             self.table.viewport().update()
@@ -823,7 +917,7 @@ class MainWindowLogic(MainWindowUI):
 
     def on_table_cell_clicked(self, row, column):
         try:
-            if column == 3:
+            if column in (3, 4):  # 태그 선택 또는 제목 소스 열 클릭 시 무시
                 return
             data = self.results[row]['game_data']
             if not data or "error" in data:

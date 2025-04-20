@@ -335,6 +335,49 @@ def process_steam_item(identifier):
         # 'timestamp': time.time()
     }
 
+# 아이템 안전 처리 함수
+def process_item_with_safety(item):
+    """안전하게 아이템을 처리하는 함수"""
+    platform = item.get("platform", "rj")
+    rj_code = item.get("rj_code")
+    
+    # 캐시 저장 요청일 경우 (크롤링 성공 or 실패 후)
+    if isinstance(item, dict) and item.get("timestamp"):
+        title = item.get("title_kr") or item.get("title") or rj_code
+        
+        # 수정: 저장 전 title_kr 검증
+        if item.get("title_kr") and not item.get("title_jp") and not item.get("skip_translation"):
+            # title_kr만 있고 title_jp가 없는 경우, 파일명이 잘못 저장된 것으로 의심
+            original_name = item.get("original") or item.get("title") or ""
+            if original_name and item.get("title_kr") == clean_rj_code(original_name, rj_code):
+                logger.warning(f"[의심 항목] {platform}:{rj_code}: title_kr이 파일명과 동일")
+                # title_kr을 비우고 original_filename 필드에 저장
+                item["original_filename"] = original_name
+                item["title_kr"] = "⚠️ " + item["title_kr"]  # 경고 표시 추가
+                
+        # skip_translation 플래그 또는 404 상태이면 번역 없이 바로 처리
+        if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
+            logger.info(f"[직접 저장] {platform}:{rj_code}")
+            processed = process_and_save_rj_item(item)  # 수정된 함수 사용
+            return processed
+        # 기존 번역/저장 조건
+        elif platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
+            logger.info(f"[번역 및 저장] {platform}:{rj_code}")
+            processed = process_and_save_rj_item(item)  # 수정된 함수 사용
+            return processed
+        else:
+            # 수정: original_filename 필드 추가
+            original_name = item.get("original") or item.get("title") or ""
+            if original_name:
+                item["original_filename"] = original_name
+                
+            cache_data(platform, rj_code, item)
+            logger.info(f"[저장 완료] {platform}/items/{rj_code}, title_kr={title}")
+            return item
+    
+    # 캐시 확인 요청일 경우 기존 로직 유지
+    return None
+
 # 게임 데이터 처리 엔드포인트
 @app.route('/games', methods=['POST'])
 def process_games():
@@ -370,48 +413,32 @@ def process_games():
             # 이제 item은 확실히 딕셔너리 타입
             logger.info(f"[항목 처리] {json.dumps(item, ensure_ascii=False)}")
 
-            # 캐시 저장 요청일 경우 (크롤링 성공 or 실패 후)
-            if isinstance(item, dict) and item.get("timestamp"):
-                platform = item.get("platform", "rj")
-                rj_code = item.get("rj_code")
-                title = item.get("title_kr") or item.get("title") or rj_code
-
-                # skip_translation 플래그 또는 404 상태이면 번역 없이 바로 처리
-                if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
-                    logger.info(f"[직접 저장] {platform}:{rj_code}")
-                    processed = process_and_save_rj_item(item)  # 이미 번역 스킵 로직이 포함됨
-                    results.append(processed)
-                # 기존 번역/저장 조건
-                elif platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
-                    logger.info(f"[번역 및 저장] {platform}:{rj_code}")
-                    processed = process_and_save_rj_item(item)
-                    results.append(processed)
-                else:
-                    cache_data(platform, rj_code, item)
-                    logger.info(f"[저장 완료] {platform}/items/{rj_code}, title_kr={title}")
-                    results.append(item)
+            # 수정: process_item_with_safety 함수로 처리
+            processed = process_item_with_safety(item)
+            if processed:
+                results.append(processed)
+                continue
 
             # 캐시 확인 요청일 경우
+            rj_code = item.get("rj_code") if isinstance(item, dict) else None
+            platform = item.get("platform", "rj") if isinstance(item, dict) else "rj"
+
+            # RJ 없는 경우 steam 처리
+            if not rj_code:
+                title = item.get("title", "untitled") if isinstance(item, dict) else str(item)
+                steam_fallback = process_steam_item(title)
+                logger.info(f"[Steam 모드] 제목={steam_fallback.get('title')}")
+                results.append(steam_fallback)
+                continue
+
+            # 캐시 확인
+            cached = get_cached_data(platform, rj_code)
+            if cached and cached.get("timestamp"):
+                logger.info(f"[캐시 조회 성공] {platform}:{rj_code}")
+                results.append(cached)
             else:
-                rj_code = item.get("rj_code") if isinstance(item, dict) else None
-                platform = item.get("platform", "rj") if isinstance(item, dict) else "rj"
-
-                # RJ 없는 경우 steam 처리
-                if not rj_code:
-                    title = item.get("title", "untitled") if isinstance(item, dict) else str(item)
-                    steam_fallback = process_steam_item(title)
-                    logger.info(f"[Steam 모드] 제목={steam_fallback.get('title')}")
-                    results.append(steam_fallback)
-                    continue
-
-                # 캐시 확인
-                cached = get_cached_data(platform, rj_code)
-                if cached and cached.get("timestamp"):
-                    logger.info(f"[캐시 조회 성공] {platform}:{rj_code}")
-                    results.append(cached)
-                else:
-                    logger.info(f"[캐시 조회 실패] {platform}:{rj_code}")
-                    missing.append(rj_code)
+                logger.info(f"[캐시 조회 실패] {platform}:{rj_code}")
+                missing.append(rj_code)
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
         logger.info(f"응답 반환: task_id={task_id}, 결과={len(results)}, 누락={len(missing)}")
@@ -521,10 +548,24 @@ def process_and_save_rj_item(item):
     # 번역 스킵 플래그 확인
     if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
         logger.info(f"[번역 스킵] {rj_code}: 번역 없이 바로 저장")
-        # title_kr이 없으면 original 또는 title 필드를 사용
+        
+        # 수정: title_kr이 없고 일본어도 없는 경우에만 파일명 사용하며,
+        # 이 경우에도 original_filename 필드에 따로 저장
         if not item.get("title_kr"):
-            original_name = item.get("original") or item.get("title") or ""
-            item["title_kr"] = clean_rj_code(original_name, rj_code)
+            # title_jp가 있는 경우 title_kr은 빈 상태로 두어 번역 가능성 열어둠
+            if item.get("title_jp"):
+                logger.info(f"[번역 스킵] {rj_code}: title_jp 있음, title_kr은 비워둠")
+                item["original_filename"] = item.get("original") or item.get("title") or ""
+            else:
+                # title_jp도 없는 경우에만 제한적으로 original을 title_kr로 사용
+                original_name = item.get("original") or item.get("title") or ""
+                if original_name:
+                    logger.info(f"[번역 스킵] {rj_code}: title_jp 없음, original 사용")
+                    # 대신 original_filename 필드에도 원본을 저장
+                    item["original_filename"] = original_name
+                    item["title_kr"] = "⚠️ " + clean_rj_code(original_name, rj_code)
+                else:
+                    item["title_kr"] = ""
         
         # 태그가 없으면 기본값 설정
         if not item.get("tags"):
@@ -540,6 +581,10 @@ def process_and_save_rj_item(item):
 
     if not title_jp and not tags_jp:
         logger.warning(f"[불완전 항목] {rj_code}: title_jp/tags_jp 없음")
+        # 수정: 불완전 항목도 original_filename 필드 추가
+        original_name = item.get("original") or item.get("title") or ""
+        if original_name:
+            item["original_filename"] = original_name
         return item
 
     # title 정제
@@ -596,6 +641,11 @@ def process_and_save_rj_item(item):
         "primary_tag": primary_tag,
         "timestamp": time.time()
     }
+    
+    # 수정: original_filename 필드 추가
+    original_name = item.get("original") or item.get("title") or ""
+    if original_name:
+        final["original_filename"] = original_name
 
     # 저장
     cache_data("rj", rj_code, final)
