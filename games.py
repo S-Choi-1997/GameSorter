@@ -5,7 +5,7 @@ import json, logging
 game_bp = Blueprint("games", __name__)
 logger = logging.getLogger(__name__)
 
-BUCKET_NAME = "RJ"
+BUCKET_NAME = "rjcode"
 gcs_client = storage.Client()
 bucket = gcs_client.bucket(BUCKET_NAME)
 
