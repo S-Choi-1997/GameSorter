@@ -20,7 +20,14 @@ const newTagPriority = document.getElementById('new-tag-priority');
 const addTagBtn = document.getElementById('add-tag-btn');
 const tagsTableBody = document.getElementById('tags-table-body');
 
-// DOM 요소 - 게임 데이터 관리
+// DOM 요소 - 게임 목록
+const gameListPlatformSelect = document.getElementById('game-list-platform-select');
+const loadGamesBtn = document.getElementById('load-games-btn');
+const gameListSearch = document.getElementById('game-list-search');
+const gameList = document.getElementById('game-list');
+const gameDetails = document.getElementById('game-details');
+
+// DOM 요소 - 게임 검색
 const platformSelect = document.getElementById('platform-select');
 const gameCodeInput = document.getElementById('game-code-input');
 const searchGameBtn = document.getElementById('search-game-btn');
@@ -38,9 +45,12 @@ const saveGameBtn = document.getElementById('save-game-btn');
 
 // 데이터 저장소
 let tags = [];
+let games = [];
+let filteredGames = [];
 let currentGame = null;
 let currentGameCode = '';
 let currentPlatform = 'rj';
+let selectedGameIndex = -1;
 
 // 탭 전환 이벤트
 tabs.forEach(tab => {
@@ -240,6 +250,168 @@ async function handleAddTag() {
   } catch (error) {
     console.error('태그 추가 오류:', error);
   }
+}
+
+// 게임 목록 불러오기 버튼 클릭
+loadGamesBtn.addEventListener('click', loadGameList);
+
+// 게임 목록 검색
+gameListSearch.addEventListener('input', filterGameList);
+
+// 게임 목록 불러오기
+async function loadGameList() {
+  const platform = gameListPlatformSelect.value;
+  
+  gameList.innerHTML = '<div class="loading-message">로딩 중...</div>';
+  
+  try {
+    loadGamesBtn.disabled = true;
+    loadGamesBtn.innerHTML = '<span class="spinner"></span>로딩 중...';
+    
+    const response = await fetch(`${API_URL}/games/${platform}`);
+    
+    if (!response.ok) {
+      throw new Error('게임 목록을 가져오는데 실패했습니다');
+    }
+    
+    games = await response.json();
+    filteredGames = [...games];
+    
+    renderGameList();
+    
+    if (games.length > 0) {
+      showToast('성공', `${games.length}개의 게임을 불러왔습니다`, 'success');
+    } else {
+      showToast('알림', '게임이 없습니다', 'error');
+    }
+  } catch (error) {
+    console.error('게임 목록 불러오기 오류:', error);
+    showToast('오류', '게임 목록을 가져오는데 실패했습니다. 다시 시도해주세요.', 'error');
+    gameList.innerHTML = '<div class="loading-message">데이터를 불러올 수 없습니다</div>';
+  } finally {
+    loadGamesBtn.disabled = false;
+    loadGamesBtn.innerHTML = '목록 불러오기';
+  }
+}
+
+// 게임 목록 필터링
+function filterGameList() {
+  const searchQuery = gameListSearch.value.toLowerCase();
+  
+  filteredGames = games.filter(game => 
+    (game.title_kr && game.title_kr.toLowerCase().includes(searchQuery)) || 
+    (game.title_jp && game.title_jp.toLowerCase().includes(searchQuery)) ||
+    (game.rj_code && game.rj_code.toLowerCase().includes(searchQuery))
+  );
+  
+  renderGameList();
+}
+
+// 게임 목록 렌더링
+function renderGameList() {
+  if (filteredGames.length === 0) {
+    gameList.innerHTML = '<div class="loading-message">게임이 없습니다</div>';
+    return;
+  }
+  
+  gameList.innerHTML = filteredGames.map((game, index) => `
+    <div class="game-list-item" data-index="${index}">
+      <div class="game-list-item-title">${game.title_kr || game.title_jp || '제목 없음'}</div>
+      <div class="game-list-item-code">${game.rj_code || ''}</div>
+    </div>
+  `).join('');
+  
+  // 게임 선택 이벤트 리스너 추가
+  document.querySelectorAll('.game-list-item').forEach(item => {
+    item.addEventListener('click', function() {
+      const index = parseInt(this.dataset.index);
+      selectGame(index);
+    });
+  });
+  
+  // 게임 상세 정보 초기화
+  gameDetails.innerHTML = '<div class="no-selection-message">왼쪽 목록에서 게임을 선택하세요</div>';
+  selectedGameIndex = -1;
+}
+
+// 게임 선택
+function selectGame(index) {
+  if (index < 0 || index >= filteredGames.length) return;
+  
+  // 선택된 게임 항목 스타일 변경
+  document.querySelectorAll('.game-list-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  const selectedItem = document.querySelector(`.game-list-item[data-index="${index}"]`);
+  if (selectedItem) {
+    selectedItem.classList.add('active');
+  }
+  
+  selectedGameIndex = index;
+  const game = filteredGames[index];
+  
+  // 게임 상세 정보 표시
+  renderGameDetails(game);
+}
+
+// 게임 상세 정보 렌더링
+function renderGameDetails(game) {
+  if (!game) return;
+  
+  const thumbnailUrl = game.thumbnail_url || '/placeholder.svg?height=120&width=120';
+  const title = game.title_kr || game.title_jp || '제목 없음';
+  const originalTitle = game.title_jp || '';
+  const circle = game.maker || '';
+  const releaseDate = game.release_date || '';
+  const primaryTag = game.primary_tag || '';
+  const tagsJp = game.tags_jp || [];
+  const tagsKr = game.tags || [];
+  const link = game.link || '';
+  const rjCode = game.rj_code || '';
+  
+  gameDetails.innerHTML = `
+    <div class="game-detail-header">
+      <img src="${thumbnailUrl}" alt="${title}" class="game-thumbnail">
+      <div class="game-detail-title">
+        <h3>${title}</h3>
+        ${originalTitle ? `<p>${originalTitle}</p>` : ''}
+        <p>${circle}</p>
+        <p>${rjCode}</p>
+      </div>
+    </div>
+    
+    <div class="game-detail-info">
+      <div class="game-detail-info-item">
+        <span class="game-detail-info-label">출시일</span>
+        <span>${releaseDate}</span>
+      </div>
+      <div class="game-detail-info-item">
+        <span class="game-detail-info-label">주요 태그</span>
+        <span>${primaryTag}</span>
+      </div>
+      ${link ? `
+      <div class="game-detail-info-item">
+        <span class="game-detail-info-label">링크</span>
+        <a href="${link}" target="_blank" rel="noopener noreferrer">DLsite 페이지</a>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="game-detail-tags">
+      <h4>일본어 태그</h4>
+      <div class="compact-tag-chips">
+        ${tagsJp.map(tag => `<span class="compact-tag-chip">${tag}</span>`).join('')}
+      </div>
+    </div>
+    
+    <div class="game-detail-tags">
+      <h4>한국어 태그</h4>
+      <div class="compact-tag-chips">
+        ${tagsKr.map(tag => `<span class="compact-tag-chip">${tag}</span>`).join('')}
+      </div>
+    </div>
+  `;
 }
 
 // 게임 검색 버튼 클릭

@@ -3,136 +3,137 @@
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  
-  body {
+    }
+    
+    body {
     background-color: #f9fafb;
     color: #111827;
     line-height: 1.5;
-  }
-  
-  .container {
+    }
+    
+    .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
-  }
-  
-  h1 {
+    }
+    
+    h1 {
     font-size: 1.875rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
-  }
-  
-  h2 {
+    }
+    
+    h2 {
     font-size: 1.25rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
-  }
-  
-  .search-add-section {
+    }
+    
+    .search-add-section {
     display: grid;
     gap: 1.5rem;
     margin-bottom: 2rem;
-  }
-  
-  @media (min-width: 768px) {
-    .search-add-section {
-      grid-template-columns: 1fr 1fr;
     }
-  }
-  
-  .search-container {
+    
+    @media (min-width: 768px) {
+    .search-add-section {
+    grid-template-columns: 1fr 1fr;
+    }
+    }
+    
+    .search-container {
     position: relative;
-  }
-  
-  .search-icon {
+    margin-bottom: 1rem;
+    }
+    
+    .search-icon {
     position: absolute;
     left: 0.75rem;
     top: 0.75rem;
     color: #6b7280;
-  }
-  
-  input, button, select, textarea {
+    }
+    
+    input, button, select, textarea {
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
     border: 1px solid #d1d5db;
     font-size: 0.875rem;
-  }
-  
-  input, select, textarea {
+    }
+    
+    input, select, textarea {
     width: 100%;
     background-color: white;
-  }
-  
-  textarea {
+    }
+    
+    textarea {
     min-height: 100px;
     resize: vertical;
-  }
-  
-  input[type="search"] {
+    }
+    
+    input[type="search"] {
     padding-left: 2.5rem;
-  }
-  
-  button {
+    }
+    
+    button {
     background-color: #2563eb;
     color: white;
     cursor: pointer;
     font-weight: 500;
     transition: background-color 0.2s;
-  }
-  
-  button:hover {
+    }
+    
+    button:hover {
     background-color: #1d4ed8;
-  }
-  
-  button:disabled {
+    }
+    
+    button:disabled {
     background-color: #93c5fd;
     cursor: not-allowed;
-  }
-  
-  .add-tag-form {
+    }
+    
+    .add-tag-form {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-  
-  .add-tag-inputs {
+    }
+    
+    .add-tag-inputs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
-  }
-  
-  table {
+    }
+    
+    table {
     width: 100%;
     border-collapse: collapse;
     background-color: white;
     border-radius: 0.5rem;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  th, td {
+    }
+    
+    th, td {
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
-  }
-  
-  th {
+    }
+    
+    th {
     font-weight: 600;
     color: #4b5563;
     background-color: #f9fafb;
-  }
-  
-  tr:last-child td {
+    }
+    
+    tr:last-child td {
     border-bottom: none;
-  }
-  
-  .save-btn {
+    }
+    
+    .save-btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
-  }
-  
-  .toast {
+    }
+    
+    .toast {
     position: fixed;
     bottom: 1rem;
     right: 1rem;
@@ -143,28 +144,28 @@
     max-width: 300px;
     display: none;
     z-index: 50;
-  }
-  
-  .toast.success {
+    }
+    
+    .toast.success {
     border-left: 4px solid #10b981;
-  }
-  
-  .toast.error {
+    }
+    
+    .toast.error {
     border-left: 4px solid #ef4444;
-  }
-  
-  .toast-title {
+    }
+    
+    .toast-title {
     font-weight: 600;
     margin-bottom: 0.25rem;
-  }
-  
-  .loading-row {
+    }
+    
+    .loading-row {
     text-align: center;
     padding: 2rem 0;
-  }
-  
-  /* 확인 모달 */
-  .modal-overlay {
+    }
+    
+    /* 확인 모달 */
+    .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -176,58 +177,59 @@
     justify-content: center;
     z-index: 100;
     display: none;
-  }
-  
-  .modal {
+    }
+    
+    .modal {
     background-color: white;
     border-radius: 0.5rem;
     padding: 2rem;
     width: 90%;
     max-width: 400px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .modal-title {
+    }
+    
+    .modal-title {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1rem;
     text-align: center;
-  }
-  
-  .modal-actions {
+    }
+    
+    .modal-actions {
     display: flex;
     gap: 1rem;
     justify-content: center;
     margin-top: 1.5rem;
-  }
-  
-  /* 헤더 영역 스타일 */
-  .header-container {
+    }
+    
+    /* 헤더 영역 스타일 */
+    .header-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-  }
-  
-  .header-actions {
+    }
+    
+    .header-actions {
     display: flex;
     gap: 0.75rem;
-  }
-  
-  .sync-btn {
+    align-items: center;
+    }
+    
+    .sync-btn {
     background-color: #059669;
-  }
-  
-  .sync-btn:hover {
+    }
+    
+    .sync-btn:hover {
     background-color: #047857;
-  }
-  
-  .sync-btn:disabled {
+    }
+    
+    .sync-btn:disabled {
     background-color: #a7f3d0;
-  }
-  
-  /* 로딩 스피너 */
-  .spinner {
+    }
+    
+    /* 로딩 스피너 */
+    .spinner {
     display: inline-block;
     width: 1rem;
     height: 1rem;
@@ -236,122 +238,261 @@
     border-top-color: white;
     animation: spin 1s ease-in-out infinite;
     margin-right: 0.5rem;
-  }
-  
-  @keyframes spin {
+    }
+    
+    @keyframes spin {
     to { transform: rotate(360deg); }
-  }
-  
-  /* 탭 스타일 */
-  .tabs {
+    }
+    
+    /* 탭 스타일 */
+    .tabs {
     display: flex;
     border-bottom: 1px solid #d1d5db;
     margin-bottom: 2rem;
-  }
-  
-  .tab {
+    }
+    
+    .tab {
     padding: 0.75rem 1.5rem;
     cursor: pointer;
     font-weight: 500;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
-  }
-  
-  .tab.active {
+    }
+    
+    .tab.active {
     color: #2563eb;
     border-bottom-color: #2563eb;
-  }
-  
-  .tab-content {
+    }
+    
+    .tab-content {
     display: none;
-  }
-  
-  .tab-content.active {
+    }
+    
+    .tab-content.active {
     display: block;
-  }
-  
-  /* 게임 관리 스타일 */
-  .game-search-form {
+    }
+    
+    /* 게임 관리 스타일 */
+    .game-search-form {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
     align-items: center;
-  }
-  
-  /* 수정된 부분: 플랫폼 선택 드롭다운 너비 조정 */
-  #platform-select {
+    }
+    
+    /* 수정된 부분: 플랫폼 선택 드롭다운 너비 조정 */
+    #platform-select, #game-list-platform-select {
     width: auto;
     min-width: 100px;
     flex: 0 0 auto;
-  }
-  
-  /* 수정된 부분: 게임 코드 입력 필드 너비 조정 */
-  #game-code-input {
+    }
+    
+    /* 수정된 부분: 게임 코드 입력 필드 너비 조정 */
+    #game-code-input {
     flex: 1;
-  }
-  
-  /* 수정된 부분: 검색 버튼 너비 조정 */
-  #search-game-btn {
+    }
+    
+    /* 수정된 부분: 검색 버튼 너비 조정 */
+    #search-game-btn, #load-games-btn {
     flex: 0 0 auto;
     white-space: nowrap;
-  }
-  
-  .game-data-container {
+    }
+    
+    .game-data-container {
     display: none;
-  }
-  
-  .game-form {
+    }
+    
+    .game-form {
     background-color: white;
     border-radius: 0.5rem;
     padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-group {
+    }
+    
+    .form-group {
     margin-bottom: 1rem;
-  }
-  
-  .form-group label {
+    }
+    
+    .form-group label {
     display: block;
     margin-bottom: 0.25rem;
     font-weight: 500;
-  }
-  
-  .form-row {
+    }
+    
+    .form-row {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
     margin-bottom: 1rem;
-  }
-  
-  @media (min-width: 768px) {
-    .form-row {
-      grid-template-columns: 1fr 1fr;
     }
-  }
-  
-  .tag-chips {
+    
+    @media (min-width: 768px) {
+    .form-row {
+    grid-template-columns: 1fr 1fr;
+    }
+    }
+    
+    .tag-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.5rem;
-  }
-  
-  .tag-chip {
+    }
+    
+    .tag-chip {
     background-color: #e5e7eb;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     font-size: 0.75rem;
     display: flex;
     align-items: center;
-  }
-  
-  .tag-chip .remove {
+    }
+    
+    .tag-chip .remove {
     margin-left: 0.25rem;
     cursor: pointer;
     color: #6b7280;
-  }
-  
-  .tag-chip .remove:hover {
+    }
+    
+    .tag-chip .remove:hover {
     color: #ef4444;
-  }
+    }
+    
+    /* 게임 목록 스타일 */
+    .game-list-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    }
+    
+    .game-list-sidebar {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    }
+    
+    .game-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 0.5rem;
+    }
+    
+    .game-list-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    }
+    
+    .game-list-item:hover {
+    background-color: #f3f4f6;
+    }
+    
+    .game-list-item.active {
+    background-color: #e5e7eb;
+    }
+    
+    .game-list-item-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    }
+    
+    .game-list-item-code {
+    font-size: 0.75rem;
+    color: #6b7280;
+    }
+    
+    .game-details {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    overflow-y: auto;
+    }
+    
+    .loading-message, .no-selection-message {
+    text-align: center;
+    color: #6b7280;
+    padding: 2rem 0;
+    }
+    
+    .game-detail-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    }
+    
+    .game-thumbnail {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    }
+    
+    .game-detail-title {
+    flex: 1;
+    }
+    
+    .game-detail-title h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    }
+    
+    .game-detail-title p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    }
+    
+    .game-detail-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    }
+    
+    .game-detail-info-item {
+    display: flex;
+    flex-direction: column;
+    }
+    
+    .game-detail-info-label {
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 0.25rem;
+    }
+    
+    .game-detail-tags {
+    margin-bottom: 1.5rem;
+    }
+    
+    .game-detail-tags h4 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    }
+    
+    .compact-tag-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    }
+    
+    .compact-tag-chip {
+    background-color: #e5e7eb;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    }

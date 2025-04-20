@@ -28,6 +28,27 @@ def get_game(platform, rj_code):
     except Exception as e:
         logger.error(f"[GET] Failed to read {path}: {e}")
         return jsonify({"error": str(e)}), 500
+    
+@game_bp.route("/<platform>", methods=["GET"])
+def list_games(platform):
+    try:
+        prefix = f"{platform}/"
+        blobs = bucket.list_blobs(prefix=prefix)
+
+        game_list = []
+        for blob in blobs:
+            if blob.name.endswith(".json"):
+                try:
+                    content = blob.download_as_text()
+                    data = json.loads(content)
+                    game_list.append(data)
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to parse {blob.name}: {e}")
+
+        return jsonify(game_list)
+    except Exception as e:
+        logger.error(f"[LIST] Failed to list {platform} games: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @game_bp.route("/<platform>/<rj_code>", methods=["POST"])
 def update_game(platform, rj_code):
