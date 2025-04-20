@@ -109,7 +109,7 @@ class FetchWorker(QThread):
                 logging.error(f"No title found for RJ code {rj_code}")
                 raise Exception("No title found")
 
-            tags_elem = soup.select('div.main_genre a, div.work_genre a, .genre a')
+            tags_elem = soup.select('div.main_genre a')
             tags_jp = [tag.text.strip() for tag in tags_elem if tag.text.strip()]
             if not tags_jp:
                 genre_th = soup.find('th', string=re.compile(r'ジャンル'))
