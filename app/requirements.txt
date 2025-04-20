@@ -8,3 +8,4 @@ gunicorn>=20.1.0
 python-dotenv
 psutil>=5.9.0
 tenacity>=8.2.0
+google-cloud-storage
