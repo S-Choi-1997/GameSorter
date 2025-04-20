@@ -711,7 +711,7 @@ def translate_title_only_with_gpt(title_jp, rj_code=""):
         return title_jp  # 오류 시 원본 반환
 
 # 단일 RJ 코드의 제목 번역 함수
-def translate_single_rj_title(rj_code):
+def translate_single_rj_title(rj_code, force=False):
     """
     단일 RJ 코드의 일본어 제목을 한국어로 번역하는 함수
     
@@ -749,7 +749,7 @@ def translate_single_rj_title(rj_code):
             
         # 이미 적절한 한국어 제목이 있는지 확인
         current_title_kr = data.get('title_kr', '')
-        if current_title_kr and not needs_translation(current_title_kr):
+        if current_title_kr and not needs_translation(current_title_kr) and not force:
             return {
                 'rj_code': rj_code,
                 'status': 'skipped',
@@ -884,8 +884,8 @@ def translate_all_rj_titles(batch_size=20, max_items=None):
                         title_jp = data.get('title_jp', '')
                         title_kr = data.get('title_kr', '')
                         
-                        # 일본어 제목이 있고, 한국어 제목이 없거나 일본어인 경우
-                        if title_jp and (not title_kr or needs_translation(title_kr)):
+                        # 일본어 제목이 있고
+                        if title_jp:
                             rj_codes_to_translate.append(rj_code)
                             
                             # 최대 항목 수 제한 확인
