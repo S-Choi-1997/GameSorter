@@ -67,7 +67,7 @@ const fsGameReleaseDate = document.getElementById("fs-game-release-date")
 const fsGamePrice = document.getElementById("fs-game-price")
 const fsGameDescription = document.getElementById("fs-game-description")
 const fsTagsJpContainer = document.getElementById("fs-tags-jp-container")
-const fsTagsKrContainer = document.getElementById("fs-tags-kr-container")
+const fsTagsKrContainer = document.getElementById("fs-tagsKr-container")
 const fsGamePrimaryTag = document.getElementById("fs-game-primary-tag")
 const fsCancelEditBtn = document.getElementById("fs-cancel-edit-btn")
 const fsSaveGameBtn = document.getElementById("fs-save-game-btn")
@@ -525,7 +525,7 @@ function showEditForm() {
 
   // 폼에 현재 게임 데이터 설정
   gameTitle.value = currentGame.title || ""
-  gameCircle.value = currentGame.circle || ""
+  gameCircle.value = currentGame.circle || currentGame.maker || ""
   gameReleaseDate.value = currentGame.release_date || ""
   gamePrice.value = currentGame.price || 0
   gameDescription.value = currentGame.description || ""
@@ -1080,7 +1080,7 @@ function showFsEditForm() {
 
   // 폼에 현재 게임 데이터 설정
   fsGameTitle.value = fsCurrentGame.title || ""
-  fsGameCircle.value = fsCurrentGame.circle || ""
+  fsGameCircle.value = fsCurrentGame.circle || fsCurrentGame.maker || ""
   fsGameReleaseDate.value = fsCurrentGame.release_date || ""
   fsGamePrice.value = fsCurrentGame.price || 0
   fsGameDescription.value = fsCurrentGame.description || ""

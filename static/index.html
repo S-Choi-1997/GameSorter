@@ -150,11 +150,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="game-title">제목</label>
-                  <input type="text" id="game-title" name="title">
+                  <input type="text" id="game-title" name="title" placeholder="게임 제목">
                 </div>
                 <div class="form-group">
                   <label for="game-circle">서클</label>
-                  <input type="text" id="game-circle" name="circle">
+                  <input type="text" id="game-circle" name="circle" placeholder="서클 이름">
                 </div>
               </div>
               
@@ -165,13 +165,18 @@
                 </div>
                 <div class="form-group">
                   <label for="game-price">가격</label>
-                  <input type="number" id="game-price" name="price">
+                  <input type="number" id="game-price" name="price" placeholder="가격 (엔)">
                 </div>
               </div>
               
               <div class="form-group">
                 <label for="game-description">설명</label>
-                <textarea id="game-description" name="description"></textarea>
+                <textarea id="game-description" name="description" placeholder="게임 설명"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="game-primary-tag">주요 태그</label>
+                <input type="text" id="game-primary-tag" name="primary_tag" placeholder="주요 태그">
               </div>
               
               <div class="form-group">
@@ -184,11 +189,6 @@
                 <div id="tags-kr-container" class="tag-chips"></div>
               </div>
               
-              <div class="form-group">
-                <label for="game-primary-tag">주요 태그</label>
-                <input type="text" id="game-primary-tag" name="primary_tag">
-              </div>
-              
               <div class="form-actions">
                 <button type="button" id="cancel-edit-btn">취소</button>
                 <button type="submit" id="save-game-btn">저장</button>
@@ -197,7 +197,6 @@
           </div>
         </div>
       </div>
-    </div>
     
     <!-- Firestore 게임 관리 탭 -->
     <div id="fs-game-management-tab" class="tab-content">
@@ -239,11 +238,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="fs-game-title">제목</label>
-                  <input type="text" id="fs-game-title" name="title">
+                  <input type="text" id="fs-game-title" name="title" placeholder="게임 제목">
                 </div>
                 <div class="form-group">
                   <label for="fs-game-circle">서클</label>
-                  <input type="text" id="fs-game-circle" name="circle">
+                  <input type="text" id="fs-game-circle" name="circle" placeholder="서클 이름">
                 </div>
               </div>
               
@@ -254,13 +253,18 @@
                 </div>
                 <div class="form-group">
                   <label for="fs-game-price">가격</label>
-                  <input type="number" id="fs-game-price" name="price">
+                  <input type="number" id="fs-game-price" name="price" placeholder="가격 (엔)">
                 </div>
               </div>
               
               <div class="form-group">
                 <label for="fs-game-description">설명</label>
-                <textarea id="fs-game-description" name="description"></textarea>
+                <textarea id="fs-game-description" name="description" placeholder="게임 설명"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="fs-game-primary-tag">주요 태그</label>
+                <input type="text" id="fs-game-primary-tag" name="primary_tag" placeholder="주요 태그">
               </div>
               
               <div class="form-group">
@@ -271,11 +275,6 @@
               <div class="form-group">
                 <label>태그 (한국어)</label>
                 <div id="fs-tags-kr-container" class="tag-chips"></div>
-              </div>
-              
-              <div class="form-group">
-                <label for="fs-game-primary-tag">주요 태그</label>
-                <input type="text" id="fs-game-primary-tag" name="primary_tag">
               </div>
               
               <div class="form-actions">
