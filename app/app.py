@@ -300,20 +300,16 @@ def process_rj_item(item):
 
 # Steam 데이터 처리
 def process_steam_item(identifier):
-    cached = get_cached_data('steam', identifier)
-    if cached:
-        return cached
-    data = {
+    return {
         'title': identifier,
         'title_kr': identifier,
         'primary_tag': "기타",
         'tags': ["기타"],
         'thumbnail_url': '',
-        'platform': 'steam',
-        'timestamp': time.time()
+        'platform': '기타'  # 🔥 platform을 "steam" → "기타"로 변경
+        # 'timestamp': time.time()
     }
-    cache_data('steam', identifier, data)
-    return data
+
 
 # 게임 데이터 처리 엔드포인트
 @app.route('/games', methods=['POST'])
