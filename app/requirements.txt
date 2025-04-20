@@ -7,6 +7,5 @@ soupsieve>=2.5.0
 gunicorn>=20.1.0
 python-dotenv
 psutil>=5.9.0
-PySide6>=6.5.0
 tenacity>=8.2.0
 google-cloud-storage

@@ -5,6 +5,7 @@ import time
 import re
 from flask import Flask, request, jsonify
 from google.cloud import firestore
+from google.cloud import storage
 from openai import OpenAI
 
 app = Flask(__name__)
@@ -23,61 +24,87 @@ logger = logging.getLogger(__name__)
 # Firestore 클라이언트 초기화
 try:
     db = firestore.Client()
-    logger.info("Firestore client initialized")
+    logger.info("Firestore 클라이언트 초기화 완료")
 except Exception as e:
-    logger.error(f"Failed to initialize Firestore: {e}")
+    logger.error(f"Firestore 초기화 실패: {e}")
     db = None
+
+# GCS 클라이언트 초기화
+try:
+    gcs_client = storage.Client()
+    bucket_name = os.getenv("GCS_BUCKET_NAME", "rjcode")
+    bucket = gcs_client.bucket(bucket_name)
+    logger.info(f"GCS 클라이언트 초기화 완료, 버킷: {bucket_name}")
+except Exception as e:
+    logger.error(f"GCS 초기화 실패: {e}")
+    gcs_client = None
+    bucket = None
 
 # OpenAI 클라이언트 초기화
 try:
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    logger.info("OpenAI client initialized")
+    logger.info("OpenAI 클라이언트 초기화 완료")
 except Exception as e:
-    logger.error(f"Failed to initialize OpenAI: {e}")
+    logger.error(f"OpenAI 초기화 실패: {e}")
     openai_client = None
 
 # 일본어 감지 함수
 def needs_translation(title: str) -> bool:
     if not title or not isinstance(title, str):
-        logger.debug(f"No translation needed: title is empty or invalid: {title}")
+        logger.debug(f"번역 불필요: 제목이 비어 있거나 유효하지 않음: {title}")
         return False
     # 히라가나(\u3040-\u309F), 가타카나(\u30A0-\u30FF), 한자(\u4E00-\u9FFF) 포함 여부 확인
     has_japanese = bool(re.search(r'[\u3040-\u30FF\u4E00-\u9FFF]', title))
-    logger.debug(f"Japanese detection for '{title}': {'Detected' if has_japanese else 'Not detected'}")
+    logger.debug(f"일본어 감지 결과 '{title}': {'감지됨' if has_japanese else '감지되지 않음'}")
     return has_japanese
 
-# Firestore 캐시 확인
+# GCS 경로 생성 함수
+def get_gcs_path(platform, rj_code):
+    # RJ 코드에서 숫자 부분만 추출 (예: RJ123456 -> 123456)
+    number_part = rj_code[2:] if rj_code.startswith('RJ') else rj_code
+    # 숫자 부분의 앞 두 글자 추출
+    prefix = number_part[:2] if len(number_part) >= 2 else number_part.zfill(2)
+    return f"{platform}/{prefix}/{rj_code}.json"
+
+# GCS에서 캐시 불러오기
 def get_cached_data(platform, identifier):
-    normalized_id = identifier.upper().replace('-', '').replace('_', '').strip()
-    doc = db.collection("games").document(platform).collection("items").document(normalized_id).get()
+    if not bucket:
+        logger.warning("GCS 버킷이 초기화되지 않음")
+        return None
+    rj_code = identifier.upper().replace('-', '').replace('_', '').strip()
+    blob_path = get_gcs_path(platform, rj_code)
+    blob = bucket.blob(blob_path)
 
-    if doc.exists:
-        data = doc.to_dict()
+    if blob.exists():
+        content = blob.download_as_text()
+        data = json.loads(content)
 
-        # ✅ 404 표시된 경우 바로 반환 (재크롤링 방지)
+        # ✅ 404 혹은 오류 상태면 바로 리턴
         if data.get("status") == "404" or data.get("permanent_error"):
-            logger.info(f"404 confirmed item: {platform}:{normalized_id}")
+            logger.info(f"[GCS 캐시] 404 확인: {platform}:{rj_code}")
             return data
 
-        # ✅ 타임스탬프 없는 경우 캐시 무시
+        # ✅ 타임스탬프 없는 경우 무효
         if not data.get("timestamp"):
-            logger.warning(f"Cached data found but missing timestamp: {platform}:{normalized_id}")
+            logger.warning(f"[GCS 캐시] 타임스탬프 없음: {platform}:{rj_code}")
             return None
 
-        logger.debug(f"Cache hit for {platform}:{normalized_id}, title_kr={data.get('title_kr')}")
+        logger.info(f"[GCS 캐시] 조회 성공: {platform}:{rj_code}")
         return data
     return None
 
-
+# GCS에 캐시 저장
 def cache_data(platform, rj_code, data):
+    if not bucket:
+        logger.warning("GCS 버킷이 초기화되지 않음")
+        return
     try:
-        doc_ref = db.collection("games").document(platform).collection("items").document(rj_code)
-        doc_ref.set(data, merge=True)
-        logger.info(f"[CACHE] 저장됨: {platform}/items/{rj_code}")
+        blob_path = get_gcs_path(platform, rj_code)
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(json.dumps(data, ensure_ascii=False), content_type='application/json')
+        logger.info(f"[GCS 캐시] 저장 완료: {blob_path}")
     except Exception as e:
-        logger.error(f"[CACHE ERROR] 저장 실패: {platform}/{rj_code}, error={e}", exc_info=True)
-
-
+        logger.error(f"[GCS 캐시 오류] 저장 실패: {platform}/{rj_code}, 오류: {e}", exc_info=True)
 
 # 태그 캐시
 def get_cached_tag(tag_jp):
@@ -91,34 +118,33 @@ def get_cached_tag(tag_jp):
             return doc.to_dict()
         return None
     except Exception as e:
-        logger.error(f"Tag cache error for {tag_jp}: {e}")
+        logger.error(f"태그 캐시 조회 오류: {tag_jp}: {e}")
         return None
-
 
 def normalize_tag_id(tag_jp):
     # Firestore 문서 ID로 쓸 수 있도록 슬래시 제거 또는 대체
     return tag_jp.replace("/", "-")
+
 def cache_tag(tag_jp, tag_kr, priority):
     if not db:
         return
     try:
         safe_tag_id = normalize_tag_id(tag_jp)
         normalized_tag_kr = normalize_tag_id(tag_kr)  # 🔥 하이픈 등으로 정제
-
         doc_ref = db.collection('tags').document('jp_to_kr').collection('mappings').document(safe_tag_id)
         doc_ref.set({
             'tag_jp': tag_jp,        # 원본 그대로 저장
             'tag_kr': normalized_tag_kr,
             'priority': priority
         })
-        logger.info(f"Cached tag: {tag_jp} → {normalized_tag_kr} (id: {safe_tag_id})")
+        logger.info(f"태그 캐시 저장: {tag_jp} → {normalized_tag_kr} (ID: {safe_tag_id})")
     except Exception as e:
-        logger.error(f"Tag cache error for {tag_jp}: {e}")
+        logger.error(f"태그 캐시 저장 오류: {tag_jp}: {e}")
 
 # GPT 번역
 def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
     if not openai_client:
-        logger.warning("OpenAI client not initialized")
+        logger.warning("OpenAI 클라이언트가 초기화되지 않음")
         return tags, title_jp
     try:
         # 개선된 프롬프트
@@ -156,7 +182,7 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
             max_tokens=200
         )
         response_text = response.choices[0].message.content.strip()
-        logger.debug(f"GPT response for {batch_idx}: {response_text}")
+        logger.debug(f"GPT 응답: {batch_idx}: {response_text}")
 
         # JSON 파싱
         try:
@@ -164,7 +190,7 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
             translated_tags = response_json.get('tags', tags)
             translated_title = response_json.get('title', title_jp) if title_jp else title_jp
         except json.JSONDecodeError:
-            logger.warning(f"Invalid JSON response for {batch_idx}: {response_text}")
+            logger.warning(f"잘못된 JSON 응답: {batch_idx}: {response_text}")
             # 폴백: 기존 방식으로 파싱
             parts = response_text.split(';')
             translated_tags = [t.strip() for t in parts[0].split(',')][:len(tags)]
@@ -172,13 +198,13 @@ def translate_with_gpt_batch(tags, title_jp=None, batch_idx=""):
 
         # 번역 실패 감지
         if title_jp and translated_title and needs_translation(translated_title):
-            logger.warning(f"Translation failed for {batch_idx}: translated_title={translated_title} is still Japanese")
+            logger.warning(f"번역 실패: {batch_idx}: translated_title={translated_title}은 여전히 일본어")
             translated_title = title_jp  # 일본어로 반환된 경우 원본 유지
 
-        logger.info(f"Translated for {batch_idx}: tags={translated_tags}, title={translated_title}")
+        logger.info(f"번역 완료: {batch_idx}: tags={translated_tags}, title={translated_title}")
         return translated_tags, translated_title
     except Exception as e:
-        logger.error(f"GPT translation error for batch {batch_idx}: {e}")
+        logger.error(f"GPT 번역 오류: 배치 {batch_idx}: {e}")
         return tags, title_jp  # 번역 실패 시 원래 제목 유지
 
 # RJ 데이터 처리
@@ -186,7 +212,7 @@ def process_rj_item(item):
     if 'error' in item:
         rj_code = item.get('rj_code') or item.get('title') or item.get('original') or 'unknown'
         if not re.match(r'^RJ\d{6,8}$', rj_code, re.IGNORECASE):
-            logger.warning(f"[ERROR ITEM] 유효하지 않은 rj_code, 저장 생략: {rj_code}")
+            logger.warning(f"[오류 항목] 유효하지 않은 RJ 코드, 저장 생략: {rj_code}")
             return {
                 'rj_code': rj_code,
                 'error': item.get('error'),
@@ -205,14 +231,14 @@ def process_rj_item(item):
             'error': item.get('error'),
             'timestamp': time.time()
         }
-        logger.warning(f"[ERROR ITEM] 캐시에 저장: {rj_code}")
+        logger.warning(f"[오류 항목] 캐시에 저장: {rj_code}")
         cache_data('rj', rj_code, error_data)
         return error_data
 
     rj_code = item.get('rj_code')
     cached = get_cached_data('rj', rj_code)
     if cached and cached.get('title_kr') and not needs_translation(cached.get('title_kr')):
-        logger.debug(f"Using cached data for {rj_code}: title_kr={cached.get('title_kr')}")
+        logger.debug(f"캐시 데이터 사용: {rj_code}: title_kr={cached.get('title_kr')}")
         return cached
 
     tags_jp = item.get('tags_jp', [])
@@ -255,7 +281,7 @@ def process_rj_item(item):
     translated_title = cleaned_title_jp
 
     if needs_translation(cleaned_title_jp) or tags_to_translate:
-        logger.debug(f"Translating for {rj_code}: title_jp={cleaned_title_jp}, tags={tags_to_translate}")
+        logger.debug(f"번역 요청: {rj_code}: title_jp={cleaned_title_jp}, tags={tags_to_translate}")
         translated_tags, translated_title = translate_with_gpt_batch(
             tags_to_translate,
             cleaned_title_jp if needs_translation(cleaned_title_jp) else None,
@@ -270,7 +296,7 @@ def process_rj_item(item):
             tag_priorities.append(priority)
             cache_tag(jp, kr, priority)
     else:
-        logger.debug(f"No translation needed for {rj_code}: title_jp={cleaned_title_jp}")
+        logger.debug(f"번역 불필요: {rj_code}: title_jp={cleaned_title_jp}")
 
     tag_with_priority = list(zip(tags_kr, tag_priorities))
     tag_with_priority.sort(key=lambda x: x[1], reverse=True)
@@ -294,9 +320,8 @@ def process_rj_item(item):
     }
 
     cache_data('rj', rj_code, processed_data)
-    logger.info(f"Processed RJ item: {rj_code}, title_kr={processed_data['title_kr']}")
+    logger.info(f"RJ 항목 처리 완료: {rj_code}, title_kr={processed_data['title_kr']}")
     return processed_data
-
 
 # Steam 데이터 처리
 def process_steam_item(identifier):
@@ -310,15 +335,14 @@ def process_steam_item(identifier):
         # 'timestamp': time.time()
     }
 
-
 # 게임 데이터 처리 엔드포인트
 @app.route('/games', methods=['POST'])
 def process_games():
     try:
         data = request.get_json()
-        logger.info(f"Received request with data: {json.dumps(data, ensure_ascii=False)[:1000]}")
+        logger.info(f"요청 데이터 수신: {json.dumps(data, ensure_ascii=False)[:1000]}")
         items = data.get('items', [])
-        logger.info(f"Processing {len(items)} items")
+        logger.info(f"{len(items)}개 항목 처리 시작")
 
         results = []
         missing = []
@@ -335,16 +359,16 @@ def process_games():
                         "rj_code": item.upper(),
                         "platform": "rj"
                     }
-                    logger.info(f"[🔄 STRING CONVERTED] {item['rj_code']}")
+                    logger.info(f"[문자열 변환] {item['rj_code']}")
                 else:
                     item = {
                         "title": item,
                         "platform": "steam"
                     }
-                    logger.info(f"[🔄 STRING CONVERTED] Steam title: {item['title']}")
+                    logger.info(f"[문자열 변환] Steam 제목: {item['title']}")
 
             # 이제 item은 확실히 딕셔너리 타입
-            logger.info(f"[🔍 PROCESSING ITEM] {json.dumps(item, ensure_ascii=False)}")
+            logger.info(f"[항목 처리] {json.dumps(item, ensure_ascii=False)}")
 
             # 캐시 저장 요청일 경우 (크롤링 성공 or 실패 후)
             if isinstance(item, dict) and item.get("timestamp"):
@@ -354,17 +378,17 @@ def process_games():
 
                 # skip_translation 플래그 또는 404 상태이면 번역 없이 바로 처리
                 if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
-                    logger.info(f"[DIRECT SAVE] {platform}:{rj_code}")
+                    logger.info(f"[직접 저장] {platform}:{rj_code}")
                     processed = process_and_save_rj_item(item)  # 이미 번역 스킵 로직이 포함됨
                     results.append(processed)
                 # 기존 번역/저장 조건
                 elif platform == "rj" and (not item.get("title_kr") or not item.get("tags")):
-                    logger.info(f"[🌀 TRANSLATE & SAVE] {platform}:{rj_code}")
+                    logger.info(f"[번역 및 저장] {platform}:{rj_code}")
                     processed = process_and_save_rj_item(item)
                     results.append(processed)
                 else:
                     cache_data(platform, rj_code, item)
-                    logger.info(f"[💾 SAVED] {platform}/items/{rj_code}, title_kr={title}")
+                    logger.info(f"[저장 완료] {platform}/items/{rj_code}, title_kr={title}")
                     results.append(item)
 
             # 캐시 확인 요청일 경우
@@ -376,42 +400,41 @@ def process_games():
                 if not rj_code:
                     title = item.get("title", "untitled") if isinstance(item, dict) else str(item)
                     steam_fallback = process_steam_item(title)
-                    logger.info(f"[🎮 STEAM MODE] title={steam_fallback.get('title')}")
+                    logger.info(f"[Steam 모드] 제목={steam_fallback.get('title')}")
                     results.append(steam_fallback)
                     continue
 
                 # 캐시 확인
                 cached = get_cached_data(platform, rj_code)
                 if cached and cached.get("timestamp"):
-                    logger.info(f"[📦 CACHE HIT] {platform}:{rj_code}")
+                    logger.info(f"[캐시 조회 성공] {platform}:{rj_code}")
                     results.append(cached)
                 else:
-                    logger.info(f"[❌ CACHE MISS] {platform}:{rj_code}")
+                    logger.info(f"[캐시 조회 실패] {platform}:{rj_code}")
                     missing.append(rj_code)
 
         task_id = request.headers.get('X-Cloud-Trace-Context', 'manual_task')[:36]
-        logger.info(f"Returning response for task_id: {task_id}, results: {len(results)}, missing: {len(missing)}")
+        logger.info(f"응답 반환: task_id={task_id}, 결과={len(results)}, 누락={len(missing)}")
         return jsonify({'results': results, 'missing': missing, 'task_id': task_id})
 
     except Exception as e:
-        logger.error(f"Error processing games: {e}", exc_info=True)
+        logger.error(f"게임 처리 중 오류: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-
-
 
 # 진행 상황 엔드포인트
 @app.route('/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     try:
-        logger.info(f"Progress request for task_id: {task_id}")
+        logger.info(f"진행 상황 요청: task_id={task_id}")
         return jsonify({'completed': 0, 'total': 1, 'status': 'completed'})
     except Exception as e:
-        logger.error(f"Progress error for task {task_id}: {e}")
+        logger.error(f"진행 상황 조회 오류: task_id={task_id}: {e}")
         return jsonify({'error': str(e)}), 500
+
 @app.route("/sync-tags", methods=["POST"])
 def sync_tags_to_games():
     try:
-        logger.info("Starting tag re-sync for all games...")
+        logger.info("모든 게임의 태그 동기화 시작")
 
         # 1. 태그 변환 테이블 생성
         tag_map = {
@@ -442,17 +465,17 @@ def sync_tags_to_games():
             })
             updated_count += 1
 
-        logger.info(f"Completed tag sync. Updated {updated_count} documents.")
+        logger.info(f"태그 동기화 완료: {updated_count}개 문서 업데이트")
         return jsonify({"updated": updated_count})
 
     except Exception as e:
-        logger.error(f"/sync-tags error: {e}", exc_info=True)
+        logger.error(f"태그 동기화 오류: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-    
+
 @app.route('/reorder-tags', methods=['POST'])
 def reorder_tags():
     try:
-        logger.info("🔧 태그 재정렬 작업 시작")
+        logger.info("태그 재정렬 작업 시작")
 
         # ✅ 태그 우선순위 로드
         tag_priority = {
@@ -460,7 +483,7 @@ def reorder_tags():
             for doc in db.collection("tags").document("jp_to_kr").collection("mappings").stream()
         }
 
-        logger.info(f"✅ {len(tag_priority)}개의 태그 우선순위 로딩 완료")
+        logger.info(f"{len(tag_priority)}개의 태그 우선순위 로딩 완료")
 
         # 🔄 전체 게임 순회
         games_ref = db.collection("games").document("rj").collection("items")
@@ -482,22 +505,22 @@ def reorder_tags():
                     "tags": sorted_tags,
                     "primary_tag": primary_tag
                 })
-                logger.info(f"[UPDATED] {doc.id} : {original_tags} → {sorted_tags}")
+                logger.info(f"[업데이트] {doc.id}: {original_tags} → {sorted_tags}")
                 updated += 1
 
-        logger.info(f"🟢 태그 재정렬 완료: {updated}개 문서 업데이트됨")
+        logger.info(f"태그 재정렬 완료: {updated}개 문서 업데이트")
         return jsonify({"status": "ok", "updated_documents": updated})
     except Exception as e:
-        logger.error(f"❌ reorder_tags 오류 발생: {e}", exc_info=True)
+        logger.error(f"태그 재정렬 오류: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-    
+
 def process_and_save_rj_item(item):
     """번역되지 않은 RJ 항목을 처리하고 저장"""
     rj_code = item.get("rj_code", "unknown")
     
     # 번역 스킵 플래그 확인
     if item.get("skip_translation") or item.get("status") == "404" or item.get("permanent_error"):
-        logger.info(f"[SKIP TRANSLATION] {rj_code}: 번역 없이 바로 저장")
+        logger.info(f"[번역 스킵] {rj_code}: 번역 없이 바로 저장")
         # title_kr이 없으면 original 또는 title 필드를 사용
         if not item.get("title_kr"):
             original_name = item.get("original") or item.get("title") or ""
@@ -516,7 +539,7 @@ def process_and_save_rj_item(item):
     tags_jp = [normalize_tag_id(tag) for tag in tags_jp]
 
     if not title_jp and not tags_jp:
-        logger.warning(f"[⚠️ INCOMPLETE ITEM] {rj_code}: title_jp/tags_jp 없음")
+        logger.warning(f"[불완전 항목] {rj_code}: title_jp/tags_jp 없음")
         return item
 
     # title 정제
@@ -576,7 +599,7 @@ def process_and_save_rj_item(item):
 
     # 저장
     cache_data("rj", rj_code, final)
-    logger.info(f"[💾 AUTO SAVED] {rj_code} → {final['title_kr']}")
+    logger.info(f"[자동 저장] {rj_code} → {final['title_kr']}")
     return final
 
 @app.route('/check_permanent_failure/<rj_code>', methods=['GET'])
@@ -590,13 +613,12 @@ def check_failure(rj_code):
             })
         return jsonify({"permanent_failure": False})
     except Exception as e:
-        logger.error(f"Failure check error: {e}")
+        logger.error(f"실패 확인 오류: {e}")
         return jsonify({"permanent_failure": False})
-
 
 if __name__ == '__main__':
     # GCP에서만 실행
     if os.getenv('GAE_ENV', '').startswith('standard') or os.getenv('CLOUD_RUN', '') == 'true':
         app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8080)))
     else:
-        logger.warning("This script should only run in GCP environment. Exiting.")
+        logger.warning("이 스크립트는 GCP 환경에서만 실행해야 합니다. 종료합니다.")
