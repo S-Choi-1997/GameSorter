@@ -32,7 +32,7 @@ except Exception as e:
 # GCS 클라이언트 초기화
 try:
     gcs_client = storage.Client()
-    bucket_name = os.getenv("GCS_BUCKET_NAME", "RJ")
+    bucket_name = os.getenv("GCS_BUCKET_NAME", "rjcode")
     bucket = gcs_client.bucket(bucket_name)
     logger.info(f"GCS 클라이언트 초기화 완료, 버킷: {bucket_name}")
 except Exception as e:
