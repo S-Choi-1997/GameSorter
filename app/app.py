@@ -666,6 +666,339 @@ def check_failure(rj_code):
         logger.error(f"실패 확인 오류: {e}")
         return jsonify({"permanent_failure": False})
 
+# app.py에 추가할 제목 번역 함수들
+
+# 제목만 번역하는 GPT 함수
+def translate_title_only_with_gpt(title_jp, rj_code=""):
+    """일본어 제목만 간단히 번역하는 함수"""
+    if not openai_client:
+        logger.warning("OpenAI 클라이언트가 초기화되지 않음")
+        return title_jp
+    
+    if not title_jp or not needs_translation(title_jp):
+        logger.debug(f"번역 불필요: {rj_code}, 제목: {title_jp}")
+        return title_jp
+    
+    try:
+        # 간결한 프롬프트 (제목만 번역)
+        prompt = (
+            "당신은 일본어에서 한국어로 번역하는 전문 번역가입니다.\n"
+            "아래의 일본어 제목을 자연스러운 한국어로 번역해주세요.\n"
+            "번역 결과만 출력하세요. 설명이나 추가 텍스트 없이 번역된 제목만 반환하세요.\n\n"
+            f"제목: {title_jp}"
+        )
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a translator specializing in Japanese to Korean."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=100
+        )
+        translated_title = response.choices[0].message.content.strip()
+        
+        # 번역 결과 확인
+        if needs_translation(translated_title):
+            logger.warning(f"번역 실패: {rj_code}: '{translated_title}'은 여전히 일본어로 보임")
+            return title_jp  # 여전히 일본어로 번역된 경우 원본 반환
+            
+        logger.info(f"번역 성공: {rj_code}: '{title_jp}' → '{translated_title}'")
+        return translated_title
+        
+    except Exception as e:
+        logger.error(f"GPT 제목 번역 오류: {rj_code}: {e}")
+        return title_jp  # 오류 시 원본 반환
+
+# 단일 RJ 코드의 제목 번역 함수
+def translate_single_rj_title(rj_code):
+    """
+    단일 RJ 코드의 일본어 제목을 한국어로 번역하는 함수
+    
+    Args:
+        rj_code: RJ 코드 (예: "RJ123456")
+        
+    Returns:
+        dict: 처리 결과 정보
+    """
+    try:
+        # RJ 코드 정규화
+        rj_code = rj_code.upper().replace('-', '').replace('_', '').strip()
+        if not rj_code.startswith('RJ'):
+            rj_code = f"RJ{rj_code}"
+            
+        logger.info(f"단일 제목 번역 시작: {rj_code}")
+        
+        # GCS에서 데이터 가져오기
+        data = get_cached_data('rj', rj_code)
+        if not data:
+            return {
+                'rj_code': rj_code,
+                'status': 'error',
+                'message': '데이터를 찾을 수 없음'
+            }
+            
+        # 일본어 제목 확인
+        title_jp = data.get('title_jp')
+        if not title_jp:
+            return {
+                'rj_code': rj_code,
+                'status': 'error',
+                'message': '일본어 제목(title_jp)이 없음'
+            }
+            
+        # 이미 적절한 한국어 제목이 있는지 확인
+        current_title_kr = data.get('title_kr', '')
+        if current_title_kr and not needs_translation(current_title_kr):
+            return {
+                'rj_code': rj_code,
+                'status': 'skipped',
+                'message': '이미 적절한 한국어 제목이 있음',
+                'title_kr': current_title_kr
+            }
+            
+        # 제목 번역
+        translated_title = translate_title_only_with_gpt(title_jp, rj_code)
+        
+        # 번역 결과 업데이트
+        if translated_title != title_jp:  # 번역이 성공적으로 이루어진 경우
+            data['title_kr'] = translated_title
+            data['timestamp'] = time.time()
+            
+            # GCS에 업데이트된 데이터 저장
+            cache_data('rj', rj_code, data)
+            
+            return {
+                'rj_code': rj_code,
+                'status': 'success',
+                'title_jp': title_jp,
+                'title_kr': translated_title
+            }
+        else:
+            return {
+                'rj_code': rj_code,
+                'status': 'unchanged',
+                'message': '번역 실패 또는 불필요'
+            }
+    
+    except Exception as e:
+        logger.error(f"제목 번역 실패: {rj_code}: {e}", exc_info=True)
+        return {
+            'rj_code': rj_code,
+            'status': 'error',
+            'message': str(e)
+        }
+
+# 배치 처리 함수
+def batch_translate_rj_titles(rj_codes):
+    """
+    여러 RJ 코드의 제목을 배치로 번역하는 함수
+    
+    Args:
+        rj_codes: RJ 코드 목록
+        
+    Returns:
+        dict: 처리 결과 요약 및 세부 결과
+    """
+    results = []
+    successful = 0
+    skipped = 0
+    errors = 0
+    
+    logger.info(f"배치 번역 시작: {len(rj_codes)}개 항목")
+    
+    for i, rj_code in enumerate(rj_codes):
+        try:
+            # 진행 상황 로깅 (10개 단위로)
+            if (i + 1) % 10 == 0 or (i + 1) == len(rj_codes):
+                logger.info(f"진행 상황: {i+1}/{len(rj_codes)} 완료")
+                
+            # 단일 처리 함수 호출
+            result = translate_single_rj_title(rj_code)
+            results.append(result)
+            
+            # 상태별 카운터 업데이트
+            if result['status'] == 'success':
+                successful += 1
+            elif result['status'] == 'skipped':
+                skipped += 1
+            else:
+                errors += 1
+                
+        except Exception as e:
+            logger.error(f"항목 처리 오류: {rj_code}: {e}", exc_info=True)
+            errors += 1
+            results.append({
+                'rj_code': rj_code,
+                'status': 'error',
+                'message': str(e)
+            })
+    
+    summary = {
+        'total': len(rj_codes),
+        'successful': successful,
+        'skipped': skipped,
+        'errors': errors
+    }
+    
+    logger.info(f"배치 번역 완료: {summary}")
+    return {
+        'summary': summary,
+        'results': results
+    }
+
+# 전체 데이터 제목 번역 함수
+def translate_all_rj_titles(batch_size=20, max_items=None):
+    """
+    모든 RJ 코드의 일본어 제목을 한국어로 번역
+    
+    Args:
+        batch_size: 한 번에 처리할 항목 수
+        max_items: 최대 처리할 항목 수 (None이면 제한 없음)
+        
+    Returns:
+        dict: 처리 결과 정보
+    """
+    # 일본어 제목이 있고 한국어 제목이 필요한 항목 찾기
+    rj_codes_to_translate = []
+    
+    try:
+        # GCS 또는 Firestore에서 데이터 가져오기
+        if bucket:
+            # GCS에서 찾기
+            prefix = 'rj/'
+            blobs = bucket.list_blobs(prefix=prefix)
+            
+            for blob in blobs:
+                # 경로 형식: rj/prefix/RJXXXXXX.json
+                if not blob.name.endswith('.json'):
+                    continue
+                    
+                file_name = blob.name.split('/')[-1]
+                rj_code = file_name.split('.')[0].upper()
+                
+                # 데이터 가져오기
+                try:
+                    data = get_cached_data('rj', rj_code)
+                    if data:
+                        title_jp = data.get('title_jp', '')
+                        title_kr = data.get('title_kr', '')
+                        
+                        # 일본어 제목이 있고, 한국어 제목이 없거나 일본어인 경우
+                        if title_jp and (not title_kr or needs_translation(title_kr)):
+                            rj_codes_to_translate.append(rj_code)
+                            
+                            # 최대 항목 수 제한 확인
+                            if max_items and len(rj_codes_to_translate) >= max_items:
+                                logger.info(f"최대 항목 수({max_items}) 도달, 검색 중단")
+                                break
+                except Exception as e:
+                    logger.error(f"데이터 가져오기 오류: {rj_code}: {e}")
+                    continue
+        else:
+            logger.error("GCS 버킷이 초기화되지 않음")
+            return {
+                'status': 'error',
+                'message': 'GCS 버킷이 초기화되지 않음'
+            }
+    except Exception as e:
+        logger.error(f"RJ 코드 수집 중 오류: {e}", exc_info=True)
+        return {
+            'status': 'error',
+            'message': f"RJ 코드 수집 실패: {str(e)}"
+        }
+    
+    # 검색 결과 요약
+    logger.info(f"번역이 필요한 항목: {len(rj_codes_to_translate)}개")
+    if not rj_codes_to_translate:
+        return {
+            'status': 'success',
+            'message': '번역이 필요한 항목이 없습니다.',
+            'items_found': 0
+        }
+    
+    # 배치 처리
+    total_results = {
+        'total_found': len(rj_codes_to_translate),
+        'batches': [],
+        'successful': 0,
+        'skipped': 0,
+        'errors': 0
+    }
+    
+    for i in range(0, len(rj_codes_to_translate), batch_size):
+        batch = rj_codes_to_translate[i:i+batch_size]
+        logger.info(f"배치 {i//batch_size + 1}/{(len(rj_codes_to_translate)-1)//batch_size + 1} 처리 시작: {len(batch)}개 항목")
+        
+        # 배치 처리
+        batch_result = batch_translate_rj_titles(batch)
+        
+        # 배치 결과 저장
+        total_results['batches'].append({
+            'batch_number': i//batch_size + 1,
+            'items': len(batch),
+            'summary': batch_result['summary']
+        })
+        
+        # 전체 결과 업데이트
+        summary = batch_result['summary']
+        total_results['successful'] += summary['successful']
+        total_results['skipped'] += summary['skipped']
+        total_results['errors'] += summary['errors']
+        
+        logger.info(f"배치 {i//batch_size + 1} 완료: 성공={summary['successful']}, 스킵={summary['skipped']}, 오류={summary['errors']}")
+    
+    logger.info(f"전체 번역 완료: 총={total_results['total_found']}, 성공={total_results['successful']}, 스킵={total_results['skipped']}, 오류={total_results['errors']}")
+    
+    return {
+        'status': 'success',
+        'message': '전체 번역 완료',
+        'results': total_results
+    }
+
+# API 엔드포인트: 단일 RJ 코드 제목 번역
+@app.route('/translate/title/<rj_code>', methods=['GET'])
+def api_translate_title(rj_code):
+    try:
+        result = translate_single_rj_title(rj_code)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"API 단일 제목 번역 오류: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# API 엔드포인트: 배치 번역
+@app.route('/translate/batch', methods=['POST'])
+def api_batch_translate():
+    try:
+        data = request.get_json()
+        rj_codes = data.get('rj_codes', [])
+        
+        if not rj_codes:
+            return jsonify({'status': 'error', 'message': 'RJ 코드 목록이 비어 있음'}), 400
+            
+        result = batch_translate_rj_titles(rj_codes)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"API 배치 번역 오류: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# API 엔드포인트: 전체 번역 작업 시작
+@app.route('/translate/all', methods=['POST'])
+def api_translate_all():
+    try:
+        data = request.get_json()
+        batch_size = int(data.get('batch_size', 20))
+        max_items = data.get('max_items')
+        if max_items is not None:
+            max_items = int(max_items)
+        
+        # 번역 시작
+        result = translate_all_rj_titles(batch_size, max_items)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"API 전체 번역 오류: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     # GCP에서만 실행
     if os.getenv('GAE_ENV', '').startswith('standard') or os.getenv('CLOUD_RUN', '') == 'true':
