@@ -5,6 +5,7 @@ import logging
 import os
 from tags import tag_bp, init_tags
 from games import game_bp
+from game2 import game_fs_bp  
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ init_tags(db)
 # Blueprint 등록
 app.register_blueprint(tag_bp, url_prefix="/tags")
 app.register_blueprint(game_bp, url_prefix="/games")
+app.register_blueprint(game_fs_bp, url_prefix="/games-fs")
 
 # 웹 라우팅
 @app.route("/")
